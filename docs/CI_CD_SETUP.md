@@ -1,211 +1,147 @@
-# CI/CD Setup Guide — Numera → TestFlight via GitHub Actions
+# CI/CD Setup — Numera via Xcode Cloud
 
-This guide walks through the one-time setup required to make the GitHub Actions
-deploy pipeline work. After this you never touch it again — every merge to `main`
-automatically builds and pushes a new TestFlight build.
+Xcode Cloud is Apple's built-in CI/CD. It handles code signing automatically,
+runs on Apple Silicon, and pushes directly to TestFlight. No certs repo, no
+secrets to manage, no third-party tooling.
 
 ---
 
-## Overview
+## How it works
 
 ```
-Push to main
-  → CI job: build + test         (.github/workflows/ci.yml)
-  → Deploy job: archive + upload  (.github/workflows/deploy.yml)
-      → Fastlane match  (downloads cert + profile from private certs repo)
-      → xcodebuild archive
-      → upload_to_testflight (via App Store Connect API)
+Push to main (or open a PR)
+  → Xcode Cloud picks up the change
+  → ci_scripts/ci_post_clone.sh       (install tools / log env)
+  → xcodebuild test                   (runs unit/UI tests)
+  → ci_scripts/ci_pre_xcodebuild.sh  (set build number)
+  → xcodebuild archive                (Release build, App Store signing)
+  → ci_scripts/ci_post_xcodebuild.sh (log result)
+  → Upload to TestFlight              (automatic, managed by Apple)
 ```
 
----
-
-## Step 1 — Create a Private Certs Repo
-
-Fastlane Match stores encrypted certificates and provisioning profiles in a
-private Git repo. Create one now:
-
-1. Go to GitHub → New repository
-2. Name it `numera-certs` (or anything you like)
-3. Set it to **Private**
-4. Do not add a README or `.gitignore`
-5. Copy the SSH URL: `git@github.com:YOUR_USERNAME/numera-certs.git`
+The `ci_scripts/` folder in this repo contains the hook scripts.
+All workflow config (triggers, schemes, environments) lives in App Store Connect.
 
 ---
 
-## Step 2 — Create an App Store Connect API Key
+## One-time setup (do this once on a Mac)
 
-This key lets Fastlane talk to Apple without a username/password.
+### 1. Register the app in App Store Connect
 
-1. Go to [App Store Connect → Users and Access → Integrations → API Keys](https://appstoreconnect.apple.com/access/api)
-2. Click **+** to create a new key
-3. Name it `Numera CI`
-4. Role: **App Manager** (minimum required for TestFlight uploads)
-5. Download the `.p8` file — **you can only download it once**
-6. Note the **Key ID** and **Issuer ID** shown on the page
+1. Go to [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → My Apps → **+**
+2. Platform: iOS
+3. Name: `Numera`
+4. Bundle ID: `com.numera.app`
+5. SKU: `numera`
+6. Click **Create**
 
----
+### 2. Open the Xcode project
 
-## Step 3 — Generate an SSH Key for the Certs Repo
+Create (or open) the `Numera.xcodeproj` in Xcode.
+Make sure:
+- Bundle identifier is `com.numera.app`
+- Deployment target is iOS 17.0+
+- The scheme `Numera` is marked as **Shared** (Product → Scheme → Manage Schemes → tick Shared)
 
-The deploy job needs to clone the private certs repo. Use a deploy key.
+### 3. Connect Xcode Cloud
 
-```bash
-# On your Mac, generate a new key pair (no passphrase)
-ssh-keygen -t ed25519 -C "numera-ci" -f ~/.ssh/numera_ci_deploy -N ""
+In Xcode:
+1. Product → Xcode Cloud → **Create Workflow**
+2. Sign in with your Apple ID if prompted
+3. Select the `Numera` product
+4. Xcode will link the GitHub repo automatically (you'll need to authorise GitHub OAuth once)
 
-# Print the public key — you'll add this to the certs repo
-cat ~/.ssh/numera_ci_deploy.pub
+### 4. Configure the workflow in App Store Connect
 
-# Print the private key — you'll add this as a GitHub secret
-cat ~/.ssh/numera_ci_deploy
-```
+After the initial connection, manage workflows at:
+**App Store Connect → Xcode Cloud → Numera → Manage Workflows**
 
-Add the **public key** to the certs repo:
-- `numera-certs` → Settings → Deploy keys → Add deploy key
-- Title: `GitHub Actions`
-- Key: paste the public key
-- Allow write access: **yes** (match may need to push new certs on first run)
+#### Workflow: CI (runs on every PR)
 
----
-
-## Step 4 — Initialize Match (run once, locally on your Mac)
-
-```bash
-# In the Numera repo root
-bundle install
-
-# Set up env vars for this one-time run
-export MATCH_GIT_URL="git@github.com:YOUR_USERNAME/numera-certs.git"
-export MATCH_PASSWORD="choose-a-strong-passphrase"
-export APPLE_TEAM_ID="YOUR10CHARID"
-
-# This creates and uploads your App Store distribution cert + profile
-bundle exec fastlane match appstore
-```
-
-Match will ask for your Apple ID and password to create the certificate via
-the Developer Portal, then encrypt and push everything to the certs repo.
-
-> **Save the MATCH_PASSWORD somewhere safe.** You'll need it as a GitHub secret
-> and whenever you run match locally.
-
----
-
-## Step 5 — Add GitHub Secrets
-
-Go to your Numera repo on GitHub → **Settings → Secrets and variables → Actions → New repository secret**.
-
-Add all of these:
-
-| Secret name | Where to get it |
+| Setting | Value |
 |---|---|
-| `APPLE_TEAM_ID` | [developer.apple.com/account](https://developer.apple.com/account) → Membership → Team ID (10 chars) |
-| `APP_STORE_CONNECT_KEY_ID` | App Store Connect → API Keys page → Key ID column |
-| `APP_STORE_CONNECT_ISSUER_ID` | App Store Connect → API Keys page → Issuer ID (top of page) |
-| `APP_STORE_CONNECT_KEY_P8` | Contents of the `.p8` file you downloaded, **base64-encoded**: `base64 -i AuthKey_XXXXXXXX.p8 \| tr -d '\n'` |
-| `MATCH_GIT_URL` | SSH URL of your certs repo, e.g. `git@github.com:YOUR_USERNAME/numera-certs.git` |
-| `MATCH_PASSWORD` | The passphrase you chose in Step 4 |
-| `MATCH_SSH_PRIVATE_KEY` | The private key from Step 3 (`cat ~/.ssh/numera_ci_deploy`) |
+| Name | CI |
+| Start condition | Pull Request changes — target branch: `main` |
+| Environment | Xcode: latest release, macOS: latest release |
+| Actions | **Test** — scheme: `Numera`, destination: any iOS simulator |
+| Post-actions | None |
+
+#### Workflow: Deploy to TestFlight (runs on merge to main)
+
+| Setting | Value |
+|---|---|
+| Name | Deploy |
+| Start condition | Branch changes — branch: `main` |
+| Environment | Xcode: latest release, macOS: latest release |
+| Actions 1 | **Test** — scheme: `Numera`, destination: any iOS simulator |
+| Actions 2 | **Archive** — scheme: `Numera`, distribution: App Store, signing: Automatic |
+| Post-actions | **TestFlight (Internal Testing)** — add yourself as tester |
+
+Xcode Cloud manages provisioning profiles and certificates entirely —
+no manual cert management required.
 
 ---
 
-## Step 6 — Register the App in App Store Connect
+## ci_scripts explained
 
-Before the first upload can succeed, the app must exist:
+Xcode Cloud runs scripts from the `ci_scripts/` folder at fixed points.
+All three scripts are in this repo:
 
-1. [App Store Connect → My Apps → +](https://appstoreconnect.apple.com/apps)
-2. Click **New App**
-3. Platforms: iOS
-4. Name: `Numera`
-5. Bundle ID: `com.numera.app` (must match `fastlane/Appfile` and your Xcode project)
-6. SKU: `numera` (any unique string)
-7. User Access: Full Access
-8. Click **Create**
+| Script | When it runs |
+|---|---|
+| `ci_post_clone.sh` | Once per build, after repo clone. Good for tool installs. |
+| `ci_pre_xcodebuild.sh` | Before each xcodebuild call. Sets `CFBundleVersion` to `$CI_BUILD_NUMBER`. |
+| `ci_post_xcodebuild.sh` | After each xcodebuild call. Logs result paths. |
 
----
+Scripts must be executable (`chmod +x`) — already set via `git update-index`.
 
-## Step 7 — Set Signing in Xcode
+### Useful Xcode Cloud environment variables
 
-Once you have the Xcode project open on a Mac:
-
-1. Select the `Numera` target → Signing & Capabilities
-2. Uncheck **Automatically manage signing**
-3. Team: select your team
-4. Provisioning Profile: the one Match created will be named
-   `match AppStore com.numera.app` — select it
-5. Bundle Identifier: `com.numera.app`
-
-Commit the updated `.xcodeproj` settings.
+| Variable | Description |
+|---|---|
+| `CI_BUILD_NUMBER` | Monotonically incrementing integer per workflow run |
+| `CI_COMMIT` | Current commit SHA |
+| `CI_BRANCH` | Branch name |
+| `CI_WORKFLOW` | Name of the running workflow |
+| `CI_XCODEBUILD_ACTION` | `test`, `archive`, or `build` |
+| `CI_ARCHIVE_PATH` | Path to the .xcarchive (archive runs only) |
+| `CI_RESULT_BUNDLE_PATH` | Path to test result bundle (test runs only) |
+| `CI_PRIMARY_REPOSITORY_PATH` | Root of the cloned repo |
 
 ---
 
-## Step 8 — Create the `testflight` GitHub Environment (optional but recommended)
+## Build numbers
 
-This lets you require a manual approval before any deploy proceeds.
+`ci_pre_xcodebuild.sh` sets `CFBundleVersion` to `$CI_BUILD_NUMBER` before
+every archive. Xcode Cloud increments this automatically — you never touch it
+manually.
 
-1. Repo → Settings → Environments → New environment
-2. Name: `testflight`
-3. Enable **Required reviewers** → add yourself
-4. Save
-
-The deploy workflow references `environment: testflight`, so every deploy will
-pause and wait for your thumbs-up before uploading.
-
-To skip the gate (fully automatic), remove the `environment:` line from
-`.github/workflows/deploy.yml`.
+`CFBundleShortVersionString` (the marketing version shown in the App Store,
+e.g. `1.0.0`) stays in the Xcode project and is changed manually when you
+are ready to release a new version.
 
 ---
 
-## Local Development
+## Promoting a TestFlight build to the App Store
 
-For running Fastlane lanes on your Mac without polluting your shell env, create
-a `.env.local` file in the repo root (it is already in `.gitignore`):
+Xcode Cloud does not auto-submit to App Store review. To ship:
 
-```bash
-# .env.local — never commit this file
-APPLE_TEAM_ID=YOUR10CHARID
-MATCH_GIT_URL=git@github.com:YOUR_USERNAME/numera-certs.git
-MATCH_PASSWORD=your-match-passphrase
-APP_STORE_CONNECT_KEY_ID=XXXXXXXXXX
-APP_STORE_CONNECT_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-APP_STORE_CONNECT_KEY_P8=<base64 encoded .p8 content>
-```
-
-Fastlane reads `.env.local` automatically.
+1. Go to App Store Connect → TestFlight → find the build
+2. Test it on your device
+3. App Store Connect → App Store → select the build → **Submit for Review**
 
 ---
 
-## Build Numbers
+## Adding environment variables / secrets
 
-The deploy workflow sets the Xcode build number to `GITHUB_RUN_NUMBER` (a
-monotonically incrementing integer unique to the repo). This means:
+If you later need API keys or feature flags in the build (e.g. a RevenueCat
+key), add them in:
 
-- Build 1 = first ever deploy run
-- Build 2 = second run, etc.
+**App Store Connect → Xcode Cloud → Numera → Manage Workflows → Environment**
+→ **Environment Variables**
 
-Apple requires each uploaded build to have a higher build number than the
-previous one. As long as you don't reorder or skip GitHub Actions runs, this is
-always satisfied automatically.
-
----
-
-## Typical Flow After Setup
-
-```
-# Feature work
-git checkout -b feature/my-screen
-# ... code ...
-git push
-# → CI job runs: build + test
-
-# Ship it
-git checkout main
-git merge feature/my-screen
-git push
-# → CI job runs: build + test
-# → Deploy job runs: match → archive → TestFlight upload
-# (if testflight environment is enabled, you approve first)
-```
+They are injected as shell environment variables and available in `ci_scripts/`.
+They are never stored in the repo.
 
 ---
 
@@ -213,8 +149,8 @@ git push
 
 | Problem | Fix |
 |---|---|
-| `match` can't clone the certs repo | Check `MATCH_SSH_PRIVATE_KEY` secret and that the deploy key is added to the certs repo with write access |
-| `No provisioning profile` | Run `bundle exec fastlane match appstore` locally to generate; commit certs repo |
-| `Invalid API key` | Re-check `APP_STORE_CONNECT_KEY_P8` is base64 encoded with no newlines |
-| Build number not incrementing | Ensure `increment_build_number` is pointing at the correct `.xcodeproj` path in `Fastfile` |
-| `No such scheme "Numera"` | Open the Xcode project and make sure the scheme is set to **Shared** |
+| `ci_scripts` not running | Scripts must have execute permission — already set with `git update-index --chmod=+x` |
+| Build number not updating | Check that `ci_pre_xcodebuild.sh` can find `Info.plist` — path may differ once `.xcodeproj` exists |
+| Scheme not found | Open Xcode → Product → Scheme → Manage Schemes → ensure `Numera` is ticked as Shared |
+| GitHub not connecting | Re-authorise under App Store Connect → Xcode Cloud → Settings → Source Control Providers |
+| Signing failure | Xcode Cloud uses automatic signing — ensure the bundle ID is registered in the Developer Portal |
