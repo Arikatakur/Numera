@@ -31,7 +31,7 @@ All workflow config (triggers, schemes, environments) lives in App Store Connect
 1. Go to [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → My Apps → **+**
 2. Platform: iOS
 3. Name: `Numera`
-4. Bundle ID: `com.numera.app`
+4. Bundle ID: `org.clientvault.numera`
 5. SKU: `numera`
 6. Click **Create**
 
@@ -39,7 +39,7 @@ All workflow config (triggers, schemes, environments) lives in App Store Connect
 
 Create (or open) the `Numera.xcodeproj` in Xcode.
 Make sure:
-- Bundle identifier is `com.numera.app`
+- Bundle identifier is `org.clientvault.numera`
 - Deployment target is iOS 17.0+
 - The scheme `Numera` is marked as **Shared** (Product → Scheme → Manage Schemes → tick Shared)
 
