@@ -26,22 +26,40 @@ All workflow config (triggers, schemes, environments) lives in App Store Connect
 
 ## One-time setup (do this once on a Mac)
 
-### 1. Register the app in App Store Connect
+### 1. Generate the Xcode project
 
-1. Go to [appstoreconnect.apple.com](https://appstoreconnect.apple.com) → My Apps → **+**
-2. Platform: iOS
-3. Name: `Numera`
-4. Bundle ID: `org.clientvault.numera`
-5. SKU: `numera`
-6. Click **Create**
+The repo contains a `project.yml` spec. One command turns it into a real `.xcodeproj`:
 
-### 2. Open the Xcode project
+```bash
+# Install XcodeGen (once, via Homebrew)
+brew install xcodegen
 
-Create (or open) the `Numera.xcodeproj` in Xcode.
-Make sure:
-- Bundle identifier is `org.clientvault.numera`
-- Deployment target is iOS 17.0+
-- The scheme `Numera` is marked as **Shared** (Product → Scheme → Manage Schemes → tick Shared)
+# In the repo root
+xcodegen generate
+```
+
+This creates `Numera.xcodeproj` with the correct bundle ID, deployment target,
+source files, and scheme already configured. Commit it:
+
+```bash
+git add Numera.xcodeproj
+git commit -m "feat: add generated Xcode project"
+git push
+```
+
+> The `.xcodeproj` must be in the repo so Xcode Cloud can find it.
+
+### 2. Verify the project opens cleanly
+
+```bash
+open Numera.xcodeproj
+```
+
+Check:
+- Bundle identifier shows `org.clientvault.numera`
+- Deployment target is iOS 17.0
+- Scheme `Numera` exists and is marked Shared (Product → Scheme → Manage Schemes)
+- Build succeeds locally (Cmd+B)
 
 ### 3. Connect Xcode Cloud
 
