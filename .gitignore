@@ -1,0 +1,71 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# Fastlane / signing
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+*.mobileprovision
+*.cer
+*.p12
+*.ipa
+*.dSYM.zip
+*.dSYM/
+
+# Environment / secrets
+.env
+.env.*
+.env.local
+*.key
+*.pem
+*.p8
+secrets/
+Secrets/
+GoogleService-Info.plist
+
+# Ruby bundler
+vendor/bundle/
+
+# Gemfile.lock is committed so CI gets reproducible gem versions
+# (do NOT add Gemfile.lock here)
+
+# Node / web tooling if added later
+node_modules/
+dist/
+.next/
+.vercel/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archives
+*.zip
+*.tar.gz
+*.rar
+
+# Temporary
+tmp/
+temp/
+.cache/
