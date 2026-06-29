@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Digital Serenity - Home Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary-fixed-dim": "#5ddbbd",
+                    "primary-container": "#b8f36a",
+                    "on-primary-fixed": "#112000",
+                    "on-secondary-fixed": "#002019",
+                    "on-primary-fixed-variant": "#304f00",
+                    "on-tertiary-fixed-variant": "#553e5e",
+                    "on-error-container": "#ffdad6",
+                    "text-secondary": "#9AA6B2",
+                    "on-secondary-container": "#003027",
+                    "surface-container-high": "#272a30",
+                    "on-tertiary-fixed": "#271331",
+                    "surface-bright": "#36393f",
+                    "outline-variant": "#434938",
+                    "tertiary-container": "#f6d7ff",
+                    "primary-fixed-dim": "#9ed752",
+                    "danger": "#FF6B6B",
+                    "chart-purple": "#A78BFA",
+                    "on-primary": "#203600",
+                    "chart-pink": "#F472B6",
+                    "on-primary-container": "#456f00",
+                    "inverse-on-surface": "#2d3036",
+                    "on-surface-variant": "#c2c9b3",
+                    "secondary": "#5ddbbd",
+                    "on-background": "#e0e2ea",
+                    "secondary-fixed": "#7cf8d9",
+                    "background": "#101419",
+                    "surface-elevated": "#151F2B",
+                    "tertiary-fixed": "#f7d9ff",
+                    "error": "#ffb4ab",
+                    "primary-fixed": "#b9f46b",
+                    "surface-secondary": "#0B1118",
+                    "surface-container-low": "#181c21",
+                    "on-tertiary": "#3d2847",
+                    "surface-container-highest": "#32353b",
+                    "tertiary": "#fffdff",
+                    "chart-orange": "#FDBA74",
+                    "surface-card": "#101823",
+                    "inverse-primary": "#426900",
+                    "border-glass": "rgba(255, 255, 255, 0.08)",
+                    "secondary-container": "#00a389",
+                    "surface-tint": "#9ed752",
+                    "error-container": "#93000a",
+                    "surface-container-lowest": "#0b0e13",
+                    "surface": "#101419",
+                    "on-error": "#690005",
+                    "warning": "#F8C46B",
+                    "surface-dim": "#101419",
+                    "on-surface": "#e0e2ea",
+                    "primary": "#fdfff1",
+                    "on-secondary-fixed-variant": "#005142",
+                    "on-tertiary-container": "#735b7d",
+                    "surface-variant": "#32353b",
+                    "outline": "#8d937f",
+                    "text-primary": "#F8FAFC",
+                    "inverse-surface": "#e0e2ea",
+                    "text-tertiary": "#64748B",
+                    "tertiary-fixed-dim": "#dabce3",
+                    "surface-container": "#1d2025",
+                    "on-secondary": "#00382d"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "margin-desktop": "40px",
+                    "card-padding": "24px",
+                    "gutter": "16px",
+                    "margin-mobile": "20px",
+                    "base": "8px"
+            },
+            "fontFamily": {
+                    "body-md": ["Plus Jakarta Sans"],
+                    "label-caps": ["Plus Jakarta Sans"],
+                    "caption": ["Plus Jakarta Sans"],
+                    "display-money-mobile": ["Plus Jakarta Sans"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "display-money": ["Plus Jakarta Sans"],
+                    "body-lg": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                    "caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "display-money-mobile": ["34px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+                    "display-money": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "24px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #070A0F;
+            color: #F8FAFC;
+            -webkit-font-smoothing: antialiased;
+            padding-bottom: 100px;
+        }
+
+        .glass-card {
+            background: #101823;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 28px;
+            backdrop-filter: blur(10px);
+        }
+
+        .privacy-blur {
+            filter: blur(12px);
+            transition: filter 0.3s ease;
+        }
+
+        .donut-segment {
+            transition: stroke-dashoffset 1s ease-out;
+        }
+
+        .haptic-feedback:active {
+            transform: scale(0.97);
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="dark font-body-md text-body-md overflow-x-hidden">
+<!-- Top App Bar -->
+<header class="w-full sticky top-0 z-40 bg-background/80 backdrop-blur-xl">
+<div class="flex justify-between items-center px-margin-mobile py-base w-full">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden border border-white/10">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a tech CEO in his late 20s, wearing minimalist black attire. The lighting is moody and cinematic with deep shadows and soft rim lights, fitting a high-end corporate dark mode aesthetic. Subtle grain and hyper-realistic skin textures." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQnGHMvoRGu-LwsWullari5C4alOAsbijgM0Pf_sB5k5OwOo395drUNZx38pb0Z4iW1wHDqm4s8CsTqfSIw4NMr08RrCYBLEkEK20_LQy_jW83p6mCZFIgVdUNo-IWDW-DDakAWG93v3_S0B9CasRQRq1kYjSKZMnziSCDRzmsOU3JMRorWXglhhwlHfsrgeoB1tJXvFCnzzqYxXOlQJybZ4d6vfJRHlW_C7sb_i_KswZGNKiHZj0U0WRp744NpBUB9t3tZB-whV4"/>
+</div>
+<div class="flex flex-col">
+<h1 class="font-headline-md-mobile text-headline-md-mobile text-text-primary tracking-tight">Good evening</h1>
+<p class="text-text-secondary font-caption text-caption">Your spending overview</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="hover:bg-surface-container-high rounded-full p-2 transition-colors active:scale-90 flex items-center justify-center" id="privacy-toggle">
+<span class="material-symbols-outlined text-text-secondary" data-icon="visibility">visibility</span>
+</button>
+<div class="flex items-center gap-1 bg-surface-container-low px-3 py-1.5 rounded-full border border-white/5 active:scale-95 transition-transform cursor-pointer">
+<span class="font-label-caps text-label-caps text-primary-fixed">Jun</span>
+<span class="material-symbols-outlined text-primary-fixed text-sm" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+</div>
+</header>
+<main class="px-margin-mobile mt-4 space-y-6">
+<!-- Hero Spending Card -->
+<section class="glass-card p-card-padding relative overflow-hidden">
+<div class="relative z-10">
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<p class="text-text-secondary font-label-caps text-label-caps uppercase tracking-wider">Spent this month</p>
+<h2 class="font-display-money-mobile text-display-money-mobile text-text-primary" id="main-balance">₪3,420.50</h2>
+<div class="flex items-center gap-1.5 mt-2">
+<div class="flex items-center bg-primary-container/10 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-primary-container text-xs" data-icon="trending_down">trending_down</span>
+<span class="text-primary-container font-label-caps text-[10px] ml-1">12% less</span>
+</div>
+<span class="text-text-tertiary font-caption text-caption">than last month</span>
+</div>
+</div>
+<!-- Simplified Donut Chart SVG -->
+<div class="relative w-28 h-28">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3.5"></circle>
+<circle class="stroke-primary-container donut-segment" cx="18" cy="18" fill="none" r="16" stroke-dasharray="65 100" stroke-width="3.5"></circle>
+<circle class="stroke-chart-purple donut-segment" cx="18" cy="18" fill="none" r="16" stroke-dasharray="25 100" stroke-dashoffset="-65" stroke-width="3.5"></circle>
+<circle class="stroke-chart-orange donut-segment" cx="18" cy="18" fill="none" r="16" stroke-dasharray="10 100" stroke-dashoffset="-90" stroke-width="3.5"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-label-caps text-[10px] text-text-tertiary">Top</span>
+<span class="material-symbols-outlined text-primary-container text-lg leading-none" data-icon="restaurant">restaurant</span>
+</div>
+</div>
+</div>
+<!-- Legend -->
+<div class="flex gap-4 mt-6 overflow-x-auto no-scrollbar">
+<div class="flex items-center gap-2 shrink-0">
+<div class="w-2 h-2 rounded-full bg-primary-container"></div>
+<span class="text-text-secondary text-caption font-caption">Dining</span>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<div class="w-2 h-2 rounded-full bg-chart-purple"></div>
+<span class="text-text-secondary text-caption font-caption">Tech</span>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+<div class="w-2 h-2 rounded-full bg-chart-orange"></div>
+<span class="text-text-secondary text-caption font-caption">Travel</span>
+</div>
+</div>
+</div>
+<!-- Decorative background gradient glow -->
+<div class="absolute -top-20 -right-20 w-48 h-48 bg-primary-container/10 rounded-full blur-[80px] pointer-events-none"></div>
+</section>
+<!-- Mini Metric Cards (Horizontal Scroll/Side-by-Side) -->
+<section class="grid grid-cols-3 gap-3">
+<div class="glass-card p-3 flex flex-col gap-1">
+<span class="text-text-tertiary text-[10px] font-label-caps uppercase">Income</span>
+<span class="text-secondary-fixed-dim font-body-lg text-body-lg truncate">₪6.2k</span>
+</div>
+<div class="glass-card p-3 flex flex-col gap-1">
+<span class="text-text-tertiary text-[10px] font-label-caps uppercase">Expenses</span>
+<span class="text-text-primary font-body-lg text-body-lg truncate">₪3.4k</span>
+</div>
+<div class="glass-card p-3 flex flex-col gap-1 bg-primary-container/5 border-primary-container/20">
+<span class="text-text-tertiary text-[10px] font-label-caps uppercase">Remaining</span>
+<span class="text-primary-container font-body-lg text-body-lg truncate">₪2.7k</span>
+</div>
+</section>
+<!-- Recent Activity Section -->
+<section class="space-y-4">
+<div class="flex justify-between items-center px-1">
+<h3 class="font-headline-md text-headline-md text-text-primary">Recent Activity</h3>
+<button class="text-primary-container font-label-caps text-label-caps hover:opacity-80 transition-opacity">See All</button>
+</div>
+<div class="space-y-3">
+<!-- Transaction Item 1 -->
+<div class="glass-card p-4 flex items-center justify-between haptic-feedback cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-primary-container group-hover:bg-primary-container/20 transition-colors">
+<span class="material-symbols-outlined" data-icon="subscriptions">subscriptions</span>
+</div>
+<div>
+<p class="font-body-lg text-body-lg text-text-primary leading-tight">Apple Music</p>
+<p class="text-text-tertiary text-caption font-caption">Subscription • Today, 10:24</p>
+</div>
+</div>
+<p class="font-body-lg text-body-lg text-text-primary">-₪19.90</p>
+</div>
+<!-- Transaction Item 2 -->
+<div class="glass-card p-4 flex items-center justify-between haptic-feedback cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-chart-orange group-hover:bg-chart-orange/20 transition-colors">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+</div>
+<div>
+<p class="font-body-lg text-body-lg text-text-primary leading-tight">Blue Wave Sushi</p>
+<p class="text-text-tertiary text-caption font-caption">Dining • Yesterday, 21:05</p>
+</div>
+</div>
+<p class="font-body-lg text-body-lg text-text-primary">-₪245.00</p>
+</div>
+<!-- Transaction Item 3 -->
+<div class="glass-card p-4 flex items-center justify-between haptic-feedback cursor-pointer group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-secondary-fixed-dim group-hover:bg-secondary-fixed-dim/20 transition-colors">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+</div>
+<div>
+<p class="font-body-lg text-body-lg text-text-primary leading-tight">Paycheck Deposit</p>
+<p class="text-text-tertiary text-caption font-caption">Income • 2 days ago</p>
+</div>
+</div>
+<p class="font-body-lg text-body-lg text-secondary-fixed-dim">+₪6,200.00</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 h-20 pb-safe bg-surface/80 backdrop-blur-xl shadow-2xl flex justify-around items-center px-margin-mobile">
+<!-- Home (Active) -->
+<a class="flex flex-col items-center justify-center text-primary-fixed scale-110 transition-transform haptic-feedback" href="#">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-caps text-label-caps mt-1">Home</span>
+</a>
+<!-- Activity -->
+<a class="flex flex-col items-center justify-center text-text-secondary opacity-60 hover:opacity-100 transition-opacity haptic-feedback" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-label-caps text-label-caps mt-1">Activity</span>
+</a>
+<!-- Prominent '+' FAB -->
+<div class="relative -top-8">
+<button class="w-14 h-14 rounded-full bg-primary-container text-on-primary-fixed shadow-[0_0_20px_rgba(184,243,106,0.4)] flex items-center justify-center active:scale-95 transition-all duration-200">
+<span class="material-symbols-outlined text-3xl" data-icon="add">add</span>
+</button>
+</div>
+<!-- Insights -->
+<a class="flex flex-col items-center justify-center text-text-secondary opacity-60 hover:opacity-100 transition-opacity haptic-feedback" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-label-caps text-label-caps mt-1">Insights</span>
+</a>
+<!-- Settings -->
+<a class="flex flex-col items-center justify-center text-text-secondary opacity-60 hover:opacity-100 transition-opacity haptic-feedback" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-caps text-label-caps mt-1">Settings</span>
+</a>
+</nav>
+<script>
+        // Privacy Mode Toggle Logic
+        const privacyToggle = document.getElementById('privacy-toggle');
+        const balanceElements = [
+            document.getElementById('main-balance'),
+            ...document.querySelectorAll('.font-body-lg.text-text-primary'),
+            ...document.querySelectorAll('.text-secondary-fixed-dim.font-body-lg'),
+            ...document.querySelectorAll('.text-primary-container.font-body-lg')
+        ];
+        
+        let isPrivate = false;
+
+        privacyToggle.addEventListener('click', () => {
+            isPrivate = !isPrivate;
+            const icon = privacyToggle.querySelector('.material-symbols-outlined');
+            icon.innerText = isPrivate ? 'visibility_off' : 'visibility';
+            
+            balanceElements.forEach(el => {
+                if (isPrivate) {
+                    el.classList.add('privacy-blur');
+                } else {
+                    el.classList.remove('privacy-blur');
+                }
+            });
+
+            // Trigger a small haptic-like visual feedback
+            privacyToggle.style.transform = 'scale(0.85)';
+            setTimeout(() => {
+                privacyToggle.style.transform = 'scale(1)';
+            }, 150);
+        });
+
+        // Add smooth interaction for FAB
+        const fab = document.querySelector('button.w-14.h-14');
+        fab.addEventListener('click', () => {
+            // Ripple or feedback effect placeholder
+            console.log('Open Add Expense Modal');
+        });
+
+        // Initialize animations
+        window.addEventListener('DOMContentLoaded', () => {
+            const segments = document.querySelectorAll('.donut-segment');
+            segments.forEach(segment => {
+                const length = segment.getTotalLength();
+                segment.style.strokeDasharray = length;
+                segment.style.strokeDashoffset = length;
+                
+                // Trigger reflow
+                segment.getBoundingClientRect();
+                
+                // Final value transition
+                const target = segment.getAttribute('stroke-dasharray').split(' ')[0];
+                segment.style.strokeDashoffset = length - (length * (parseFloat(target)/100));
+            });
+        });
+    </script>
+</body></html>
