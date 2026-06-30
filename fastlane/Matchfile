@@ -4,3 +4,4 @@ storage_mode("git")
 type("appstore")
 
 app_identifier(["org.clientvault.numera"])
+team_id(ENV["APPLE_TEAM_ID"])
