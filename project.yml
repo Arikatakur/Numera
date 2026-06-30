@@ -14,6 +14,7 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.9"
     ENABLE_PREVIEWS: "YES"
+    TARGETED_DEVICE_FAMILY: "1"
 
 targets:
   Numera:
@@ -30,6 +31,7 @@ targets:
         CFBundleDisplayName: Numera
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleIconName: AppIcon
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
