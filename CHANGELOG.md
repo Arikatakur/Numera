@@ -5,6 +5,20 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
+## [0.6.0] — 2026-07-01
+
+Supabase database schema — tables, types, RLS, and triggers.
+
+### Added
+- `supabase/migrations/20260701000000_create_types.sql` — Postgres enums `transaction_type` and `transaction_category`, mapping 1-to-1 with `TransactionType` and `Category` in Swift.
+- `supabase/migrations/20260701000001_create_profiles.sql` — `profiles` table linked to `auth.users`; trigger auto-creates a profile row on every sign-up; `set_updated_at` function shared by all tables.
+- `supabase/migrations/20260701000002_create_accounts.sql` — `accounts` table (id, user_id, name, balance, sf_symbol); RLS — users see only their own accounts; indexes on `user_id`.
+- `supabase/migrations/20260701000003_create_transactions.sql` — `transactions` table (id, user_id, type, amount, category, title, note, date, account_name, account_id); full RLS; composite indexes on `(user_id, date)`, `(user_id, category)`, `(user_id, type)`.
+- `supabase/migrations/20260701000004_create_budgets.sql` — `budgets` table; `category = NULL` row = overall monthly budget (replaces hardcoded $3,000 in `TransactionStore`); trigger seeds a $3,000 default budget for every new user at sign-up.
+- `supabase/README.md` — apply order, Swift↔Postgres enum mapping table, RLS notes, sign-up flow explanation.
+
+---
+
 ## [0.5.0] — 2026-07-01
 
 Functional UI wiring. Every button in the app now does something real.
