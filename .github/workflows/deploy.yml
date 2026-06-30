@@ -27,11 +27,6 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Generate App Icon from logo
-        run: |
-          sips -z 1024 1024 logo.png \
-            --out "Numera/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
-
       - name: Generate Xcode project
         run: xcodegen generate
 
