@@ -37,7 +37,6 @@ platform :ios do
     match(
       type:           "appstore",
       app_identifier: BUNDLE_ID,
-      readonly:       is_ci,
       api_key:        api_key
     )
 
