@@ -14,7 +14,6 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.9"
     ENABLE_PREVIEWS: "YES"
-    TARGETED_DEVICE_FAMILY: "1"
 
 targets:
   Numera:
@@ -46,6 +45,7 @@ targets:
         CODE_SIGN_STYLE: Automatic
         INFOPLIST_FILE: Numera/Resources/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
       configs:
         Debug:
           DEBUG_INFORMATION_FORMAT: dwarf
