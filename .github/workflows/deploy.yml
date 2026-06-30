@@ -34,12 +34,16 @@ jobs:
           ruby-version: "3.3"
           bundler-cache: true
 
+      - name: Write App Store Connect API key
+        run: echo "$APP_STORE_CONNECT_KEY_P8" > /tmp/AuthKey.p8
+        env:
+          APP_STORE_CONNECT_KEY_P8: ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
+
       - name: Deploy via Fastlane
         run: bundle exec fastlane beta
         env:
           APP_STORE_CONNECT_KEY_ID:       ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID:    ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_KEY_P8:       ${{ secrets.APP_STORE_CONNECT_KEY_P8 }}
           MATCH_GIT_URL:                  ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD:                 ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_BASIC_AUTHORIZATION:  ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
