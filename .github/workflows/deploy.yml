@@ -3,6 +3,13 @@ name: Deploy to TestFlight
 on:
   push:
     branches: [ main ]
+    paths:
+      - "Numera/**"
+      - "project.yml"
+      - "fastlane/**"
+      - "Gemfile"
+      - "Gemfile.lock"
+      - ".github/workflows/deploy.yml"
 
 concurrency:
   group: deploy-${{ github.ref }}

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Numera — App Icon &amp; Launch Animation</title>
+  <style>
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.12); }
+    }
+    body { margin: 0; background: #EFEEEB; }
+  </style>
+</helmet>
+
+<div style="min-height:100vh; box-sizing:border-box; padding:64px 32px; display:flex; flex-direction:column; align-items:center; gap:48px; font-family:-apple-system,'Helvetica Neue',Helvetica,Arial,sans-serif; background:#EFEEEB;">
+
+  <div style="display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center; max-width:640px;">
+    <div style="font-size:12px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:#8A8A86;">Numera</div>
+    <div style="font-size:30px; font-weight:700; letter-spacing:-0.01em; color:#1A1A18;">App icon, full size set &amp; launch animation</div>
+    <div style="font-size:15px; line-height:1.5; color:#6E6E69;">Your monogram, cleaned up into real source art for iOS — flattened to a plain square with no baked-in corner mask or glow box — plus a first-launch animation built around the icon-to-wordmark lockup.</div>
+  </div>
+
+  <div style="display:flex; gap:32px; flex-wrap:wrap; justify-content:center; align-items:flex-start;">
+
+    <div style="width:380px; box-sizing:border-box; background:#11151A; border-radius:28px; padding:40px 32px; display:flex; flex-direction:column; align-items:center; gap:28px; box-shadow:0 20px 50px rgba(0,0,0,0.16);">
+      <div style="font-size:13px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#7EE696; align-self:flex-start;">App Icon</div>
+
+      <img src="app-icons/icon-1024.png" alt="Numera app icon" style="width:200px; height:200px; border-radius:44.7px; display:block; box-shadow:0 14px 30px rgba(0,0,0,0.45);">
+
+      <div style="width:100%; height:1px; background:rgba(255,255,255,0.08);"></div>
+
+      <div style="display:flex; gap:18px; justify-content:center; align-items:flex-end; flex-wrap:wrap;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <img src="app-icons/icon-180.png" width="60" height="60" style="border-radius:13.4px; display:block; box-shadow:0 4px 10px rgba(0,0,0,0.4);">
+          <div style="font-size:10px; color:#7C8389; font-variant-numeric:tabular-nums;">180px</div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <img src="app-icons/icon-120.png" width="48" height="48" style="border-radius:10.7px; display:block; box-shadow:0 4px 10px rgba(0,0,0,0.4);">
+          <div style="font-size:10px; color:#7C8389; font-variant-numeric:tabular-nums;">120px</div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <img src="app-icons/icon-80.png" width="38" height="38" style="border-radius:8.5px; display:block; box-shadow:0 4px 10px rgba(0,0,0,0.4);">
+          <div style="font-size:10px; color:#7C8389; font-variant-numeric:tabular-nums;">80px</div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <img src="app-icons/icon-58.png" width="30" height="30" style="border-radius:6.7px; display:block; box-shadow:0 4px 10px rgba(0,0,0,0.4);">
+          <div style="font-size:10px; color:#7C8389; font-variant-numeric:tabular-nums;">58px</div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+          <img src="app-icons/icon-40.png" width="22" height="22" style="border-radius:4.9px; display:block; box-shadow:0 4px 10px rgba(0,0,0,0.4);">
+          <div style="font-size:10px; color:#7C8389; font-variant-numeric:tabular-nums;">40px</div>
+        </div>
+      </div>
+
+      <div style="font-size:12.5px; line-height:1.55; color:#9AA1A6; text-align:left; align-self:stretch;">Plain square, no rounded mask or glow baked in — that's what was clipping oddly inside Apple's own corner mask. iOS rounds and adds shine on top of this automatically.</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; align-items:center; gap:18px;">
+      <div style="font-size:13px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#8A8A86; align-self:flex-start; padding-left:4px;">Launch Animation</div>
+
+      <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402,874">
+        <div style="position:relative; width:100%; height:100%; background:#0A0D10; overflow:hidden;">
+
+          <div style="{{ glowStyle }}"></div>
+
+          <img src="assets/numera-mark.png" alt="" style="{{ markStyle }}">
+
+          <div style="{{ wordmarkStyle }}">
+            <sc-for list="{{ letters }}" as="letter" hint-placeholder-count="6">
+              <span style="{{ letter.style }}">{{ letter.ch }}</span>
+            </sc-for>
+          </div>
+
+          <div style="{{ taglineStyle }}">Understand your money.</div>
+
+        </div>
+      </x-import>
+
+      <button onClick="{{ replay }}" style="margin-top:4px; padding:11px 22px; border-radius:100px; border:none; background:#11151A; color:#F4F4F2; font-size:13px; font-weight:600; letter-spacing:0.04em; cursor:pointer; font-family:inherit;">Replay animation</button>
+    </div>
+
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { phase: 0, revealed: 0 };
+
+  // layout constants (px, inside the 402x874 device screen)
+  geo = {
+    screenW: 402,
+    screenH: 874,
+    markW: 64,
+    markH: 57,
+    gap: 16,
+    wordmarkW: 188,
+    centerY: 437,
+  };
+
+  word = ['N', 'U', 'M', 'E', 'R', 'A'];
+  // reveal order: last letter (A) first, back to the first letter (N) last
+  revealOrder = [5, 4, 3, 2, 1, 0];
+  letterStagger = 120; // ms between each letter appearing
+
+  componentDidMount() {
+    this.runSequence();
+  }
+
+  componentWillUnmount() {
+    this.clearTimers();
+  }
+
+  clearTimers() {
+    (this.timers || []).forEach(t => clearTimeout(t));
+    this.timers = [];
+  }
+
+  runSequence() {
+    this.clearTimers();
+    this.setState({ phase: 0, revealed: 0 });
+    const timers = [
+      setTimeout(() => this.setState({ phase: 1 }), 150),   // mark fades in, centered
+      setTimeout(() => this.setState({ phase: 2 }), 1700),  // slide left + merge begins
+    ];
+    // letters reveal one by one, A -> N, as the mark glides past each letter's position
+    const lettersStart = 1700 + 180;
+    for (let i = 1; i <= this.word.length; i++) {
+      timers.push(
+        setTimeout(() => this.setState({ revealed: i }), lettersStart + (i - 1) * this.letterStagger)
+      );
+    }
+    const taglineDelay = lettersStart + this.word.length * this.letterStagger + 350;
+    timers.push(setTimeout(() => this.setState({ phase: 3 }), taglineDelay));
+    this.timers = timers;
+  }
+
+  renderVals() {
+    const { phase, revealed } = this.state;
+    const g = this.geo;
+
+    const groupW = g.markW + g.gap + g.wordmarkW;
+    const groupLeft = (g.screenW - groupW) / 2;
+    const markFinalLeft = groupLeft;
+    const markAloneLeft = (g.screenW - g.markW) / 2;
+    const markTop = g.centerY - g.markH / 2;
+    const wordmarkLeft = groupLeft + g.markW + g.gap;
+
+    const merged = phase >= 2;
+    const visible = phase >= 1;
+    const taglineVisible = phase >= 3;
+
+    const markTranslateX = merged ? 0 : (markAloneLeft - markFinalLeft);
+    const markScale = visible ? 1 : 0.82;
+
+    const markStyle = {
+      position: 'absolute',
+      left: markFinalLeft,
+      top: markTop,
+      width: g.markW,
+      height: g.markH,
+      objectFit: 'contain',
+      opacity: visible ? 1 : 0,
+      transform: `translateX(${markTranslateX}px) scale(${markScale})`,
+      transition: 'transform 1.35s cubic-bezier(.16,.84,.24,1), opacity 1s ease-out',
+      willChange: 'transform, opacity',
+    };
+
+    const wordmarkStyle = {
+      position: 'absolute',
+      left: wordmarkLeft,
+      top: markTop,
+      height: g.markH,
+      width: g.wordmarkW,
+      display: 'flex',
+      alignItems: 'center',
+      color: '#F7F9F8',
+      fontSize: 25,
+      fontWeight: 700,
+      letterSpacing: '0.14em',
+      whiteSpace: 'nowrap',
+    };
+
+    const letters = this.word.map((ch, idx) => {
+      // position of this letter in the reveal order (0 = first to appear, i.e. 'A')
+      const orderPos = this.revealOrder.indexOf(idx);
+      const isRevealed = merged && revealed > orderPos;
+      return {
+        ch,
+        style: {
+          display: 'inline-block',
+          opacity: isRevealed ? 1 : 0,
+          transform: `translateY(${isRevealed ? 0 : 10}px)`,
+          transition: 'opacity 0.6s cubic-bezier(.2,.9,.3,1), transform 0.6s cubic-bezier(.2,.9,.3,1)',
+        },
+      };
+    });
+
+    const taglineStyle = {
+      position: 'absolute',
+      left: '50%',
+      top: markTop + g.markH + 24,
+      transform: `translate(-50%, ${taglineVisible ? 0 : 8}px)`,
+      opacity: taglineVisible ? 1 : 0,
+      color: 'rgba(247,249,248,0.55)',
+      fontSize: 13.5,
+      letterSpacing: '0.04em',
+      whiteSpace: 'nowrap',
+      transition: 'opacity 0.9s ease-out, transform 0.9s ease-out',
+    };
+
+    const glowStyle = {
+      position: 'absolute',
+      left: markFinalLeft + g.markW / 2 + (merged ? 0 : markTranslateX),
+      top: g.centerY,
+      width: 180,
+      height: 180,
+      borderRadius: '50%',
+      background: 'radial-gradient(circle, rgba(126,230,150,0.30) 0%, rgba(126,230,150,0) 70%)',
+      opacity: visible ? 0.7 : 0,
+      transform: 'translate(-50%, -50%)',
+      transition: 'left 1.35s cubic-bezier(.16,.84,.24,1), opacity 1s ease-out',
+      animation: visible ? 'pulseGlow 3.2s ease-in-out infinite' : 'none',
+      pointerEvents: 'none',
+    };
+
+    return {
+      markStyle,
+      wordmarkStyle,
+      letters,
+      taglineStyle,
+      glowStyle,
+      replay: () => this.runSequence(),
+    };
+  }
+}
+
+</script>
+</body>
+</html>
