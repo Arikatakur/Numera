@@ -1,0 +1,79 @@
+default_platform(:ios)
+
+SCHEME    = "Numera"
+BUNDLE_ID = "org.clientvault.numera"
+XCODE_PROJ = "Numera.xcodeproj"
+
+platform :ios do
+
+  before_all do
+    setup_ci if is_ci
+  end
+
+  def asc_api_key
+    app_store_connect_api_key(
+      key_id:                ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id:             ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_content:           ENV["APP_STORE_CONNECT_KEY_P8"],
+      is_key_content_base64: true,
+      in_house:              false
+    )
+  end
+
+  desc "Run tests"
+  lane :test do
+    run_tests(
+      project: XCODE_PROJ,
+      scheme:  SCHEME,
+      device:  "iPhone 16",
+      clean:   true
+    )
+  end
+
+  desc "Build and upload to TestFlight"
+  lane :beta do
+    api_key = asc_api_key
+
+    match(
+      type:           "appstore",
+      app_identifier: BUNDLE_ID,
+      readonly:       is_ci,
+      api_key:        api_key
+    )
+
+    increment_build_number(
+      build_number: ENV["GITHUB_RUN_NUMBER"] || Time.now.to_i.to_s,
+      xcodeproj:    XCODE_PROJ
+    )
+
+    build_app(
+      project:       XCODE_PROJ,
+      scheme:        SCHEME,
+      configuration: "Release",
+      export_method: "app-store",
+      clean:         true,
+      output_name:   "Numera.ipa"
+    )
+
+    upload_to_testflight(
+      api_key:                           api_key,
+      skip_waiting_for_build_processing: true,
+      changelog:                         "Automated build — commit #{ENV['GITHUB_SHA']&.slice(0, 7)}"
+    )
+  end
+
+  desc "Force-rotate certificates (run locally only)"
+  lane :refresh_certs do
+    match(
+      type:           "appstore",
+      app_identifier: BUNDLE_ID,
+      force:          true,
+      api_key:        asc_api_key
+    )
+  end
+
+  error do |lane, exception|
+    UI.error("Lane #{lane} failed: #{exception.message}")
+  end
+
+end
