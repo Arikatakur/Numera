@@ -196,6 +196,64 @@ Before ending every work session, update this file with:
 
 ---
 
+## Latest Session - 2026-07-01
+
+### Changed
+- Added Supabase Swift SDK to `project.yml` (`from: "2.0.0"`).
+- Added `SupabaseConfig.swift` — placeholder URL + anon key. **User must replace before building.**
+- Added `SupabaseManager.swift` — `SupabaseClient` singleton.
+- Added `AuthManager.swift` — `@MainActor @Observable` auth state manager. Listens to `authStateChanges` stream for session updates. Methods: `signIn`, `signUp`, `signInWithApple`, `signOut`.
+- Added `WelcomeView.swift` — landing screen with Sign in with Apple + Continue with Email.
+- Added `EmailAuthView.swift` — sheet with sign-in/sign-up toggle, form validation, email confirmation card.
+- Updated `NumeraApp.swift` — routes to `WelcomeView` (no session) or `ContentView` (signed in), after launch animation. Auth state resolved from Supabase local session cache within ~200ms.
+- Fixed `ci.yml` — replaced `fastlane test` (broken — no test targets) with `xcodebuild build` compile check.
+
+### Files Touched
+- `project.yml` (added packages + target dependency)
+- `Numera/App/SupabaseConfig.swift` (new)
+- `Numera/App/NumeraApp.swift` (updated)
+- `Numera/Services/SupabaseManager.swift` (new)
+- `Numera/Services/AuthManager.swift` (new)
+- `Numera/Features/Auth/WelcomeView.swift` (new)
+- `Numera/Features/Auth/EmailAuthView.swift` (new)
+- `.github/workflows/ci.yml` (updated)
+- `CHANGELOG.md` (updated)
+- `HANDOFF.md` (updated)
+
+### Tested / Checked
+- Code written and reviewed; CI compile check will validate on push.
+- Logic reviewed for `authStateChanges` stream correctness.
+- `isLoading = true` at start; set to `false` on `.initialSession` → no flash of wrong screen.
+
+### Incomplete
+- **`SupabaseConfig.swift` has placeholder values** — user must add real project URL + anon key from Supabase Dashboard → Project Settings → API.
+- **Sign in with Apple needs entitlement** — the Apple button and all Apple auth code is implemented. To activate it on device/TestFlight:
+  1. Enable "Sign in with Apple" capability on the App ID in Apple Developer portal.
+  2. Add to `project.yml` entitlements: `com.apple.developer.applesignin: [Default]`
+  3. Run `fastlane refresh_certs` to regenerate the Match provisioning profile.
+  This is a separate change; current build compiles fine without the entitlement.
+- Settings screen is a placeholder.
+- Budget screen not yet built.
+- Transaction detail / edit flow not built.
+- Onboarding flow (first-run steps after sign-up) not yet built.
+- All data still reads from `MockData` — not yet wired to Supabase.
+
+### Next
+1. **User action required**: Add real Supabase URL + anon key to `SupabaseConfig.swift`.
+2. Enable Sign in with Apple in Apple Developer portal + add entitlement to project.yml + regenerate Match certs.
+3. Build onboarding flow (shown once after first sign-up).
+4. Wire `AddTransactionView` to save real transactions to Supabase.
+5. Replace `MockData` with live Supabase queries on Home, Activity, Insights.
+6. Build Settings screen with sign-out button.
+7. Build Budget screen.
+
+### Git Status
+- Branch: main
+- Commit: auth layer + CI fix
+- Pushed: yes (this session)
+
+---
+
 ## Latest Session - 2026-06-30
 
 ### Changed

@@ -11,6 +11,12 @@ The format follows a simplified version of [Keep a Changelog], and commit messag
 ## [Unreleased]
 
 ### Added
+- Added Supabase Swift SDK (`supabase-swift 2.x`) via Swift Package Manager in `project.yml`.
+- Added `App/SupabaseConfig.swift` — project URL + anon key constants (placeholders, user must fill in).
+- Added `Services/SupabaseManager.swift` — `SupabaseClient` singleton.
+- Added `Services/AuthManager.swift` — `@MainActor @Observable` class managing session state via `authStateChanges` stream; methods for sign-in, sign-up, Apple sign-in, sign-out.
+- Added `Features/Auth/WelcomeView.swift` — launch landing screen with Sign in with Apple button (native `SignInWithAppleButton`) and Continue with Email button. Includes SHA256 nonce generation for Apple auth.
+- Added `Features/Auth/EmailAuthView.swift` — sheet with Sign In / Create Account toggle, email + password fields, confirm-password for sign-up, email confirmation card.
 - Created `Numera/` SwiftUI project folder structure (App, DesignSystem, Components, Models, Features, Services, Resources).
 - Added `DesignSystem/AppColors.swift` — full color palette with hex init extension.
 - Added `DesignSystem/AppTypography.swift` — Plus Jakarta Sans scale + `moneyStyle` / `labelCapsStyle` view modifiers.
@@ -26,25 +32,21 @@ The format follows a simplified version of [Keep a Changelog], and commit messag
 - Added `Features/AddTransaction/AddTransactionView.swift` — type toggle, large amount display, note field, category grid, numeric keypad.
 - Added `Features/Activity/ActivityView.swift` — search bar, filter chips, date-grouped transaction list.
 - Added `Features/Insights/InsightsView.swift` — editorial insight card, weekly bar chart, distribution donut, cash flow, top categories.
-- Added `App/NumeraApp.swift` — SwiftUI `@main` entry point.
 - Added `App/ContentView.swift` — `TabView` with custom tab bar and floating Add button.
-- Added `docs/CI_CD_SETUP.md` — Xcode Cloud setup guide.
 - Decided final app name: **Numera**.
 - Committed to Nike-editorial visual direction.
-- Decided on **Xcode Cloud** for CI/CD (over GitHub Actions + Fastlane).
 
 ### Changed
-- Added project documentation workflow.
-- Added `CLAUDE.md` with project context, assistant rules, changelog rules, handoff rules, and GitHub workflow.
-- Added `HANDOFF.md` for session-to-session project continuity.
-- Added `docs/GITHUB_WORKFLOW.md` with commit, push, and branch instructions.
-- Added `docs/CHANGELOG_GUIDE.md` with changelog maintenance rules.
+- Updated `App/NumeraApp.swift` — now routes after launch animation: `WelcomeView` if no session, `ContentView` if signed in. Auth state driven by `AuthManager.session` via `authStateChanges` stream.
+- Updated `.github/workflows/ci.yml` — replaced broken `fastlane test` (no test targets) with `xcodebuild build` compile-check using `CODE_SIGNING_ALLOWED=NO` on iOS Simulator. Removed unnecessary Ruby/Gemfile step from CI.
+- Added project documentation workflow (`CLAUDE.md`, `HANDOFF.md`, `docs/`).
 
 ### Fixed
-- Nothing fixed yet.
+- Fixed CI workflow that was failing because `fastlane test` had no test targets to run.
 
 ### Removed
 - Removed GitHub Actions + Fastlane approach in favour of Xcode Cloud.
+- Removed Ruby/Bundler setup from CI (no longer needed for compile check).
 
 ---
 

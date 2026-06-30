@@ -11,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Build & Test
+  build:
+    name: Compile Check
     runs-on: macos-15
 
     steps:
@@ -30,13 +30,11 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.3"
-          bundler-cache: true
-
-      - name: Run tests
-        run: bundle exec fastlane test
-        env:
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - name: Build (no signing)
+        run: |
+          xcodebuild build \
+            -project Numera.xcodeproj \
+            -scheme Numera \
+            -destination "generic/platform=iOS Simulator" \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet
