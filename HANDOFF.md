@@ -196,7 +196,67 @@ Before ending every work session, update this file with:
 
 ---
 
-## Latest Session - 2026-07-01
+## Latest Session - 2026-07-01 (continued)
+
+### Changed
+- Added `TransactionStore` — in-memory transaction store (pre-seeded with MockData). Add/delete + per-month aggregates. All views now read from this store so adding a transaction immediately updates Home and Activity.
+- Added `AppSettings` — shared `isPrivate: Bool` flag. Privacy toggle is now global; toggling in any view (or Settings) affects all views.
+- Added `SettingsView` — shows user email/initials, Hide Balances toggle, version info, sign-out with confirmation.
+- Wired all previously dead buttons:
+  - Home "View Insights" → Insights tab
+  - Home "SEE ALL" → Activity tab
+  - Home "Details" (safe to spend) → Insights tab
+  - Home month picker → sheet with last 6 months; data updates per month
+  - AddTransaction Save → creates real Transaction in TransactionStore and dismisses
+  - AddTransaction account pill → sheet with account list
+  - AddTransaction date pill → DatePicker sheet
+  - AddTransaction "VIEW ALL" → full category grid sheet
+  - Insights "View spending details" → Activity tab
+  - Insights "VIEW ALL" categories → Activity tab
+
+### Files Touched
+- `Numera/Services/TransactionStore.swift` (new)
+- `Numera/Services/AppSettings.swift` (new)
+- `Numera/Features/Settings/SettingsView.swift` (new)
+- `Numera/App/ContentView.swift` (updated)
+- `Numera/App/NumeraApp.swift` (updated)
+- `Numera/Features/Home/HomeView.swift` (updated)
+- `Numera/Features/AddTransaction/AddTransactionView.swift` (updated)
+- `Numera/Features/Activity/ActivityView.swift` (updated)
+- `Numera/Features/Insights/InsightsView.swift` (updated)
+- `CHANGELOG.md` (updated)
+- `HANDOFF.md` (updated)
+
+### Tested / Checked
+- Code written and reviewed; CI compile check will validate on push.
+- All button targets verified: no dead `Button {}` closures remain.
+- TransactionStore computed properties use `Decimal` matching Transaction.amount.
+
+### Incomplete
+- **`SupabaseConfig.swift` has placeholder values** — user must add real Supabase URL + anon key.
+- Sign in with Apple needs entitlement enabled + Match cert regeneration.
+- TransactionStore is in-memory only — data resets on each app launch; Supabase persistence is next.
+- Insights data (weekly trend, cash flow, distribution) still uses hardcoded values; will need real aggregates from TransactionStore.
+- Budget screen not yet built.
+- Transaction detail / edit flow not yet built.
+- Onboarding flow not yet built.
+
+### Next
+1. **User action required**: Add Supabase URL + anon key to `SupabaseConfig.swift`.
+2. Enable Sign in with Apple in Apple Developer portal + add entitlement.
+3. Wire transactions to Supabase (CRUD).
+4. Replace InsightsView hardcoded numbers with live TransactionStore aggregates.
+5. Build onboarding (first-run screens after sign-up).
+6. Build budget screen.
+
+### Git Status
+- Branch: main
+- Commits: auth layer + functional UI wiring
+- Pushed: yes (this session)
+
+---
+
+## Latest Session - 2026-07-01 (auth)
 
 ### Changed
 - Added Supabase Swift SDK to `project.yml` (`from: "2.0.0"`).

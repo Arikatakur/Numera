@@ -9,16 +9,19 @@ struct ContentView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             TabView(selection: $selectedTab) {
-                HomeView()
-                    .tag(Tab.home)
+                HomeView(
+                    onShowInsights: { selectedTab = .insights },
+                    onShowActivity: { selectedTab = .activity }
+                )
+                .tag(Tab.home)
 
                 ActivityView()
                     .tag(Tab.activity)
 
-                InsightsView()
+                InsightsView(onShowActivity: { selectedTab = .activity })
                     .tag(Tab.insights)
 
-                SettingsPlaceholderView()
+                SettingsView()
                     .tag(Tab.settings)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
@@ -32,12 +35,12 @@ struct ContentView: View {
     }
 
     // MARK: - Custom Tab Bar
+
     private var customTabBar: some View {
         HStack(spacing: 0) {
-            tabBarItem(icon: "house.fill",         label: "Home",     tab: .home)
-            tabBarItem(icon: "list.bullet.indent",  label: "Activity", tab: .activity)
+            tabBarItem(icon: "house.fill",              label: "Home",     tab: .home)
+            tabBarItem(icon: "list.bullet.indent",      label: "Activity", tab: .activity)
 
-            // Floating add button (center)
             Button { showAddTransaction = true } label: {
                 Image(systemName: "plus")
                     .font(.system(size: 22, weight: .bold))
@@ -81,27 +84,10 @@ struct ContentView: View {
     }
 }
 
-// Placeholder until Settings screen is built
-struct SettingsPlaceholderView: View {
-    var body: some View {
-        ZStack {
-            AppColors.background.ignoresSafeArea()
-            VStack(spacing: AppSpacing.base) {
-                Image(systemName: "gearshape.fill")
-                    .font(.system(size: 40))
-                    .foregroundColor(AppColors.textTertiary)
-                Text("Settings")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(AppColors.textSecondary)
-                Text("Coming soon")
-                    .font(.system(size: 14))
-                    .foregroundColor(AppColors.textTertiary)
-            }
-        }
-    }
-}
-
 #Preview {
     ContentView()
         .preferredColorScheme(.dark)
+        .environment(AuthManager())
+        .environment(TransactionStore())
+        .environment(AppSettings())
 }

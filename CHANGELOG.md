@@ -11,6 +11,9 @@ The format follows a simplified version of [Keep a Changelog], and commit messag
 ## [Unreleased]
 
 ### Added
+- Added `Services/TransactionStore.swift` — `@MainActor @Observable` store; holds transactions in memory (seeded from MockData); add/delete; computed `totalSpent`, `totalIncome`, `safeToSpend` per month; `recentTransactions`.
+- Added `Services/AppSettings.swift` — `@MainActor @Observable` shared settings; `isPrivate: Bool` controls balance visibility across all views.
+- Added `Features/Settings/SettingsView.swift` — full settings screen: user avatar + email (from AuthManager), Hide Balances toggle (AppSettings), app version, sign-out with confirmation dialog.
 - Added Supabase Swift SDK (`supabase-swift 2.x`) via Swift Package Manager in `project.yml`.
 - Added `App/SupabaseConfig.swift` — project URL + anon key constants (placeholders, user must fill in).
 - Added `Services/SupabaseManager.swift` — `SupabaseClient` singleton.
@@ -37,6 +40,13 @@ The format follows a simplified version of [Keep a Changelog], and commit messag
 - Committed to Nike-editorial visual direction.
 
 ### Changed
+- Updated all views to use `TransactionStore` from environment instead of static `MockData`. Adding a transaction now immediately reflects in Home and Activity.
+- Updated all views to use `AppSettings.isPrivate` from environment — privacy toggle is now global and synchronized across Home, Activity, Insights, Settings.
+- Updated `HomeView` — "View Insights" and "Details" navigate to Insights tab; "SEE ALL" navigates to Activity tab; month picker opens a sheet with last 6 months; reads live data from `TransactionStore`; greets user by name from `AuthManager`.
+- Updated `AddTransactionView` — Save button creates a real `Transaction` and calls `TransactionStore.add()`; account pill opens account picker sheet (seeded from MockData.accounts); date pill opens `DatePicker` in a sheet; "VIEW ALL" opens all-category grid sheet. Amount is properly parsed as `Decimal`.
+- Updated `ActivityView` — reads transactions from `TransactionStore`; shows empty state when no results; privacy toggle is global.
+- Updated `InsightsView` — "View spending details" and "VIEW ALL" navigate to Activity tab.
+- Updated `ContentView` — removed `SettingsPlaceholderView`; replaced with real `SettingsView`; passes navigation closures to `HomeView` and `InsightsView`.
 - Updated `App/NumeraApp.swift` — now routes after launch animation: `WelcomeView` if no session, `ContentView` if signed in. Auth state driven by `AuthManager.session` via `authStateChanges` stream.
 - Updated `.github/workflows/ci.yml` — replaced broken `fastlane test` (no test targets) with `xcodebuild build` compile-check using `CODE_SIGNING_ALLOWED=NO` on iOS Simulator. Removed unnecessary Ruby/Gemfile step from CI.
 - Added project documentation workflow (`CLAUDE.md`, `HANDOFF.md`, `docs/`).

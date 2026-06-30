@@ -1,7 +1,9 @@
 import SwiftUI
 
 struct InsightsView: View {
-    @State private var isPrivate = false
+    let onShowActivity: () -> Void
+
+    @Environment(AppSettings.self) private var settings
     @State private var selectedMonth = "June 2026"
 
     private let months = ["April 2026", "May 2026", "June 2026"]
@@ -32,8 +34,8 @@ struct InsightsView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button { isPrivate.toggle() } label: {
-                        Image(systemName: isPrivate ? "eye.slash" : "eye")
+                    Button { settings.isPrivate.toggle() } label: {
+                        Image(systemName: settings.isPrivate ? "eye.slash" : "eye")
                             .foregroundColor(AppColors.textSecondary)
                     }
                 }
@@ -83,7 +85,7 @@ struct InsightsView: View {
                 .font(.system(size: 20, weight: .bold))
                 .lineSpacing(4)
 
-                Button {} label: {
+                Button { onShowActivity() } label: {
                     HStack(spacing: 4) {
                         Text("View spending details")
                             .font(.system(size: 14, weight: .semibold))
@@ -278,7 +280,7 @@ struct InsightsView: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(AppColors.textPrimary)
                 Spacer()
-                Button {} label: {
+                Button { onShowActivity() } label: {
                     Text("VIEW ALL")
                         .labelCapsStyle(color: AppColors.accent)
                 }
@@ -325,6 +327,7 @@ struct InsightsView: View {
 }
 
 #Preview {
-    InsightsView()
+    InsightsView(onShowActivity: {})
         .preferredColorScheme(.dark)
+        .environment(AppSettings())
 }

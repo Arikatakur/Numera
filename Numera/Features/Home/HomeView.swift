@@ -1,12 +1,16 @@
 import SwiftUI
 
 struct HomeView: View {
-    @State private var isPrivate = false
-    @State private var showAddTransaction = false
-    @State private var selectedMonth = "June"
+    let onShowInsights: () -> Void
+    let onShowActivity: () -> Void
 
-    private let transactions = MockData.transactions
-    private let recentTransactions = Array(MockData.transactions.prefix(3))
+    @Environment(AuthManager.self)    private var authManager
+    @Environment(TransactionStore.self) private var store
+    @Environment(AppSettings.self)   private var settings
+
+    @State private var displayMonth  = Date()
+    @State private var showMonthPicker = false
+    @State private var showAddTransaction = false
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: .now)
@@ -15,6 +19,22 @@ struct HomeView: View {
         case 12..<17: return "Good afternoon,"
         default:      return "Good evening,"
         }
+    }
+
+    private var displayName: String {
+        let email = authManager.currentUserEmail ?? ""
+        let username = email.split(separator: "@").first.map(String.init) ?? "there"
+        return username.prefix(1).uppercased() + username.dropFirst()
+    }
+
+    private var monthLabel: String {
+        let fmt = DateFormatter()
+        fmt.dateFormat = "MMMM"
+        return fmt.string(from: displayMonth)
+    }
+
+    private var recentMonths: [Date] {
+        (0..<6).compactMap { Calendar.current.date(byAdding: .month, value: -$0, to: .now) }
     }
 
     var body: some View {
@@ -28,7 +48,7 @@ struct HomeView: View {
                         monthCardSection
                         safeToSpendSection
                         recentActivitySection
-                        Spacer().frame(height: 100) // tab bar clearance
+                        Spacer().frame(height: 100)
                     }
                     .padding(.horizontal, AppSpacing.screenMargin)
                     .padding(.top, AppSpacing.lg)
@@ -36,16 +56,23 @@ struct HomeView: View {
             }
             .navigationBarHidden(true)
         }
+        .sheet(isPresented: $showAddTransaction) {
+            AddTransactionView()
+        }
+        .sheet(isPresented: $showMonthPicker) {
+            monthPickerSheet
+        }
     }
 
     // MARK: - Header
+
     private var headerSection: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(greeting)
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(AppColors.textPrimary)
-                Text("Saleem")
+                Text(displayName)
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(AppColors.textPrimary)
                 Text("Your money, clearly.")
@@ -55,29 +82,32 @@ struct HomeView: View {
             }
             Spacer()
             HStack(spacing: AppSpacing.md) {
-                Button { isPrivate.toggle() } label: {
-                    Image(systemName: isPrivate ? "eye.slash" : "eye")
+                Button { settings.isPrivate.toggle() } label: {
+                    Image(systemName: settings.isPrivate ? "eye.slash" : "eye")
                         .font(.system(size: 18))
                         .foregroundColor(AppColors.textSecondary)
                 }
-                Button {} label: {
-                    Text(selectedMonth)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(AppColors.textPrimary)
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(AppColors.textSecondary)
+                Button { showMonthPicker = true } label: {
+                    HStack(spacing: 4) {
+                        Text(monthLabel)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(AppColors.textPrimary)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(AppColors.surfaceElevated)
+                    .cornerRadius(AppRadius.pill)
+                    .overlay(Capsule().stroke(AppColors.borderGlass, lineWidth: 1))
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(AppColors.surfaceElevated)
-                .cornerRadius(AppRadius.pill)
-                .overlay(Capsule().stroke(AppColors.borderGlass, lineWidth: 1))
             }
         }
     }
 
     // MARK: - Month Card
+
     private var monthCardSection: some View {
         NumeraCard {
             VStack(alignment: .leading, spacing: AppSpacing.base) {
@@ -86,7 +116,7 @@ struct HomeView: View {
 
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                        MoneyText(amount: MockData.totalSpentThisMonth, size: 40, isPrivate: isPrivate)
+                        MoneyText(amount: store.totalSpent(forMonth: displayMonth), size: 40, isPrivate: settings.isPrivate)
 
                         HStack(spacing: AppSpacing.sm) {
                             HStack(spacing: 4) {
@@ -96,8 +126,7 @@ struct HomeView: View {
                                     .font(.system(size: 13, weight: .bold))
                             }
                             .foregroundColor(.black)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
+                            .padding(.horizontal, 10).padding(.vertical, 5)
                             .background(AppColors.accent)
                             .cornerRadius(AppRadius.pill)
 
@@ -115,10 +144,8 @@ struct HomeView: View {
                 HStack {
                     legendDot(color: AppColors.chartGreen,  label: "Dining")
                     legendDot(color: AppColors.chartPurple, label: "Tech")
-
                     Spacer()
-
-                    Button {} label: {
+                    Button { onShowInsights() } label: {
                         HStack(spacing: 4) {
                             Text("View Insights")
                                 .font(.system(size: 13, weight: .semibold))
@@ -169,6 +196,7 @@ struct HomeView: View {
     }
 
     // MARK: - Safe to Spend
+
     private var safeToSpendSection: some View {
         NumeraCard(padding: AppSpacing.xl) {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
@@ -176,7 +204,7 @@ struct HomeView: View {
                     .labelCapsStyle(color: AppColors.accent)
 
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    MoneyText(amount: MockData.safeToSpendToday, size: 36, isPrivate: isPrivate)
+                    MoneyText(amount: store.safeToSpend(forMonth: displayMonth), size: 36, isPrivate: settings.isPrivate)
                     Text("/ today")
                         .font(.system(size: 17))
                         .foregroundColor(AppColors.textSecondary)
@@ -186,7 +214,7 @@ struct HomeView: View {
                     .font(.system(size: 14))
                     .foregroundColor(AppColors.textSecondary)
 
-                Button {} label: {
+                Button { onShowInsights() } label: {
                     HStack(spacing: 4) {
                         Text("Details")
                             .font(.system(size: 14, weight: .semibold))
@@ -203,13 +231,13 @@ struct HomeView: View {
                 .fill(AppColors.accent)
                 .frame(width: 3)
                 .cornerRadius(2)
-                .padding(.leading, 0)
                 .padding(.vertical, AppSpacing.md)
         }
         .clipShape(RoundedRectangle(cornerRadius: AppRadius.hero))
     }
 
     // MARK: - Recent Activity
+
     private var recentActivitySection: some View {
         VStack(alignment: .leading, spacing: AppSpacing.base) {
             HStack {
@@ -217,7 +245,7 @@ struct HomeView: View {
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(AppColors.textPrimary)
                 Spacer()
-                Button {} label: {
+                Button { onShowActivity() } label: {
                     Text("SEE ALL")
                         .labelCapsStyle(color: AppColors.accent)
                 }
@@ -225,12 +253,21 @@ struct HomeView: View {
 
             NumeraCard(padding: 0) {
                 VStack(spacing: 0) {
-                    ForEach(Array(recentTransactions.enumerated()), id: \.element.id) { index, tx in
-                        TransactionRow(transaction: tx, isPrivate: isPrivate)
-                        if index < recentTransactions.count - 1 {
-                            Divider()
-                                .background(AppColors.borderGlass)
-                                .padding(.horizontal, AppSpacing.base)
+                    let recent = store.recentTransactions
+                    if recent.isEmpty {
+                        Text("No transactions yet")
+                            .font(.system(size: 14))
+                            .foregroundColor(AppColors.textTertiary)
+                            .frame(maxWidth: .infinity)
+                            .padding(AppSpacing.xl)
+                    } else {
+                        ForEach(Array(recent.enumerated()), id: \.element.id) { index, tx in
+                            TransactionRow(transaction: tx, isPrivate: settings.isPrivate)
+                            if index < recent.count - 1 {
+                                Divider()
+                                    .background(AppColors.borderGlass)
+                                    .padding(.horizontal, AppSpacing.base)
+                            }
                         }
                     }
                 }
@@ -238,9 +275,61 @@ struct HomeView: View {
             }
         }
     }
+
+    // MARK: - Month Picker Sheet
+
+    private var monthPickerSheet: some View {
+        NavigationStack {
+            ZStack {
+                AppColors.background.ignoresSafeArea()
+                VStack(spacing: 0) {
+                    ForEach(recentMonths, id: \.self) { month in
+                        let fmt: DateFormatter = {
+                            let f = DateFormatter()
+                            f.dateFormat = "MMMM yyyy"
+                            return f
+                        }()
+                        Button {
+                            displayMonth = month
+                            showMonthPicker = false
+                        } label: {
+                            HStack {
+                                Text(fmt.string(from: month))
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(AppColors.textPrimary)
+                                Spacer()
+                                if Calendar.current.isDate(month, equalTo: displayMonth, toGranularity: .month) {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(AppColors.accent)
+                                }
+                            }
+                            .padding(.horizontal, AppSpacing.screenMargin)
+                            .padding(.vertical, AppSpacing.base)
+                        }
+                        Divider().background(AppColors.borderGlass)
+                    }
+                    Spacer()
+                }
+                .padding(.top, AppSpacing.sm)
+            }
+            .navigationTitle("Select Month")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { showMonthPicker = false }
+                        .foregroundColor(AppColors.accent)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+        .presentationDetents([.medium])
+    }
 }
 
 #Preview {
-    HomeView()
+    HomeView(onShowInsights: {}, onShowActivity: {})
         .preferredColorScheme(.dark)
+        .environment(AuthManager())
+        .environment(TransactionStore())
+        .environment(AppSettings())
 }
