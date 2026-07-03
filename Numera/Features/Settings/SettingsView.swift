@@ -7,6 +7,7 @@ struct SettingsView: View {
     @Environment(AuthManager.self) private var authManager
     @Environment(DataStore.self) private var store
     @Environment(AppSettings.self) private var settings
+    @Environment(PremiumManager.self) private var premium
 
     private struct ExportItem: Identifiable {
         let url: URL
@@ -18,6 +19,9 @@ struct SettingsView: View {
     @State private var showImporter = false
     @State private var exportItem: ExportItem?
     @State private var importMessage: String?
+    @State private var showPaywall = false
+    @State private var showManageSubscriptions = false
+    @State private var showRecurringSoon = false
 
     var body: some View {
         @Bindable var settings = settings
@@ -29,6 +33,10 @@ struct SettingsView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: AppSpacing.lg) {
                         profileCard
+
+                        if !premium.isPremium {
+                            proBanner
+                        }
 
                         SettingsSectionHeader(title: "General")
                         SettingsCard {
@@ -45,6 +53,37 @@ struct SettingsView: View {
                             } label: {
                                 SettingsRow(icon: "building.columns", title: "Accounts") {
                                     SettingsValueChevron(value: "\(store.accounts.count)")
+                                }
+                            }
+                            SettingsDivider()
+                            Button {
+                                if premium.isPremium {
+                                    showManageSubscriptions = true
+                                } else {
+                                    showPaywall = true
+                                }
+                            } label: {
+                                SettingsRow(icon: "star.circle", title: "Subscription") {
+                                    SettingsValueChevron(value: premium.isPremium ? "Pro" : "Free")
+                                }
+                            }
+                        }
+
+                        SettingsSectionHeader(title: "Automations")
+                        SettingsCard {
+                            Button {
+                                if premium.isPremium {
+                                    showRecurringSoon = true
+                                } else {
+                                    showPaywall = true
+                                }
+                            } label: {
+                                SettingsRow(icon: "arrow.triangle.2.circlepath", title: "Recurring transactions") {
+                                    if premium.isPremium {
+                                        SettingsValueChevron(value: "Soon")
+                                    } else {
+                                        PremiumBadge()
+                                    }
                                 }
                             }
                         }
@@ -109,12 +148,18 @@ struct SettingsView: View {
                         SettingsSectionHeader(title: "Data")
                         SettingsCard {
                             Button {
-                                if let url = store.exportCSVFile() {
+                                if !premium.isPremium {
+                                    showPaywall = true
+                                } else if let url = store.exportCSVFile() {
                                     exportItem = ExportItem(url: url)
                                 }
                             } label: {
                                 SettingsRow(icon: "square.and.arrow.up", title: "Export data (CSV)") {
-                                    SettingsValueChevron()
+                                    if premium.isPremium {
+                                        SettingsValueChevron()
+                                    } else {
+                                        PremiumBadge()
+                                    }
                                 }
                             }
                             SettingsDivider()
@@ -181,6 +226,15 @@ struct SettingsView: View {
         } message: {
             Text("Deletes every transaction, budget, account, and custom category. Default categories are restored. This cannot be undone.")
         }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
+        .manageSubscriptionsSheet(isPresented: $showManageSubscriptions)
+        .alert("Recurring transactions", isPresented: $showRecurringSoon) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Coming soon — your Pro subscription will include it at launch.")
+        }
         .sheet(item: $exportItem) { item in
             ShareSheet(activityItems: [item.url])
                 .presentationDetents([.medium, .large])
@@ -207,6 +261,34 @@ struct SettingsView: View {
         } message: {
             Text(importMessage ?? "")
         }
+    }
+
+    // MARK: - Pro banner
+
+    private var proBanner: some View {
+        Button {
+            showPaywall = true
+        } label: {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Try Numera Pro for free!")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(.black)
+                Text("Unlock budgeting, recurring & export.")
+                    .font(.system(size: 14))
+                    .foregroundColor(.black.opacity(0.7))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(AppSpacing.lg)
+            .background(
+                LinearGradient(
+                    colors: [AppColors.chartTeal, AppColors.accent],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Profile
@@ -276,4 +358,5 @@ private struct ShareSheet: UIViewControllerRepresentable {
         .environment(AuthManager())
         .environment(DataStore.preview())
         .environment(AppSettings.shared)
+        .environment(PremiumManager.preview())
 }

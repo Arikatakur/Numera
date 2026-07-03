@@ -5,6 +5,7 @@ import SwiftUI
 struct BudgetView: View {
     @Environment(DataStore.self) private var store
     @Environment(AppSettings.self) private var settings
+    @Environment(PremiumManager.self) private var premium
 
     enum EditorTarget: Identifiable {
         case overall
@@ -21,6 +22,7 @@ struct BudgetView: View {
     }
 
     @State private var editorTarget: EditorTarget?
+    @State private var showPaywall = false
 
     private var period: Period { store.currentPeriod }
 
@@ -38,22 +40,26 @@ struct BudgetView: View {
             ZStack {
                 AppColors.background.ignoresSafeArea()
 
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: AppSpacing.lg) {
-                        if let overall = store.overallBudget {
-                            overallCard(overall)
-                        } else {
-                            setBudgetCard
+                if premium.isPremium {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: AppSpacing.lg) {
+                            if let overall = store.overallBudget {
+                                overallCard(overall)
+                            } else {
+                                setBudgetCard
+                            }
+
+                            categoryGrid
+
+                            Spacer().frame(height: 120)
                         }
-
-                        categoryGrid
-
-                        Spacer().frame(height: 120)
+                        .padding(.horizontal, AppSpacing.screenMargin)
+                        .padding(.top, AppSpacing.sm)
                     }
-                    .padding(.horizontal, AppSpacing.screenMargin)
-                    .padding(.top, AppSpacing.sm)
+                    .refreshable { await store.bootstrap() }
+                } else {
+                    lockedView
                 }
-                .refreshable { await store.bootstrap() }
             }
             .navigationTitle("Budget")
             .navigationBarTitleDisplayMode(.large)
@@ -72,6 +78,53 @@ struct BudgetView: View {
         }
         .sheet(item: $editorTarget) { target in
             BudgetEditSheet(target: target)
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
+        }
+    }
+
+    // MARK: - Locked (premium)
+
+    /// Quanto-style budgeting lock screen: mock ring + pitch + unlock CTA.
+    private var lockedView: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: AppSpacing.xl) {
+                ZStack {
+                    BudgetRing(progress: 0.72, color: AppColors.accent, lineWidth: 14)
+                    VStack(spacing: 5) {
+                        Text("Left this month")
+                            .font(.system(size: 14))
+                            .foregroundColor(AppColors.textSecondary)
+                        Text("$1,320")
+                            .moneyStyle(size: 32)
+                        Text("$680 / $2,000")
+                            .font(.system(size: 13))
+                            .monospacedDigit()
+                            .foregroundColor(AppColors.textTertiary)
+                    }
+                }
+                .frame(width: 210, height: 210)
+                .padding(.top, AppSpacing.xl)
+
+                VStack(spacing: AppSpacing.sm) {
+                    Text("Budgeting")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(AppColors.textPrimary)
+                    Text("Set limits to how much you want to spend on each category.")
+                        .font(.system(size: 15))
+                        .foregroundColor(AppColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
+
+                UnlockGradientButton(title: "Unlock") {
+                    showPaywall = true
+                }
+                .padding(.horizontal, AppSpacing.xxl)
+
+                Spacer().frame(height: 120)
+            }
+            .padding(.horizontal, AppSpacing.screenMargin)
         }
     }
 
@@ -432,4 +485,5 @@ struct BudgetEditSheet: View {
         .preferredColorScheme(.dark)
         .environment(DataStore.preview())
         .environment(AppSettings.shared)
+        .environment(PremiumManager.preview(isPremium: true))
 }
