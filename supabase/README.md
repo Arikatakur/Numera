@@ -11,30 +11,32 @@ Apply these in order via **Supabase Dashboard → SQL Editor → New query**.
 | `20260701000002_create_accounts.sql` | `accounts` table + RLS |
 | `20260701000003_create_transactions.sql` | `transactions` table + RLS + indexes |
 | `20260701000004_create_budgets.sql` | `budgets` table + RLS + $3,000 default seed |
+| `20260703000000_create_categories.sql` | **Schema v2** — user-editable `categories` (emoji, color, kind, sort order) + default seed trigger + backfill |
+| `20260703000001_rewire_category_refs.sql` | **Schema v2** — `transactions.category_id` / `budgets.category_id` FKs, drops the `transaction_category` enum |
+| `20260703000002_accounts_emoji.sql` | **Schema v2** — `accounts.emoji` (replaces `sf_symbol`) + default "Main account" seed |
 
 Run them one file at a time, top to bottom. Each depends on the previous.
 
+> **Schema v2 note:** after `20260703000001`, the old `category` enum columns are
+> gone. App builds older than the Quanto-redesign branch can no longer insert
+> transactions — update the app together with the database.
+
 ---
 
-## Swift enum → Postgres enum mapping
+## Schema v2 (current)
 
-| Swift | Postgres column | Postgres type |
-|---|---|---|
-| `TransactionType.expense` | `type` | `'expense'` |
-| `TransactionType.income` | `type` | `'income'` |
-| `TransactionType.transfer` | `type` | `'transfer'` |
-| `Category.food` | `category` | `'food'` |
-| `Category.coffee` | `category` | `'coffee'` |
-| `Category.transport` | `category` | `'transport'` |
-| `Category.groceries` | `category` | `'groceries'` |
-| `Category.leisure` | `category` | `'leisure'` |
-| `Category.health` | `category` | `'health'` |
-| `Category.shopping` | `category` | `'shopping'` |
-| `Category.tech` | `category` | `'tech'` |
-| `Category.travel` | `category` | `'travel'` |
-| `Category.income` | `category` | `'income'` |
-| `Category.investment` | `category` | `'investment'` |
-| `Category.other` | `category` | `'other'` |
+| Table | Key columns |
+|---|---|
+| `profiles` | `id` (= auth.users.id), `email`, `display_name`, `currency` |
+| `categories` | `name`, `emoji`, `color` (hex), `kind` (`expense`/`income`), `sort_order`, `is_default` |
+| `accounts` | `name`, `balance` (starting balance), `emoji` |
+| `transactions` | `type`, `amount`, `category_id` → categories, `title`, `note`, `date`, `account_id` → accounts, `account_name` (denormalized fallback) |
+| `budgets` | `category_id` (NULL = overall monthly budget), `amount`, `month_start` (NULL = repeats monthly) |
+
+Legacy enum → category-name mapping used by the rewire migration (and CSV import):
+`food→Food, coffee→Coffee, transport→Transport, groceries→Groceries, leisure→Leisure,
+health→Health, shopping→Shopping, tech→Tech, travel→Travel, income→Salary,
+investment→Investments, other→Other`.
 
 ---
 
@@ -49,16 +51,19 @@ their own rows (`auth.uid() = user_id`). No data leaks between accounts.
 
 1. Supabase Auth creates a row in `auth.users`.
 2. `on_auth_user_created` trigger → inserts a row in `profiles`.
-3. `on_profile_created_seed_budget` trigger → inserts a default $3,000/month
-   overall budget in `budgets` for the new user.
+3. `on_profile_created_seed_budget` trigger → default $3,000/month overall budget.
+4. `on_profile_created_seed_categories` trigger → 11 expense + 4 income default categories.
+5. `on_profile_created_seed_account` trigger → "Main account" with 0 balance.
 
 ---
 
 ## Notes
 
-- `transactions.account_name` stores the display name as a string (matches the
-  current Swift model). `transactions.account_id` is a nullable FK ready for
-  when you wire up proper account management.
-- `budgets.category = NULL` means the overall monthly budget (used for
-  safe-to-spend). A non-null category means a per-category limit.
-- `budgets.month_start = NULL` means the budget repeats every month.
+- `accounts.balance` is the **starting** balance; the app computes the current
+  balance as `starting + income − expenses` over that account's transactions.
+- `transactions.account_name` keeps the display name so history still renders
+  if an account is deleted (`account_id` becomes NULL via `ON DELETE SET NULL`).
+- Deleting a category sets `transactions.category_id` to NULL (rows render as
+  "Other" in the app) and cascades its per-category budget rows.
+- `budgets.category_id = NULL` means the overall monthly budget (used for
+  safe-to-spend). `month_start = NULL` means the budget repeats every month.
