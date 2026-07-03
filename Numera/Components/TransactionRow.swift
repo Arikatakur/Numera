@@ -2,59 +2,76 @@ import SwiftUI
 
 struct TransactionRow: View {
     let transaction: Transaction
-    var isPrivate: Bool = false
+    /// Show "Category · Date" under the title. Off in day-grouped lists.
+    var showsDate: Bool = true
 
-    private var amountColor: Color {
-        transaction.type == .income ? AppColors.income : AppColors.textPrimary
-    }
+    @Environment(DataStore.self) private var store: DataStore?
 
-    private var amountPrefix: String {
-        transaction.type == .income ? "+" : "-"
+    private var category: UserCategory? {
+        guard transaction.type != .transfer else { return nil }
+        return store?.displayCategory(for: transaction)
     }
 
     private var relativeDate: String {
         let cal = Calendar.current
-        if cal.isDateInToday(transaction.date)     { return "Today" }
+        if cal.isDateInToday(transaction.date) { return "Today" }
         if cal.isDateInYesterday(transaction.date) { return "Yesterday" }
         let fmt = DateFormatter()
         fmt.dateFormat = "MMM d"
         return fmt.string(from: transaction.date)
     }
 
+    private var subtitle: String {
+        let name = category?.name ?? "Transfer"
+        return showsDate ? "\(name) · \(relativeDate)" : name
+    }
+
     var body: some View {
         HStack(spacing: AppSpacing.base) {
-            // Category icon
-            ZStack {
-                Circle()
-                    .fill(AppColors.surfaceElevated)
-                    .frame(width: 48, height: 48)
-                Image(systemName: transaction.category.sfSymbol)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(AppColors.textSecondary)
-            }
+            EmojiIconTile(
+                emoji: category?.emoji ?? "🔁",
+                colorHex: category?.colorHex
+            )
 
-            // Title + meta
             VStack(alignment: .leading, spacing: 2) {
                 Text(transaction.title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(AppColors.textPrimary)
-                Text("\(transaction.category.rawValue) · \(relativeDate)")
+                    .lineLimit(1)
+                Text(subtitle)
                     .font(.system(size: 13))
                     .foregroundColor(AppColors.textSecondary)
+                    .lineLimit(1)
             }
 
             Spacer()
 
-            // Amount
-            if isPrivate {
-                Text("••••")
-                    .moneyStyle(size: 16, color: amountColor)
-            } else {
-                Text("\(amountPrefix)$\(NSDecimalNumber(decimal: transaction.amount).doubleValue, specifier: "%.2f")")
-                    .moneyStyle(size: 16, color: amountColor)
+            switch transaction.type {
+            case .income:
+                MoneyText(amount: transaction.amount, size: 16, color: AppColors.income, signed: true)
+            case .expense:
+                MoneyText(amount: -transaction.amount, size: 16)
+            case .transfer:
+                MoneyText(amount: transaction.amount, size: 16, color: AppColors.textSecondary)
             }
         }
         .padding(.horizontal, AppSpacing.base)
         .padding(.vertical, AppSpacing.md)
     }
+}
+
+#Preview {
+    ZStack {
+        AppColors.background.ignoresSafeArea()
+        VStack(spacing: 0) {
+            TransactionRow(transaction: MockData.transactions[0])
+            TransactionRow(transaction: MockData.transactions[2])
+        }
+        .background(AppColors.surfaceCard)
+        .cornerRadius(AppRadius.card)
+        .padding()
+    }
+    .preferredColorScheme(.dark)
+    .environment(DataStore.preview())
+    .environment(AppSettings.shared)
 }

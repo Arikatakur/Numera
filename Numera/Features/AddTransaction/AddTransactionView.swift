@@ -1,31 +1,71 @@
 import SwiftUI
 
+/// Add or edit a transaction. Pass `editing` to prefill and enable delete.
 struct AddTransactionView: View {
-    @Environment(\.dismiss)       private var dismiss
-    @Environment(TransactionStore.self) private var store
+    @Environment(\.dismiss) private var dismiss
+    @Environment(DataStore.self) private var store
+    @Environment(AppSettings.self) private var settings
 
-    @State private var transactionType:  TransactionType = .expense
-    @State private var amountString      = "0"
-    @State private var selectedCategory: Category = .food
-    @State private var selectedAccount   = "Cash Account"
-    @State private var selectedDate      = Date()
-    @State private var note              = ""
-    @State private var showDatePicker    = false
+    let editing: Transaction?
+
+    @State private var transactionType: TransactionType
+    @State private var amountString: String
+    @State private var selectedCategoryId: UUID?
+    @State private var selectedAccountId: UUID?
+    @State private var selectedDate: Date
+    @State private var titleText: String
+    @State private var showDatePicker = false
     @State private var showAccountPicker = false
     @State private var showAllCategories = false
+    @State private var showDeleteConfirm = false
 
-    private let quickCategories: [Category] = [.food, .coffee, .transport, .groceries, .leisure, .health, .shopping, .other]
-    private let accounts = MockData.accounts.map(\.name)
+    init(editing: Transaction? = nil) {
+        self.editing = editing
+        _transactionType = State(initialValue: editing?.type ?? .expense)
+        _amountString = State(initialValue: editing.map { "\($0.amount)" } ?? "0")
+        _selectedCategoryId = State(initialValue: editing?.categoryId)
+        _selectedAccountId = State(initialValue: editing?.accountId)
+        _selectedDate = State(initialValue: editing?.date ?? Date())
+        _titleText = State(initialValue: editing?.title ?? "")
+    }
 
-    private var displayAmount: String {
-        let val = Double(amountString) ?? 0
-        return String(format: "%.2f", val)
+    // MARK: - Derived
+
+    private var kindForType: CategoryKind? {
+        switch transactionType {
+        case .expense:  return .expense
+        case .income:   return .income
+        case .transfer: return nil
+        }
+    }
+
+    private var kindCategories: [UserCategory] {
+        guard let kind = kindForType else { return [] }
+        return store.categories(of: kind)
+    }
+
+    /// The selection, corrected when switching between expense/income kinds.
+    private var activeCategoryId: UUID? {
+        if let selectedCategoryId,
+           kindCategories.contains(where: { $0.id == selectedCategoryId }) {
+            return selectedCategoryId
+        }
+        return kindCategories.first?.id
+    }
+
+    private var activeAccount: Account? {
+        store.account(selectedAccountId) ?? store.accounts.first
+    }
+
+    private var amount: Decimal {
+        Decimal(string: amountString, locale: Locale(identifier: "en_US_POSIX")) ?? 0
     }
 
     private var dateLabel: String {
         if Calendar.current.isDateInToday(selectedDate) { return "Today" }
         if Calendar.current.isDateInYesterday(selectedDate) { return "Yesterday" }
-        let fmt = DateFormatter(); fmt.dateFormat = "MMM d"
+        let fmt = DateFormatter()
+        fmt.dateFormat = "MMM d"
         return fmt.string(from: selectedDate)
     }
 
@@ -46,14 +86,16 @@ struct AddTransactionView: View {
                         .padding(.horizontal, AppSpacing.screenMargin)
                         .padding(.top, AppSpacing.lg)
 
-                    noteField
+                    titleField
                         .padding(.horizontal, AppSpacing.screenMargin)
                         .padding(.top, AppSpacing.base)
 
-                    categoryGrid
-                        .padding(.top, AppSpacing.lg)
+                    if !kindCategories.isEmpty {
+                        categoryGrid
+                            .padding(.top, AppSpacing.lg)
+                    }
 
-                    Spacer()
+                    Spacer(minLength: AppSpacing.sm)
 
                     keypad
                 }
@@ -65,15 +107,23 @@ struct AddTransactionView: View {
                         .foregroundColor(AppColors.textSecondary)
                 }
                 ToolbarItem(placement: .principal) {
-                    Text("New Entry")
+                    Text(editing == nil ? "New Entry" : "Edit Entry")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(AppColors.textPrimary)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") { save() }
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor((Decimal(string: amountString) ?? 0) > 0 ? AppColors.accent : AppColors.textTertiary)
-                        .disabled((Decimal(string: amountString) ?? 0) <= 0)
+                    HStack(spacing: AppSpacing.base) {
+                        if editing != nil {
+                            Button { showDeleteConfirm = true } label: {
+                                Image(systemName: "trash")
+                                    .foregroundColor(AppColors.danger)
+                            }
+                        }
+                        Button("Save") { save() }
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(amount > 0 ? AppColors.accent : AppColors.textTertiary)
+                            .disabled(amount <= 0)
+                    }
                 }
             }
         }
@@ -81,24 +131,46 @@ struct AddTransactionView: View {
         .sheet(isPresented: $showDatePicker) { datePicker }
         .sheet(isPresented: $showAccountPicker) { accountPicker }
         .sheet(isPresented: $showAllCategories) { allCategoriesPicker }
+        .confirmationDialog("Delete this transaction?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                guard let editing else { return }
+                Haptics.warning()
+                Task { await store.deleteTransaction(id: editing.id) }
+                dismiss()
+            }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 
     // MARK: - Save
 
     private func save() {
-        let amount = Decimal(string: amountString) ?? 0
         guard amount > 0 else { return }
-        let title = note.isEmpty ? selectedCategory.rawValue : note
+        let categoryId = transactionType == .transfer ? nil : activeCategoryId
+        let trimmed = titleText.trimmingCharacters(in: .whitespaces)
+        let fallback = store.category(categoryId)?.name ?? transactionType.label
+
         let tx = Transaction(
+            id: editing?.id ?? UUID(),
             type: transactionType,
             amount: amount,
-            category: selectedCategory,
-            title: title,
-            note: note.isEmpty ? nil : note,
+            categoryId: categoryId,
+            title: trimmed.isEmpty ? fallback : trimmed,
+            note: editing?.note,
             date: selectedDate,
-            accountName: selectedAccount
+            accountId: activeAccount?.id,
+            accountName: activeAccount?.name ?? ""
         )
-        store.add(tx)
+
+        Haptics.success()
+        let isNew = editing == nil
+        Task {
+            if isNew {
+                await store.addTransaction(tx)
+            } else {
+                await store.updateTransaction(tx)
+            }
+        }
         dismiss()
     }
 
@@ -108,9 +180,10 @@ struct AddTransactionView: View {
         HStack(spacing: 0) {
             ForEach(TransactionType.allCases, id: \.self) { type in
                 Button {
+                    Haptics.select()
                     withAnimation(.easeInOut(duration: 0.2)) { transactionType = type }
                 } label: {
-                    Text(type.rawValue.uppercased())
+                    Text(type.label.uppercased())
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(transactionType == type ? .black : AppColors.textSecondary)
                         .frame(maxWidth: .infinity)
@@ -126,41 +199,53 @@ struct AddTransactionView: View {
         .overlay(Capsule().stroke(AppColors.borderGlass, lineWidth: 1))
     }
 
-    // MARK: - Amount Display
+    // MARK: - Amount
 
     private var amountDisplay: some View {
         HStack(alignment: .firstTextBaseline, spacing: 4) {
-            Text("$")
+            Text(settings.currencySymbol)
                 .font(.system(size: 28, weight: .bold))
                 .foregroundColor(AppColors.textSecondary)
-            Text(displayAmount)
+            Text(amountString)
                 .font(.system(size: 56, weight: .bold))
                 .monospacedDigit()
                 .foregroundColor(AppColors.textPrimary)
                 .tracking(-1)
-                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+                .minimumScaleFactor(0.4)
         }
         .frame(maxWidth: .infinity)
+        .padding(.horizontal, AppSpacing.screenMargin)
     }
 
     // MARK: - Context Pills
 
     private var contextPills: some View {
         HStack(spacing: AppSpacing.sm) {
-            contextPill(icon: "banknote", label: selectedAccount) { showAccountPicker = true }
-            contextPill(icon: "calendar", label: dateLabel) { showDatePicker = true }
+            contextPill(
+                icon: nil,
+                emoji: activeAccount?.emoji,
+                label: activeAccount?.name ?? "Account"
+            ) { showAccountPicker = true }
+
+            contextPill(icon: "calendar", emoji: nil, label: dateLabel) { showDatePicker = true }
         }
     }
 
-    private func contextPill(icon: String, label: String, action: @escaping () -> Void) -> some View {
+    private func contextPill(icon: String?, emoji: String?, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 13))
-                    .foregroundColor(AppColors.textSecondary)
+                if let emoji {
+                    Text(emoji).font(.system(size: 13))
+                } else if let icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 13))
+                        .foregroundColor(AppColors.textSecondary)
+                }
                 Text(label)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(AppColors.textPrimary)
+                    .lineLimit(1)
                 Image(systemName: "chevron.down")
                     .font(.system(size: 11))
                     .foregroundColor(AppColors.textSecondary)
@@ -173,14 +258,14 @@ struct AddTransactionView: View {
         }
     }
 
-    // MARK: - Note Field
+    // MARK: - Title Field
 
-    private var noteField: some View {
+    private var titleField: some View {
         HStack(spacing: AppSpacing.sm) {
             Image(systemName: "text.alignleft")
                 .font(.system(size: 15))
                 .foregroundColor(AppColors.textTertiary)
-            TextField("What was this for?", text: $note)
+            TextField("What was this for?", text: $titleText)
                 .font(.system(size: 15))
                 .foregroundColor(AppColors.textPrimary)
                 .tint(AppColors.accent)
@@ -199,38 +284,39 @@ struct AddTransactionView: View {
             HStack {
                 Text("SELECT CATEGORY")
                     .labelCapsStyle()
-                    .padding(.horizontal, AppSpacing.screenMargin)
                 Spacer()
                 Button { showAllCategories = true } label: {
                     Text("VIEW ALL")
                         .labelCapsStyle(color: AppColors.accent)
                 }
-                .padding(.horizontal, AppSpacing.screenMargin)
             }
+            .padding(.horizontal, AppSpacing.screenMargin)
 
-            let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
+            let columns = Array(repeating: GridItem(.flexible()), count: 4)
             LazyVGrid(columns: columns, spacing: AppSpacing.base) {
-                ForEach(quickCategories) { categoryCell($0) }
+                ForEach(kindCategories.prefix(8)) { categoryCell($0) }
             }
             .padding(.horizontal, AppSpacing.screenMargin)
         }
     }
 
-    private func categoryCell(_ cat: Category) -> some View {
-        let isSelected = selectedCategory == cat
-        return Button { selectedCategory = cat } label: {
+    private func categoryCell(_ category: UserCategory) -> some View {
+        let isSelected = category.id == activeCategoryId
+        return Button {
+            Haptics.select()
+            selectedCategoryId = category.id
+        } label: {
             VStack(spacing: AppSpacing.sm) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: AppRadius.md)
-                        .fill(isSelected ? AppColors.accent : AppColors.surfaceCard)
-                        .frame(width: 64, height: 64)
-                    Image(systemName: cat.sfSymbol)
-                        .font(.system(size: 22, weight: .medium))
-                        .foregroundColor(isSelected ? .black : AppColors.textSecondary)
-                }
-                Text(cat.rawValue)
+                EmojiIconTile(
+                    emoji: category.emoji,
+                    colorHex: isSelected ? category.colorHex : nil,
+                    size: 58
+                )
+                Text(category.name)
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(isSelected ? AppColors.textPrimary : AppColors.textSecondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
         }
     }
@@ -238,16 +324,19 @@ struct AddTransactionView: View {
     // MARK: - Keypad
 
     private var keypad: some View {
-        let keys = ["1","2","3","4","5","6","7","8","9",".","0","⌫"]
-        let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
+        let keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"]
+        let columns = Array(repeating: GridItem(.flexible()), count: 3)
         return LazyVGrid(columns: columns, spacing: 0) {
             ForEach(keys, id: \.self) { key in
-                Button { handleKey(key) } label: {
+                Button {
+                    Haptics.tap()
+                    handleKey(key)
+                } label: {
                     Text(key)
                         .font(.system(size: 26, weight: .regular))
                         .foregroundColor(AppColors.textPrimary)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 64)
+                        .frame(height: 62)
                 }
             }
         }
@@ -257,15 +346,23 @@ struct AddTransactionView: View {
     private func handleKey(_ key: String) {
         switch key {
         case "⌫":
-            if amountString.count > 1 { amountString.removeLast() } else { amountString = "0" }
+            if amountString.count > 1 {
+                amountString.removeLast()
+            } else {
+                amountString = "0"
+            }
         case ".":
             if !amountString.contains(".") { amountString += "." }
         default:
             if amountString.contains(".") {
-                let parts = amountString.split(separator: ".")
-                if parts.count > 1 && parts[1].count >= 2 { return }
+                let decimals = amountString.split(separator: ".", omittingEmptySubsequences: false)
+                if decimals.count > 1 && decimals[1].count >= 2 { return }
             }
-            if amountString == "0" { amountString = key } else { amountString += key }
+            if amountString == "0" {
+                amountString = key
+            } else if amountString.count < 10 {
+                amountString += key
+            }
         }
     }
 
@@ -298,17 +395,19 @@ struct AddTransactionView: View {
             ZStack {
                 AppColors.background.ignoresSafeArea()
                 VStack(spacing: 0) {
-                    ForEach(accounts, id: \.self) { account in
+                    ForEach(store.accounts) { account in
                         Button {
-                            selectedAccount = account
+                            Haptics.select()
+                            selectedAccountId = account.id
                             showAccountPicker = false
                         } label: {
-                            HStack {
-                                Text(account)
+                            HStack(spacing: AppSpacing.md) {
+                                Text(account.emoji)
+                                Text(account.name)
                                     .font(.system(size: 16, weight: .medium))
                                     .foregroundColor(AppColors.textPrimary)
                                 Spacer()
-                                if selectedAccount == account {
+                                if activeAccount?.id == account.id {
                                     Image(systemName: "checkmark")
                                         .foregroundColor(AppColors.accent)
                                 }
@@ -320,6 +419,7 @@ struct AddTransactionView: View {
                     }
                     Spacer()
                 }
+                .padding(.top, AppSpacing.sm)
             }
             .navigationTitle("Select Account")
             .navigationBarTitleDisplayMode(.inline)
@@ -338,27 +438,26 @@ struct AddTransactionView: View {
         NavigationStack {
             ZStack {
                 AppColors.background.ignoresSafeArea()
-                let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
+                let columns = Array(repeating: GridItem(.flexible()), count: 4)
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: AppSpacing.lg) {
-                        ForEach(Category.allCases) { cat in
+                        ForEach(kindCategories) { category in
                             Button {
-                                selectedCategory = cat
+                                Haptics.select()
+                                selectedCategoryId = category.id
                                 showAllCategories = false
                             } label: {
-                                let isSel = selectedCategory == cat
                                 VStack(spacing: AppSpacing.sm) {
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: AppRadius.md)
-                                            .fill(isSel ? AppColors.accent : AppColors.surfaceCard)
-                                            .frame(width: 64, height: 64)
-                                        Image(systemName: cat.sfSymbol)
-                                            .font(.system(size: 22, weight: .medium))
-                                            .foregroundColor(isSel ? .black : AppColors.textSecondary)
-                                    }
-                                    Text(cat.rawValue)
+                                    EmojiIconTile(
+                                        emoji: category.emoji,
+                                        colorHex: category.id == activeCategoryId ? category.colorHex : nil,
+                                        size: 58
+                                    )
+                                    Text(category.name)
                                         .font(.system(size: 12, weight: .medium))
-                                        .foregroundColor(isSel ? AppColors.textPrimary : AppColors.textSecondary)
+                                        .foregroundColor(category.id == activeCategoryId ? AppColors.textPrimary : AppColors.textSecondary)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.8)
                                 }
                             }
                         }
@@ -382,5 +481,6 @@ struct AddTransactionView: View {
 
 #Preview {
     AddTransactionView()
-        .environment(TransactionStore())
+        .environment(DataStore.preview())
+        .environment(AppSettings.shared)
 }

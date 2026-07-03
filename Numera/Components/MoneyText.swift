@@ -1,29 +1,29 @@
 import SwiftUI
 
+/// Money display that follows the global currency, cents, and privacy settings.
 struct MoneyText: View {
     let amount: Decimal
     var size: CGFloat = 34
     var color: Color = AppColors.textPrimary
-    var showSign: Bool = false
-    var isPrivate: Bool = false
+    /// Prefix positive amounts with "+".
+    var signed: Bool = false
+    /// Force privacy on/off (previews, per-view overrides). nil = follow settings.
+    var privacyOverride: Bool?
 
-    private var formatted: String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 2
-        formatter.maximumFractionDigits = 2
-        let str = formatter.string(from: amount as NSDecimalNumber) ?? "0.00"
-        if showSign { return amount >= 0 ? "+\(str)" : "-\(str)" }
-        return str
+    @Environment(AppSettings.self) private var settings: AppSettings?
+
+    private var display: String {
+        if privacyOverride ?? settings?.isPrivate ?? false { return "••••" }
+        return MoneyFormatter.string(
+            amount,
+            code: settings?.currencyCode ?? "USD",
+            cents: settings?.displayCents ?? true,
+            signed: signed
+        )
     }
 
     var body: some View {
-        if isPrivate {
-            Text("••••••")
-                .moneyStyle(size: size, color: color)
-        } else {
-            Text(formatted)
-                .moneyStyle(size: size, color: color)
-        }
+        Text(display)
+            .moneyStyle(size: size, color: color)
     }
 }
