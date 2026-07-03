@@ -2,10 +2,10 @@ import SwiftUI
 
 @main
 struct NumeraApp: App {
-    @State private var authManager   = AuthManager()
-    @State private var txStore       = TransactionStore()
-    @State private var appSettings   = AppSettings()
-    @State private var showLaunch    = true
+    @State private var authManager = AuthManager()
+    @State private var appSettings = AppSettings.shared
+    @State private var dataStore   = DataStore()
+    @State private var showLaunch  = true
 
     var body: some Scene {
         WindowGroup {
@@ -13,7 +13,7 @@ struct NumeraApp: App {
                 destination
                     .preferredColorScheme(.dark)
                     .environment(authManager)
-                    .environment(txStore)
+                    .environment(dataStore)
                     .environment(appSettings)
 
                 if showLaunch {
@@ -28,6 +28,9 @@ struct NumeraApp: App {
             }
             .task {
                 await authManager.start()
+            }
+            .onChange(of: authManager.session == nil) { _, signedOut in
+                if signedOut { dataStore.reset() }
             }
         }
     }

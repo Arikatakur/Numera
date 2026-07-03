@@ -5,6 +5,77 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
+## [0.10.0] — 2026-07-03
+
+Quanto-parity settings suite. Every row does something real.
+
+### Added
+- `Features/Settings/SettingsView.swift` — rebuilt hub in Quanto structure (General / Preferences / Privacy & security / Data / About) using Numera card language: profile card, icon-tile rows, hairline dividers.
+- `Features/Settings/CategoriesView.swift` — category manager: Expense/Income tabs, long-press drag reorder (persisted `sort_order`), tap to edit; `CategoryEditSheet` with name, 11-color palette, 40-emoji grid, delete (transactions fall back to "Other").
+- `Features/Settings/AccountsView.swift` — total-balance hero, per-account computed balances (starting ± transactions), `AccountEditSheet` (name, emoji, starting balance, delete).
+- `Features/Settings/CurrencyPickerView.swift` — searchable currency list (30 currencies, flags + symbols); selection reformats money app-wide.
+- `Features/Settings/ReminderView.swift` — Never/Daily/Weekly/Monthly + time wheel; schedules repeating local notifications via `ReminderScheduler`; shows a hint when permission is denied.
+- `Features/Settings/MonthStartDayView.swift` — 1–31 grid; every period calculation (Home, Activity, Insights, Budget) honors the chosen start day.
+- Settings toggles: First day of week (Mon/Sun), Display cents, Haptic feedback, Hide balances.
+- Data tools: Export CSV (share sheet), Import CSV (file picker; creates unknown categories/accounts by name), Erase data (wipes all rows, re-seeds defaults).
+
+---
+
+## [0.9.0] — 2026-07-03
+
+Functional analytics and budgeting.
+
+### Added
+- `Features/Insights/InsightsView.swift` (rebuilt) — all live from DataStore: category donut with center total and "% from last month" badge, category breakdown rows (count, amount, share), income-vs-expenses 6-month paired bars (tap a month to switch periods), "Income left" card with currency/% toggle, calendar spend grid, cash flow card, highest-spending-day card. Month picker via Quanto-style Select date sheet.
+- `Features/Budget/BudgetView.swift` — overall monthly budget ring ("Left this month" with spent/limit), per-category limit cards with progress rings (danger state when over), add/edit/remove via `BudgetEditSheet`; backed by the `budgets` table. Home safe-to-spend now uses the real overall budget.
+- Chart components: `DonutChart`, `DayBarsChart` (dashed average line), `MonthlyBarsChart`, `BudgetRing`, `CalendarSpendGrid`.
+
+---
+
+## [0.8.0] — 2026-07-03
+
+Quanto-style shell: glass tab bar, floating add, Activity rebuild.
+
+### Added
+- `Components/GlassTabBar.swift` — floating Apple-glass pill (ultraThinMaterial, soft border, sliding highlight) with 5 tabs: Home, Activity, Insights, Budget, Settings.
+- Floating (+) button pinned bottom-right above the bar (Quanto placement), opens Add Transaction from every tab.
+- `Components/EmojiIconTile.swift` — Quanto signature card element: emoji in a rounded square with category-colored border. Used across rows, grids, and editors.
+- `Components/SelectMonthSheet.swift` — Quanto "Select date": year pills + month grid, future months disabled. Used by Home, Activity, Insights.
+- Transaction editing — tap any row to open it in `AddTransactionView` (prefilled) with save/delete; context-menu delete on rows.
+- Error toast — failed writes roll back optimistic state and surface a dismissible banner.
+
+### Changed
+- `ActivityView` — rebuilt in Quanto layout: centered month + big period total, per-day bars with dashed average line, filter chips (type, account, category, expanding search), day-grouped list with per-day totals and emoji rows.
+- `AddTransactionView` — categories come from the user's category store (kind-aware for expense/income, hidden for transfers), accounts from the account store, amount shows the selected currency symbol, keypad haptics.
+- `HomeView` — real month-over-month change badge, mini donut from live category totals, top-2 category legend, safe-to-spend from the overall budget (with set-budget CTA), month picker sheet, pull-to-refresh.
+- `ContentView` / `NumeraApp` — five-tab shell, DataStore bootstrap on sign-in, store reset on sign-out.
+
+---
+
+## [0.7.0] — 2026-07-03
+
+Schema v2 + real persistence. Every feature now reads and writes Supabase.
+
+### Added
+- `supabase/migrations/20260703000000_create_categories.sql` — user-editable `categories` table (name, emoji, color, expense/income kind, sort order) + RLS; seed of 11 expense + 4 income defaults on sign-up, backfilled for existing users.
+- `supabase/migrations/20260703000001_rewire_category_refs.sql` — `transactions.category_id` and `budgets.category_id` uuid FKs (legacy enum values mapped by name), rebuilt budget uniqueness, drops the `transaction_category` enum.
+- `supabase/migrations/20260703000002_accounts_emoji.sql` — `accounts.emoji` replaces `sf_symbol`; "Main account" seeded for every user.
+- `Services/DataStore.swift` (+ `+Aggregates`, `+CSV`) — replaces TransactionStore: Supabase CRUD for transactions/categories/accounts/budgets with optimistic updates and rollback, period aggregates (totals, category breakdown, daily totals, monthly series, safe-to-spend, account balances), CSV export/import, erase-and-reseed.
+- `Services/Period.swift` — budgeting-month math honoring a custom month start day (1–31, clamped per month).
+- `Services/AppSettings.swift` (expanded) — persisted preferences: currency, display cents, haptics, month start day, first weekday, reminder schedule, hide balances.
+- `Services/MoneyFormatter.swift`, `Services/Haptics.swift`, `Services/ReminderScheduler.swift`, `Services/SupabaseDTOs.swift`.
+- Models: `UserCategory` (with palette/emoji suggestions and seed mirror), `Budget`, `CurrencyInfo`; `Transaction` and `Account` reworked to id-based references.
+
+### Changed
+- `MoneyText` / `TransactionRow` — read currency, cents, and privacy from the environment; rows render Quanto-style emoji tiles.
+- `MockData` — preview-only seed with stable UUIDs (runtime data comes from Supabase).
+
+### Removed
+- `Services/TransactionStore.swift` — superseded by DataStore.
+- Fixed `Category` enum — categories are user data now.
+
+---
+
 ## [0.6.0] — 2026-07-01
 
 Supabase database schema — tables, types, RLS, and triggers.

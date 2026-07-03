@@ -17,18 +17,47 @@ struct PrimaryButton: View {
     }
 }
 
+/// Quanto-style floating (+): a circle pinned to the bottom-right, hovering
+/// above the glass tab bar.
 struct FloatingAddButton: View {
     var action: () -> Void = {}
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            Haptics.tap()
+            action()
+        } label: {
             Image(systemName: "plus")
-                .font(.system(size: 22, weight: .bold))
+                .font(.system(size: 24, weight: .semibold))
                 .foregroundColor(.black)
-                .frame(width: 56, height: 56)
+                .frame(width: 60, height: 60)
                 .background(AppColors.accent)
                 .clipShape(Circle())
-                .shadow(color: AppColors.accent.opacity(0.45), radius: 20, x: 0, y: 8)
+                .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 8)
+                .shadow(color: AppColors.accent.opacity(0.25), radius: 24, x: 0, y: 6)
+        }
+        .accessibilityLabel("Add transaction")
+    }
+}
+
+/// Floating white pill button (Quanto "New category" / "New account").
+struct FloatingPillButton: View {
+    let title: String
+    var action: () -> Void = {}
+
+    var body: some View {
+        Button {
+            Haptics.tap()
+            action()
+        } label: {
+            Text(title)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.black)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 15)
+                .background(AppColors.textPrimary)
+                .clipShape(Capsule())
+                .shadow(color: .black.opacity(0.4), radius: 18, x: 0, y: 10)
         }
     }
 }

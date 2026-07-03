@@ -1,85 +1,94 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var selectedTab: Tab = .home
-    @State private var showAddTransaction = false
+    @Environment(DataStore.self) private var store
 
-    enum Tab { case home, activity, insights, settings }
+    @State private var selectedTab: AppTab = .home
+    @State private var showAddTransaction = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
             TabView(selection: $selectedTab) {
                 HomeView(
                     onShowInsights: { selectedTab = .insights },
-                    onShowActivity: { selectedTab = .activity }
+                    onShowActivity: { selectedTab = .activity },
+                    onShowBudget: { selectedTab = .budget }
                 )
-                .tag(Tab.home)
+                .tag(AppTab.home)
 
                 ActivityView()
-                    .tag(Tab.activity)
+                    .tag(AppTab.activity)
 
                 InsightsView(onShowActivity: { selectedTab = .activity })
-                    .tag(Tab.insights)
+                    .tag(AppTab.insights)
+
+                BudgetView()
+                    .tag(AppTab.budget)
 
                 SettingsView()
-                    .tag(Tab.settings)
+                    .tag(AppTab.settings)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
+            .ignoresSafeArea(edges: .bottom)
 
-            customTabBar
+            GlassTabBar(selected: $selectedTab)
+                .padding(.horizontal, AppSpacing.base)
+                .padding(.bottom, 2)
         }
-        .ignoresSafeArea(edges: .bottom)
+        .overlay(alignment: .bottomTrailing) {
+            FloatingAddButton { showAddTransaction = true }
+                .padding(.trailing, AppSpacing.screenMargin)
+                .padding(.bottom, 96)
+        }
+        .overlay(alignment: .top) {
+            if let message = store.errorMessage {
+                ErrorToast(message: message) { store.errorMessage = nil }
+            }
+        }
+        .animation(.snappy(duration: 0.3), value: store.errorMessage)
         .sheet(isPresented: $showAddTransaction) {
             AddTransactionView()
         }
-    }
-
-    // MARK: - Custom Tab Bar
-
-    private var customTabBar: some View {
-        HStack(spacing: 0) {
-            tabBarItem(icon: "house.fill",              label: "Home",     tab: .home)
-            tabBarItem(icon: "list.bullet.indent",      label: "Activity", tab: .activity)
-
-            Button { showAddTransaction = true } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(.black)
-                    .frame(width: 56, height: 56)
-                    .background(AppColors.accent)
-                    .clipShape(Circle())
-                    .shadow(color: AppColors.accent.opacity(0.45), radius: 20, x: 0, y: 4)
+        .task {
+            if !store.hasLoaded {
+                await store.bootstrap()
             }
-            .frame(maxWidth: .infinity)
-            .offset(y: -8)
-
-            tabBarItem(icon: "chart.line.uptrend.xyaxis", label: "Insights",  tab: .insights)
-            tabBarItem(icon: "gearshape.fill",            label: "Settings",  tab: .settings)
         }
-        .padding(.horizontal, AppSpacing.sm)
-        .padding(.top, AppSpacing.md)
-        .padding(.bottom, 24)
-        .background(
-            AppColors.surfaceCard
-                .overlay(AppColors.borderGlass)
-                .ignoresSafeArea(edges: .bottom)
+    }
+}
+
+/// Transient banner for DataStore errors; auto-dismisses after a few seconds.
+private struct ErrorToast: View {
+    let message: String
+    var onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: AppSpacing.sm) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 14))
+                .foregroundColor(AppColors.warning)
+            Text(message)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(AppColors.textPrimary)
+            Spacer(minLength: 4)
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(AppColors.textSecondary)
+            }
+        }
+        .padding(.horizontal, AppSpacing.base)
+        .padding(.vertical, 12)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(AppColors.borderGlass, lineWidth: 1)
         )
-        .overlay(alignment: .top) {
-            Divider().background(AppColors.borderGlass)
-        }
-    }
-
-    private func tabBarItem(icon: String, label: String, tab: Tab) -> some View {
-        Button { selectedTab = tab } label: {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: selectedTab == tab ? .semibold : .regular))
-                    .foregroundColor(selectedTab == tab ? AppColors.accent : AppColors.textTertiary)
-                Text(label)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(selectedTab == tab ? AppColors.accent : AppColors.textTertiary)
-            }
-            .frame(maxWidth: .infinity)
+        .padding(.horizontal, AppSpacing.screenMargin)
+        .transition(.move(edge: .top).combined(with: .opacity))
+        .task {
+            try? await Task.sleep(for: .seconds(4))
+            onDismiss()
         }
     }
 }
@@ -88,6 +97,6 @@ struct ContentView: View {
     ContentView()
         .preferredColorScheme(.dark)
         .environment(AuthManager())
-        .environment(TransactionStore())
-        .environment(AppSettings())
+        .environment(DataStore.preview())
+        .environment(AppSettings.shared)
 }

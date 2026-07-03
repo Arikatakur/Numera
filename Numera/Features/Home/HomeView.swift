@@ -3,14 +3,16 @@ import SwiftUI
 struct HomeView: View {
     let onShowInsights: () -> Void
     let onShowActivity: () -> Void
+    var onShowBudget: () -> Void = {}
 
-    @Environment(AuthManager.self)    private var authManager
-    @Environment(TransactionStore.self) private var store
-    @Environment(AppSettings.self)   private var settings
+    @Environment(AuthManager.self) private var authManager
+    @Environment(DataStore.self) private var store
+    @Environment(AppSettings.self) private var settings
 
-    @State private var displayMonth  = Date()
+    @State private var pickedPeriod: Period?
     @State private var showMonthPicker = false
-    @State private var showAddTransaction = false
+
+    private var period: Period { pickedPeriod ?? store.currentPeriod }
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: .now)
@@ -27,19 +29,9 @@ struct HomeView: View {
         return username.prefix(1).uppercased() + username.dropFirst()
     }
 
-    private var monthLabel: String {
-        let fmt = DateFormatter()
-        fmt.dateFormat = "MMMM"
-        return fmt.string(from: displayMonth)
-    }
-
-    private var recentMonths: [Date] {
-        (0..<6).compactMap { Calendar.current.date(byAdding: .month, value: -$0, to: .now) }
-    }
-
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .bottom) {
+            ZStack {
                 AppColors.background.ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {
@@ -48,19 +40,26 @@ struct HomeView: View {
                         monthCardSection
                         safeToSpendSection
                         recentActivitySection
-                        Spacer().frame(height: 100)
+                        Spacer().frame(height: 110)
                     }
                     .padding(.horizontal, AppSpacing.screenMargin)
                     .padding(.top, AppSpacing.lg)
                 }
+                .refreshable { await store.bootstrap() }
+
+                if store.isLoading && !store.hasLoaded {
+                    ProgressView()
+                        .tint(AppColors.accent)
+                }
             }
             .navigationBarHidden(true)
         }
-        .sheet(isPresented: $showAddTransaction) {
-            AddTransactionView()
-        }
         .sheet(isPresented: $showMonthPicker) {
-            monthPickerSheet
+            SelectMonthSheet(
+                period: Binding(get: { period }, set: { pickedPeriod = $0 }),
+                startDay: settings.monthStartDay,
+                earliest: store.transactions.last?.date
+            )
         }
     }
 
@@ -82,14 +81,17 @@ struct HomeView: View {
             }
             Spacer()
             HStack(spacing: AppSpacing.md) {
-                Button { settings.isPrivate.toggle() } label: {
+                Button {
+                    Haptics.tap()
+                    settings.isPrivate.toggle()
+                } label: {
                     Image(systemName: settings.isPrivate ? "eye.slash" : "eye")
                         .font(.system(size: 18))
                         .foregroundColor(AppColors.textSecondary)
                 }
                 Button { showMonthPicker = true } label: {
                     HStack(spacing: 4) {
-                        Text(monthLabel)
+                        Text(PeriodMath.monthLabel(period))
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(AppColors.textPrimary)
                         Image(systemName: "chevron.down")
@@ -108,6 +110,10 @@ struct HomeView: View {
 
     // MARK: - Month Card
 
+    private var topCategories: [CategoryTotal] {
+        store.categoryTotals(in: period)
+    }
+
     private var monthCardSection: some View {
         NumeraCard {
             VStack(alignment: .leading, spacing: AppSpacing.base) {
@@ -116,24 +122,8 @@ struct HomeView: View {
 
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: AppSpacing.sm) {
-                        MoneyText(amount: store.totalSpent(forMonth: displayMonth), size: 40, isPrivate: settings.isPrivate)
-
-                        HStack(spacing: AppSpacing.sm) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "arrow.down")
-                                    .font(.system(size: 11, weight: .bold))
-                                Text("12% less")
-                                    .font(.system(size: 13, weight: .bold))
-                            }
-                            .foregroundColor(.black)
-                            .padding(.horizontal, 10).padding(.vertical, 5)
-                            .background(AppColors.accent)
-                            .cornerRadius(AppRadius.pill)
-
-                            Text("than last month")
-                                .font(.system(size: 13))
-                                .foregroundColor(AppColors.textSecondary)
-                        }
+                        MoneyText(amount: store.totalExpenses(in: period), size: 40)
+                        changeBadge
                     }
                     Spacer()
                     miniDonutChart
@@ -142,8 +132,9 @@ struct HomeView: View {
                 Divider().background(AppColors.borderGlass)
 
                 HStack {
-                    legendDot(color: AppColors.chartGreen,  label: "Dining")
-                    legendDot(color: AppColors.chartPurple, label: "Tech")
+                    ForEach(topCategories.prefix(2)) { item in
+                        legendDot(color: Color(hex: item.category.colorHex), label: item.category.name)
+                    }
                     Spacer()
                     Button { onShowInsights() } label: {
                         HStack(spacing: 4) {
@@ -159,30 +150,46 @@ struct HomeView: View {
         }
     }
 
-    private var miniDonutChart: some View {
-        ZStack {
-            Circle()
-                .stroke(AppColors.surfaceHigh, lineWidth: 8)
-                .frame(width: 72, height: 72)
-            Circle()
-                .trim(from: 0, to: 0.55)
-                .stroke(AppColors.chartGreen, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .frame(width: 72, height: 72)
-            Circle()
-                .trim(from: 0.55, to: 0.75)
-                .stroke(AppColors.chartPurple, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .frame(width: 72, height: 72)
-            Circle()
-                .trim(from: 0.75, to: 0.88)
-                .stroke(AppColors.chartOrange, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .frame(width: 72, height: 72)
-            Image(systemName: "fork.knife")
-                .font(.system(size: 14))
+    @ViewBuilder
+    private var changeBadge: some View {
+        if let change = store.expenseChange(in: period) {
+            let isDown = change <= 0
+            HStack(spacing: AppSpacing.sm) {
+                HStack(spacing: 4) {
+                    Image(systemName: isDown ? "arrow.down" : "arrow.up")
+                        .font(.system(size: 11, weight: .bold))
+                    Text("\(abs(Int(change.rounded())))% \(isDown ? "less" : "more")")
+                        .font(.system(size: 13, weight: .bold))
+                }
+                .foregroundColor(isDown ? .black : AppColors.textPrimary)
+                .padding(.horizontal, 10).padding(.vertical, 5)
+                .background(isDown ? AnyShapeStyle(AppColors.accent) : AnyShapeStyle(AppColors.expense.opacity(0.35)))
+                .cornerRadius(AppRadius.pill)
+
+                Text("than last month")
+                    .font(.system(size: 13))
+                    .foregroundColor(AppColors.textSecondary)
+            }
+        } else {
+            Text("Spending this month")
+                .font(.system(size: 13))
                 .foregroundColor(AppColors.textSecondary)
         }
+    }
+
+    private var miniDonutChart: some View {
+        let top = topCategories.prefix(3)
+        let segments = top.map { DonutSegment(color: Color(hex: $0.category.colorHex), fraction: $0.share) }
+        return ZStack {
+            if segments.isEmpty {
+                Circle().stroke(AppColors.surfaceHigh, lineWidth: 8)
+            } else {
+                DonutChart(segments: segments, lineWidth: 8)
+            }
+            Text(top.first?.category.emoji ?? "✨")
+                .font(.system(size: 18))
+        }
+        .frame(width: 72, height: 72)
     }
 
     private func legendDot(color: Color, label: String) -> some View {
@@ -191,39 +198,60 @@ struct HomeView: View {
             Text(label)
                 .font(.system(size: 13))
                 .foregroundColor(AppColors.textSecondary)
+                .lineLimit(1)
         }
         .padding(.trailing, AppSpacing.sm)
     }
 
     // MARK: - Safe to Spend
 
+    @ViewBuilder
     private var safeToSpendSection: some View {
         NumeraCard(padding: AppSpacing.xl) {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 Text("SAFE TO SPEND")
                     .labelCapsStyle(color: AppColors.accent)
 
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    MoneyText(amount: store.safeToSpend(forMonth: displayMonth), size: 36, isPrivate: settings.isPrivate)
-                    Text("/ today")
-                        .font(.system(size: 17))
-                        .foregroundColor(AppColors.textSecondary)
-                }
-
-                Text("Stay on track to reach your monthly goal.")
-                    .font(.system(size: 14))
-                    .foregroundColor(AppColors.textSecondary)
-
-                Button { onShowInsights() } label: {
-                    HStack(spacing: 4) {
-                        Text("Details")
-                            .font(.system(size: 14, weight: .semibold))
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 12, weight: .semibold))
+                if let perDay = store.safeToSpendPerDay(in: period) {
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        MoneyText(amount: perDay, size: 36)
+                        Text("/ day")
+                            .font(.system(size: 17))
+                            .foregroundColor(AppColors.textSecondary)
                     }
-                    .foregroundColor(AppColors.accent)
+
+                    Text("What's left of your monthly budget, split across the remaining days.")
+                        .font(.system(size: 14))
+                        .foregroundColor(AppColors.textSecondary)
+
+                    Button { onShowBudget() } label: {
+                        HStack(spacing: 4) {
+                            Text("Details")
+                                .font(.system(size: 14, weight: .semibold))
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        .foregroundColor(AppColors.accent)
+                    }
+                    .padding(.top, AppSpacing.xs)
+                } else {
+                    Text("No monthly budget yet")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(AppColors.textPrimary)
+                    Text("Set one to see how much you can safely spend each day.")
+                        .font(.system(size: 14))
+                        .foregroundColor(AppColors.textSecondary)
+                    Button { onShowBudget() } label: {
+                        HStack(spacing: 4) {
+                            Text("Set budget")
+                                .font(.system(size: 14, weight: .semibold))
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        .foregroundColor(AppColors.accent)
+                    }
+                    .padding(.top, AppSpacing.xs)
                 }
-                .padding(.top, AppSpacing.xs)
             }
         }
         .overlay(alignment: .leading) {
@@ -253,16 +281,16 @@ struct HomeView: View {
 
             NumeraCard(padding: 0) {
                 VStack(spacing: 0) {
-                    let recent = store.recentTransactions
+                    let recent = Array(store.transactions.prefix(3))
                     if recent.isEmpty {
-                        Text("No transactions yet")
+                        Text("No transactions yet — tap + to add your first")
                             .font(.system(size: 14))
                             .foregroundColor(AppColors.textTertiary)
                             .frame(maxWidth: .infinity)
                             .padding(AppSpacing.xl)
                     } else {
                         ForEach(Array(recent.enumerated()), id: \.element.id) { index, tx in
-                            TransactionRow(transaction: tx, isPrivate: settings.isPrivate)
+                            TransactionRow(transaction: tx)
                             if index < recent.count - 1 {
                                 Divider()
                                     .background(AppColors.borderGlass)
@@ -275,61 +303,12 @@ struct HomeView: View {
             }
         }
     }
-
-    // MARK: - Month Picker Sheet
-
-    private var monthPickerSheet: some View {
-        NavigationStack {
-            ZStack {
-                AppColors.background.ignoresSafeArea()
-                VStack(spacing: 0) {
-                    ForEach(recentMonths, id: \.self) { month in
-                        let fmt: DateFormatter = {
-                            let f = DateFormatter()
-                            f.dateFormat = "MMMM yyyy"
-                            return f
-                        }()
-                        Button {
-                            displayMonth = month
-                            showMonthPicker = false
-                        } label: {
-                            HStack {
-                                Text(fmt.string(from: month))
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(AppColors.textPrimary)
-                                Spacer()
-                                if Calendar.current.isDate(month, equalTo: displayMonth, toGranularity: .month) {
-                                    Image(systemName: "checkmark")
-                                        .foregroundColor(AppColors.accent)
-                                }
-                            }
-                            .padding(.horizontal, AppSpacing.screenMargin)
-                            .padding(.vertical, AppSpacing.base)
-                        }
-                        Divider().background(AppColors.borderGlass)
-                    }
-                    Spacer()
-                }
-                .padding(.top, AppSpacing.sm)
-            }
-            .navigationTitle("Select Month")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { showMonthPicker = false }
-                        .foregroundColor(AppColors.accent)
-                }
-            }
-        }
-        .preferredColorScheme(.dark)
-        .presentationDetents([.medium])
-    }
 }
 
 #Preview {
     HomeView(onShowInsights: {}, onShowActivity: {})
         .preferredColorScheme(.dark)
         .environment(AuthManager())
-        .environment(TransactionStore())
-        .environment(AppSettings())
+        .environment(DataStore.preview())
+        .environment(AppSettings.shared)
 }
