@@ -73,6 +73,9 @@ schemes:
         Numera: all
     run:
       config: Debug
+      # Local StoreKit testing: simulated Numera Pro products (monthly/yearly/
+      # lifetime + 14-day trial) without App Store Connect.
+      storeKitConfiguration: Numera/Resources/Numera.storekit
     test:
       config: Debug
       targets: []

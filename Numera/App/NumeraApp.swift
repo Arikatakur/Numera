@@ -2,10 +2,11 @@ import SwiftUI
 
 @main
 struct NumeraApp: App {
-    @State private var authManager = AuthManager()
-    @State private var appSettings = AppSettings.shared
-    @State private var dataStore   = DataStore()
-    @State private var showLaunch  = true
+    @State private var authManager    = AuthManager()
+    @State private var appSettings    = AppSettings.shared
+    @State private var dataStore      = DataStore()
+    @State private var premiumManager = PremiumManager()
+    @State private var showLaunch     = true
 
     var body: some Scene {
         WindowGroup {
@@ -15,6 +16,7 @@ struct NumeraApp: App {
                     .environment(authManager)
                     .environment(dataStore)
                     .environment(appSettings)
+                    .environment(premiumManager)
 
                 if showLaunch {
                     LaunchAnimationView {
@@ -25,6 +27,9 @@ struct NumeraApp: App {
                     .transition(.opacity)
                     .zIndex(1)
                 }
+            }
+            .task {
+                await premiumManager.start()
             }
             .task {
                 await authManager.start()

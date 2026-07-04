@@ -16,6 +16,10 @@ Data model (schema v2): user-editable categories (emoji/color/kind/order),
 accounts (emoji + starting balance), transactions (category_id/account_id FKs),
 budgets (overall + per-category). See `supabase/README.md`.
 
+Monetization: **Numera Pro** (StoreKit 2 — monthly / yearly with 14-day trial /
+lifetime). Budgeting, recurring transactions, and CSV export are Pro; entitlements
+are tracked on-device by `PremiumManager`.
+
 ---
 
 ## Current Design Direction
@@ -200,7 +204,74 @@ Before ending every work session, update this file with:
 
 ---
 
-## Latest Session - 2026-07-03 (Quanto redesign)
+## Latest Session - 2026-07-03 (Numera Pro subscriptions)
+
+### Changed
+- Added StoreKit 2 subscriptions ("Numera Pro"): monthly, yearly (14-day free
+  trial), and lifetime. `PremiumManager` tracks entitlements on-device;
+  `PaywallView` mirrors Quanto's paywall in Numera's identity.
+- Locked behind Pro (per product decision): **Budgeting** (Budget tab shows a
+  pitch + Unlock), **Recurring transactions** (Settings row + locked Insights
+  card; feature itself is still "coming soon"), **Export data (CSV)** (Premium
+  badge, paywall for free users). Multiple accounts stay free.
+- Settings gained a Pro banner and a Subscription row (Free/Pro → paywall or
+  manage-subscriptions sheet). Insights shows locked recurring/budgeting cards.
+- `Numera.storekit` local config + scheme wiring — purchases fully testable in
+  the simulator with no App Store Connect setup.
+
+### Files Touched
+- `Numera/Services/PremiumManager.swift` (new)
+- `Numera/Features/Premium/PaywallView.swift` (new)
+- `Numera/Components/PremiumBadge.swift` (new)
+- `Numera/Resources/Numera.storekit` (new), `project.yml` (scheme run config)
+- `Numera/App/NumeraApp.swift`, `Numera/App/ContentView.swift` (env/preview)
+- `Numera/Features/Budget/BudgetView.swift` (locked state)
+- `Numera/Features/Settings/SettingsView.swift` (banner, subscription,
+  automations, export gate)
+- `Numera/Features/Insights/InsightsView.swift` (locked cards)
+- `CHANGELOG.md`, `HANDOFF.md`
+
+### Tested / Checked
+- Written on Windows — CI compile check is the build verification for this
+  branch; simulator StoreKit testing must happen on a Mac (scheme already
+  points at `Numera.storekit`).
+- No DB migration needed (entitlements are on-device only).
+
+### Incomplete / User Action Required — App Store Connect setup
+Before purchases work on TestFlight:
+1. App Store Connect → Numera → **Subscriptions**: create group **"Numera Pro"**.
+2. Add auto-renewable subscriptions with EXACTLY these product IDs:
+   - `org.clientvault.numera.pro.monthly` (1 month)
+   - `org.clientvault.numera.pro.yearly` (1 year) + **Introductory Offer:
+     14 days free**
+3. App Store Connect → **In-App Purchases**: non-consumable
+   `org.clientvault.numera.pro.lifetime`.
+4. Set prices (the paywall reads localized prices from the store; the "$"
+   fallbacks in `PaywallView.cardSpecs` only show when products fail to load).
+5. Replace the placeholder Privacy Policy link in `PaywallView` (currently the
+   GitHub repo URL) with a real policy page before App Review; Terms uses
+   Apple's standard EULA.
+6. Sign the Paid Applications agreement in App Store Connect if not yet signed.
+
+Other notes:
+- Lifetime purchasers tapping Subscription → manage sheet will see no
+  subscriptions (StoreKit manage sheet only lists auto-renewables) — cosmetic.
+- If a free user set budgets before this update, Home's safe-to-spend still
+  reads them; the Budget tab is where the lock applies.
+
+### Next
+1. Complete App Store Connect setup above, then TestFlight a build and test
+   purchase/restore.
+2. Build recurring transactions (the paywall advertises it as "SOON").
+3. Real privacy policy page.
+
+### Git Status
+- Branch: `feature/premium-subscriptions`
+- Pushed: yes (PR opened)
+
+---
+
+## Previous Session - 2026-07-03 (Quanto redesign)
 
 ### Changed
 Big milestone: adopted the Quanto app's feature set and card anatomy (reference
@@ -257,7 +328,7 @@ screenshots in `quanto-app/`) while keeping Numera's dark/mint design language.
 - Model initializer call sites, store method names, and DTO column names were
   cross-checked against the migrations by hand.
 
-### Incomplete / User Action Required
+### completed / User Action Required
 1. **Apply the three new migrations** in Supabase SQL Editor, in order
    (`20260703000000` → `01` → `02`). The app and DB must move together — old
    builds can't insert after the enum column is dropped.

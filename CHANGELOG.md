@@ -5,6 +5,28 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
+## [0.11.0] — 2026-07-03
+
+Numera Pro subscriptions (StoreKit 2). Budgeting, recurring, and CSV export are premium.
+
+### Added
+- `Services/PremiumManager.swift` — StoreKit 2: loads monthly/yearly/lifetime products (`org.clientvault.numera.pro.*`), tracks entitlements via `Transaction.currentEntitlements`, listens to `Transaction.updates` for renewals/refunds, purchase + restore. Entitlements are the on-device source of truth (no server validation).
+- `Features/Premium/PaywallView.swift` — Quanto-anatomy paywall in Numera identity: star badge, feature checklist (budgeting / recurring "SOON" / export / support), three pricing cards with live App Store prices and a computed "Save X%" badge on yearly, 14-day free-trial CTA when eligible, Terms / Privacy / Restore links, graceful state when products aren't configured yet.
+- `Components/PremiumBadge.swift` — `PremiumBadge` capsule, `UnlockGradientButton` (teal→mint), and `PremiumLockCard` (blurred locked card, Quanto Overview style).
+- `Numera/Resources/Numera.storekit` — local StoreKit configuration (3 products, 14-day free intro offer on yearly) wired into the run scheme via `project.yml`, so purchases are testable in the simulator without App Store Connect.
+
+### Changed
+- `BudgetView` — locked behind Pro: non-subscribers see the Quanto-style budgeting pitch (mock ring + "Unlock") instead of the budget UI.
+- `SettingsView` — "Try Numera Pro for free!" gradient banner (free users), General → Subscription row (Free/Pro; opens paywall or manage-subscriptions sheet), new Automations section with a Recurring transactions row (Premium badge → paywall; "Soon" for subscribers), Export data row shows a Premium badge and opens the paywall for free users.
+- `InsightsView` — locked "Recurring insights" and "Budgeting insights" cards (Quanto Overview style) for free users.
+- `NumeraApp` — injects `PremiumManager` and starts the entitlement listener at launch.
+
+### Notes
+- No database migration needed — entitlements live on-device.
+- App Store Connect setup still required before TestFlight purchases work (see HANDOFF).
+
+---
+
 ## [0.10.0] — 2026-07-03
 
 Quanto-parity settings suite. Every row does something real.

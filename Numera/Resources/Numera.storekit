@@ -1,0 +1,98 @@
+{
+  "identifier" : "9E5A5C2A-1111-4222-8333-000000000001",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "59.99",
+      "familyShareable" : false,
+      "internalID" : "6F100003",
+      "localizations" : [
+        {
+          "description" : "One-time purchase. Numera Pro forever.",
+          "displayName" : "Lifetime",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "org.clientvault.numera.pro.lifetime",
+      "referenceName" : "Numera Pro Lifetime",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA"
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21100001",
+      "localizations" : [
+
+      ],
+      "name" : "Numera Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "2.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6F100001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Numera Pro, billed monthly.",
+              "displayName" : "1 Month",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "org.clientvault.numera.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Numera Pro Monthly",
+          "subscriptionGroupID" : "21100001",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "24.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6F100002",
+          "introductoryOffer" : {
+            "internalID" : "6F100010",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P2W"
+          },
+          "localizations" : [
+            {
+              "description" : "Numera Pro, billed yearly. 14 days free.",
+              "displayName" : "12 Months",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "org.clientvault.numera.pro.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Numera Pro Yearly",
+          "subscriptionGroupID" : "21100001",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

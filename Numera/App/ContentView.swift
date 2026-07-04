@@ -99,4 +99,5 @@ private struct ErrorToast: View {
         .environment(AuthManager())
         .environment(DataStore.preview())
         .environment(AppSettings.shared)
+        .environment(PremiumManager.preview())
 }

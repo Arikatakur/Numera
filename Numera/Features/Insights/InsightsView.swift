@@ -7,10 +7,12 @@ struct InsightsView: View {
 
     @Environment(DataStore.self) private var store
     @Environment(AppSettings.self) private var settings
+    @Environment(PremiumManager.self) private var premium
 
     @State private var pickedPeriod: Period?
     @State private var showMonthPicker = false
     @State private var incomeLeftAsPercent = false
+    @State private var showPaywall = false
 
     private var period: Period { pickedPeriod ?? store.currentPeriod }
     private var totals: [CategoryTotal] { store.categoryTotals(in: period) }
@@ -37,6 +39,19 @@ struct InsightsView: View {
                             highestDayCard
                         } else {
                             emptyState
+                        }
+
+                        if !premium.isPremium {
+                            PremiumLockCard(
+                                title: "RECURRING INSIGHTS",
+                                buttonTitle: "Unlock recurring insights"
+                            ) { showPaywall = true }
+
+                            PremiumLockCard(
+                                title: "BUDGETING INSIGHTS",
+                                buttonTitle: "Unlock budgeting insights",
+                                height: 170
+                            ) { showPaywall = true }
                         }
 
                         Spacer().frame(height: 120)
@@ -67,6 +82,9 @@ struct InsightsView: View {
                 startDay: settings.monthStartDay,
                 earliest: store.transactions.last?.date
             )
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
         }
     }
 
@@ -444,4 +462,5 @@ struct InsightsView: View {
         .preferredColorScheme(.dark)
         .environment(DataStore.preview())
         .environment(AppSettings.shared)
+        .environment(PremiumManager.preview())
 }
