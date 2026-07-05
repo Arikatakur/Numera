@@ -10,6 +10,7 @@ final class DataStore {
     var accounts: [Account] = []
     var transactions: [Transaction] = []   // sorted newest first
     var budgets: [Budget] = []
+    var recurringRules: [RecurringRule] = []
 
     var isLoading = false
     var hasLoaded = false
@@ -58,9 +59,28 @@ final class DataStore {
             transactions = txs.map(\.model)
             budgets = buds.map(\.model)
             hasLoaded = true
+            await loadAndApplyRecurring()
         } catch {
             fail("Couldn't load your data — pull to refresh.", error)
         }
+    }
+
+    /// Loads recurring rules and generates any that are due. Resilient: if the
+    /// table is missing (migration not yet applied) it's skipped, not fatal —
+    /// so the rest of the app keeps working.
+    func loadAndApplyRecurring() async {
+        guard !isPreview, userId != nil else { return }
+        do {
+            let rules: [RecurringRuleDTO] = try await client.from("recurring_rules")
+                .select().execute().value
+            recurringRules = rules.map(\.model)
+        } catch {
+            #if DEBUG
+            print("[DataStore] recurring load skipped — \(error)")
+            #endif
+            return
+        }
+        await materializeDueRecurring()
     }
 
     func reset() {
@@ -68,6 +88,7 @@ final class DataStore {
         accounts = []
         transactions = []
         budgets = []
+        recurringRules = []
         userId = nil
         hasLoaded = false
         errorMessage = nil

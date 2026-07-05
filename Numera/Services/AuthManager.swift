@@ -41,6 +41,17 @@ final class AuthManager {
         try await SupabaseManager.shared.client.auth.signOut()
     }
 
+    /// Permanently deletes the user's account and all associated data. The
+    /// `delete-account` Edge Function removes the Supabase auth user; every
+    /// owned row is cascade-deleted server-side. Apple requires in-app account
+    /// deletion for apps that support account creation.
+    func deleteAccount() async throws {
+        try await SupabaseManager.shared.client.functions.invoke("delete-account")
+        // Account is gone server-side — clear the local session. Local scope
+        // avoids revoking a token that no longer exists.
+        try? await SupabaseManager.shared.client.auth.signOut(scope: .local)
+    }
+
     var currentUserEmail: String? {
         session?.user.email
     }

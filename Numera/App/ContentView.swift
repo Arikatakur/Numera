@@ -31,15 +31,22 @@ struct ContentView: View {
             .tabViewStyle(.page(indexDisplayMode: .never))
             .ignoresSafeArea(edges: .bottom)
 
-            GlassTabBar(selected: $selectedTab)
-                .padding(.horizontal, AppSpacing.base)
-                .padding(.bottom, 2)
+            if !TabBarVisibility.shared.isHidden {
+                GlassTabBar(selected: $selectedTab)
+                    .padding(.horizontal, AppSpacing.base)
+                    .padding(.bottom, 2)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
         .overlay(alignment: .bottomTrailing) {
-            FloatingAddButton { showAddTransaction = true }
-                .padding(.trailing, AppSpacing.screenMargin)
-                .padding(.bottom, 96)
+            // Hidden on the Settings tab and on any pushed detail screen.
+            if !TabBarVisibility.shared.isHidden && selectedTab != .settings {
+                FloatingAddButton { showAddTransaction = true }
+                    .padding(.trailing, AppSpacing.screenMargin)
+                    .padding(.bottom, 96)
+            }
         }
+        .animation(.easeInOut(duration: 0.25), value: TabBarVisibility.shared.isHidden)
         .overlay(alignment: .top) {
             if let message = store.errorMessage {
                 ErrorToast(message: message) { store.errorMessage = nil }

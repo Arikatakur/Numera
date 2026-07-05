@@ -5,6 +5,7 @@ struct AddTransactionView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(DataStore.self) private var store
     @Environment(AppSettings.self) private var settings
+    @Environment(PremiumManager.self) private var premium
 
     let editing: Transaction?
 
@@ -18,6 +19,8 @@ struct AddTransactionView: View {
     @State private var showAccountPicker = false
     @State private var showAllCategories = false
     @State private var showDeleteConfirm = false
+    @State private var recurrence: RecurrenceFrequency?
+    @State private var showPaywall = false
 
     init(editing: Transaction? = nil) {
         self.editing = editing
@@ -100,6 +103,10 @@ struct AddTransactionView: View {
                     keypad
                 }
             }
+            // Custom keypad drives the amount; the only system keyboard is the
+            // title field. Disable keyboard avoidance so the fixed layout (with
+            // its bottom-pinned keypad) doesn't jump — the title sits above it.
+            .ignoresSafeArea(.keyboard, edges: .bottom)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -131,6 +138,7 @@ struct AddTransactionView: View {
         .sheet(isPresented: $showDatePicker) { datePicker }
         .sheet(isPresented: $showAccountPicker) { accountPicker }
         .sheet(isPresented: $showAllCategories) { allCategoriesPicker }
+        .sheet(isPresented: $showPaywall) { PaywallView() }
         .confirmationDialog("Delete this transaction?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {
                 guard let editing else { return }
@@ -164,9 +172,24 @@ struct AddTransactionView: View {
 
         Haptics.success()
         let isNew = editing == nil
+        let newRecurrence = recurrence
         Task {
             if isNew {
                 await store.addTransaction(tx)
+                if let newRecurrence {
+                    let rule = RecurringRule(
+                        type: tx.type,
+                        amount: tx.amount,
+                        categoryId: tx.categoryId,
+                        title: tx.title,
+                        note: tx.note,
+                        accountId: tx.accountId,
+                        accountName: tx.accountName,
+                        frequency: newRecurrence,
+                        nextRun: newRecurrence.next(after: tx.date)
+                    )
+                    await store.addRecurringRule(rule)
+                }
             } else {
                 await store.updateTransaction(tx)
             }
@@ -229,33 +252,62 @@ struct AddTransactionView: View {
             ) { showAccountPicker = true }
 
             contextPill(icon: "calendar", emoji: nil, label: dateLabel) { showDatePicker = true }
+
+            // Recurring is a new-entry, Pro-gated option.
+            if editing == nil {
+                recurrenceMenu
+            }
+        }
+    }
+
+    private var recurrenceMenu: some View {
+        Menu {
+            Button("One-time") { recurrence = nil }
+            ForEach(RecurrenceFrequency.allCases, id: \.self) { freq in
+                Button(freq.label) { selectRecurrence(freq) }
+            }
+        } label: {
+            pillBody(icon: "repeat", emoji: nil, label: recurrence?.label ?? "One-time")
+        }
+    }
+
+    private func selectRecurrence(_ freq: RecurrenceFrequency) {
+        if premium.isPremium {
+            Haptics.select()
+            recurrence = freq
+        } else {
+            showPaywall = true
         }
     }
 
     private func contextPill(icon: String?, emoji: String?, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 6) {
-                if let emoji {
-                    Text(emoji).font(.system(size: 13))
-                } else if let icon {
-                    Image(systemName: icon)
-                        .font(.system(size: 13))
-                        .foregroundColor(AppColors.textSecondary)
-                }
-                Text(label)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(AppColors.textPrimary)
-                    .lineLimit(1)
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 11))
+            pillBody(icon: icon, emoji: emoji, label: label)
+        }
+    }
+
+    private func pillBody(icon: String?, emoji: String?, label: String) -> some View {
+        HStack(spacing: 6) {
+            if let emoji {
+                Text(emoji).font(.system(size: 13))
+            } else if let icon {
+                Image(systemName: icon)
+                    .font(.system(size: 13))
                     .foregroundColor(AppColors.textSecondary)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(AppColors.surfaceCard)
-            .cornerRadius(AppRadius.pill)
-            .overlay(Capsule().stroke(AppColors.borderGlass, lineWidth: 1))
+            Text(label)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(AppColors.textPrimary)
+                .lineLimit(1)
+            Image(systemName: "chevron.down")
+                .font(.system(size: 11))
+                .foregroundColor(AppColors.textSecondary)
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(AppColors.surfaceCard)
+        .cornerRadius(AppRadius.pill)
+        .overlay(Capsule().stroke(AppColors.borderGlass, lineWidth: 1))
     }
 
     // MARK: - Title Field
@@ -483,4 +535,5 @@ struct AddTransactionView: View {
     AddTransactionView()
         .environment(DataStore.preview())
         .environment(AppSettings.shared)
+        .environment(PremiumManager.preview())
 }

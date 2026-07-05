@@ -4,6 +4,7 @@ import SwiftUI
 /// floating "New account" pill. Balances are starting balance ± transactions.
 struct AccountsView: View {
     @Environment(DataStore.self) private var store
+    @Environment(PremiumManager.self) private var premium
 
     enum EditorTarget: Identifiable {
         case new
@@ -18,6 +19,7 @@ struct AccountsView: View {
     }
 
     @State private var editorTarget: EditorTarget?
+    @State private var showPaywall = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -63,12 +65,26 @@ struct AccountsView: View {
                     }
                     .padding(.horizontal, AppSpacing.screenMargin)
 
+                    if !premium.isPremium {
+                        HStack(spacing: AppSpacing.sm) {
+                            Text("Add more accounts with Numera Pro")
+                                .font(.system(size: 13))
+                                .foregroundColor(AppColors.textSecondary)
+                            PremiumBadge()
+                        }
+                        .padding(.horizontal, AppSpacing.screenMargin)
+                    }
+
                     Spacer().frame(height: 100)
                 }
             }
 
             FloatingPillButton(title: "New account") {
-                editorTarget = .new
+                if !premium.isPremium && store.accounts.count >= 1 {
+                    showPaywall = true
+                } else {
+                    editorTarget = .new
+                }
             }
             .padding(.bottom, AppSpacing.xl)
         }
@@ -77,6 +93,9 @@ struct AccountsView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .sheet(item: $editorTarget) { target in
             AccountEditSheet(target: target)
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
         }
     }
 }
@@ -269,4 +288,5 @@ struct AccountEditSheet: View {
     .preferredColorScheme(.dark)
     .environment(DataStore.preview())
     .environment(AppSettings.shared)
+    .environment(PremiumManager.preview())
 }

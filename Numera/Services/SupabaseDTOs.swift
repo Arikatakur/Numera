@@ -158,3 +158,51 @@ struct BudgetDTO: Codable {
         Budget(id: id, categoryId: category_id, amount: amount)
     }
 }
+
+// MARK: - recurring rules
+
+struct RecurringRuleDTO: Codable {
+    var id: UUID
+    var user_id: UUID
+    var type: String
+    var amount: Decimal
+    var category_id: UUID?
+    var title: String
+    var note: String?
+    var account_id: UUID?
+    var account_name: String
+    var frequency: String
+    var next_run: String
+    var is_active: Bool
+
+    init(_ rule: RecurringRule, userId: UUID) {
+        id = rule.id
+        user_id = userId
+        type = rule.type.rawValue
+        amount = rule.amount
+        category_id = rule.categoryId
+        title = rule.title
+        note = rule.note
+        account_id = rule.accountId
+        account_name = rule.accountName
+        frequency = rule.frequency.rawValue
+        next_run = SupaDate.string(from: rule.nextRun)
+        is_active = rule.isActive
+    }
+
+    var model: RecurringRule {
+        RecurringRule(
+            id: id,
+            type: TransactionType(rawValue: type) ?? .expense,
+            amount: amount,
+            categoryId: category_id,
+            title: title,
+            note: note,
+            accountId: account_id,
+            accountName: account_name,
+            frequency: RecurrenceFrequency(rawValue: frequency) ?? .monthly,
+            nextRun: SupaDate.parse(next_run),
+            isActive: is_active
+        )
+    }
+}
