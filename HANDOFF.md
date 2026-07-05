@@ -22,6 +22,56 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
+## Session — App Store prep + recurring (2026-07-06)
+
+Addressed the App Store review blockers in `appstore-review.md`, shipped recurring
+transactions for real, and fixed several UX issues. Branch:
+`feature/appstore-review-and-recurring`.
+
+**What changed**
+- **Account deletion (Apple requirement):** Settings → Delete account →
+  `AuthManager.deleteAccount()` → `supabase/functions/delete-account/` Edge Function
+  (verifies the caller's JWT, then service-role `admin.deleteUser`; every table
+  cascades from `auth.users`), then local sign-out routes back to Welcome.
+- **Recurring transactions (Pro):** `Models/RecurringRule.swift`,
+  `migrations/20260706000000_create_recurring_rules.sql`, `RecurringRuleDTO`,
+  `DataStore+Recurring.swift` (CRUD + `materializeDueRecurring()` on launch),
+  a Pro-gated Repeat pill on Add Transaction, and `RecurringView` to manage rules.
+- **Legal pages:** real Privacy/Terms/Support at `clientvault.org/numera/*` (built
+  in the ClientVault-Web repo, `artifacts/client-vault/src/pages/numera-*.tsx`),
+  linked from Settings + paywall. Content reflects Numera's real behavior.
+- **Accounts:** free = 1 account, 2nd is Pro (Premium tag added).
+- **Tab bar:** `TabBarVisibility` + `.hidesTabBar()` hide the floating chrome on
+  Settings sub-pages (fixes overlap on e.g. Accounts).
+- **Keyboard fix:** Add Transaction no longer jumps when the title field is focused.
+- **`project.yml`:** fixed the broken Sign in with Apple entitlements block.
+
+**⚠️ Manual steps required before/after this ships (not automatable from here):**
+1. **Apply the migration** — run `supabase/migrations/20260706000000_create_recurring_rules.sql`
+   in the Supabase SQL editor. Until then the app runs fine but recurring is inert
+   (load is guarded).
+2. **Deploy the Edge Function** — `supabase functions deploy delete-account`
+   (after `supabase login` + `supabase link --project-ref odxzvfhxgsvqmgydlamm`).
+   Until deployed, Delete account will error.
+3. **Deploy ClientVault-Web** — commit + push the `artifacts/client-vault` changes in
+   the ClientVault-Web repo so the `/numera/*` URLs resolve (Vercel). Needed for App
+   Review, not for a TestFlight build.
+4. **App Store Connect** — confirm Sign in with Apple capability for
+   `org.clientvault.numera`, the `.v2` IAP product IDs, and set the Privacy Policy URL
+   to `https://clientvault.org/numera/privacy`. See `appstore-review.md`.
+5. **Ship to TestFlight** — after CI passes, run the **Deploy to TestFlight** workflow
+   (`workflow_dispatch`, `.github/workflows/deploy.yml`).
+
+**Testing status:** NOT compiled locally (Windows workspace — CI on macOS is the only
+compiler). Verified by inspection + a cross-file consistency sweep. Needs on-device QA:
+recurring create/pause/delete + launch materialization, account deletion end-to-end,
+the keyboard fix, and the tab-bar hide on Settings sub-pages.
+
+**Note:** root `privacy.md` / `terms.md` are the original Quanto source files (left
+untracked); the shipping policies live in ClientVault-Web. Safe to delete.
+
+---
+
 ## Current Design Direction
 
 The app should become a premium manual expense tracker inspired by:
@@ -204,7 +254,60 @@ Before ending every work session, update this file with:
 
 ---
 
-## Latest Session - 2026-07-03 (Numera Pro subscriptions)
+## Latest Session - 2026-07-05 (Product ID rename + Home safe-to-spend lock)
+
+### Changed
+- Renamed the monthly/yearly Pro product IDs to end in `.v2`
+  (`org.clientvault.numera.pro.monthly.v2` / `...yearly.v2`) because App Store
+  Connect now has these two configured under the `.v2` IDs. Lifetime
+  (`org.clientvault.numera.pro.lifetime`) is unchanged. `PremiumProduct` is the
+  single source of truth (`PremiumManager.swift`), so no other Swift file
+  hardcodes the raw strings.
+- Home's **Safe to Spend** card is now Pro-gated: it reports on the same
+  overall budget the Budget tab manages, so it now follows Budget's lock rule.
+  Free users see a `PremiumLockCard` ("Unlock safe-to-spend") that opens the
+  paywall; Pro users see the existing real/empty-state card unchanged.
+
+### Files Touched
+- `Numera/Services/PremiumManager.swift` (product ID suffixes)
+- `Numera/Resources/Numera.storekit` (matching local test product IDs)
+- `Numera/Features/Home/HomeView.swift` (premium gate on Safe to Spend +
+  paywall sheet)
+- `HANDOFF.md`, `appstore-review.md` (product ID references)
+- `CHANGELOG.md`
+
+### Tested / Checked
+- Written on Windows — not compiled locally. CI compile check is the build
+  verification; watch it after pushing.
+- Grep-swept the repo for the old `org.clientvault.numera.pro.monthly` /
+  `.pro.yearly` strings (without `.v2`) — none remain outside historical
+  CHANGELOG entries, which are left as a record of what shipped in 0.11.0.
+
+### Incomplete
+- App Store Connect must have the **actual** `.v2` product IDs created (or
+  renamed) to match — StoreKit product IDs cannot be edited in ASC after
+  creation, so if `.monthly`/`.yearly` (no `.v2`) were already created there,
+  those old ones stay as dead/unused records and new `.v2` ones must be added
+  instead.
+- Same outstanding App Store Connect setup as before (subscription group,
+  prices, screenshots, Paid Apps agreement, real privacy policy) — see the
+  Numera Pro subscriptions session below and `appstore-review.md`.
+
+### Next
+1. Confirm the `.v2` product IDs exist in App Store Connect exactly as above,
+   then TestFlight a build and test purchase/restore.
+2. Work through `appstore-review.md`'s "Fix Before Submit" checklist
+   (account deletion, real privacy policy, recurring-transactions marketing)
+   before public App Review.
+
+### Git Status
+- Branch: `main`
+- Last commit: `f897878` (Numera Pro subscriptions, PR #2)
+- Pushed: no — changes are local/uncommitted this session
+
+---
+
+## Previous Session - 2026-07-03 (Numera Pro subscriptions)
 
 ### Changed
 - Added StoreKit 2 subscriptions ("Numera Pro"): monthly, yearly (14-day free
@@ -241,8 +344,8 @@ Before ending every work session, update this file with:
 Before purchases work on TestFlight:
 1. App Store Connect → Numera → **Subscriptions**: create group **"Numera Pro"**.
 2. Add auto-renewable subscriptions with EXACTLY these product IDs:
-   - `org.clientvault.numera.pro.monthly` (1 month)
-   - `org.clientvault.numera.pro.yearly` (1 year) + **Introductory Offer:
+   - `org.clientvault.numera.pro.monthly.v2` (1 month)
+   - `org.clientvault.numera.pro.yearly.v2` (1 year) + **Introductory Offer:
      14 days free**
 3. App Store Connect → **In-App Purchases**: non-consumable
    `org.clientvault.numera.pro.lifetime`.

@@ -52,7 +52,7 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "org.clientvault.numera.pro.monthly",
+          "productID" : "org.clientvault.numera.pro.monthly.v2",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Numera Pro Monthly",
           "subscriptionGroupID" : "21100001",
@@ -82,7 +82,7 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "org.clientvault.numera.pro.yearly",
+          "productID" : "org.clientvault.numera.pro.yearly.v2",
           "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Numera Pro Yearly",
           "subscriptionGroupID" : "21100001",

@@ -16,12 +16,12 @@ struct SettingsView: View {
 
     @State private var showSignOutConfirm = false
     @State private var showEraseConfirm = false
+    @State private var showDeleteAccountConfirm = false
     @State private var showImporter = false
     @State private var exportItem: ExportItem?
     @State private var importMessage: String?
     @State private var showPaywall = false
     @State private var showManageSubscriptions = false
-    @State private var showRecurringSoon = false
 
     var body: some View {
         @Bindable var settings = settings
@@ -41,7 +41,7 @@ struct SettingsView: View {
                         SettingsSectionHeader(title: "General")
                         SettingsCard {
                             NavigationLink {
-                                CategoriesView()
+                                CategoriesView().hidesTabBar()
                             } label: {
                                 SettingsRow(icon: "circle.grid.2x2", title: "Categories") {
                                     SettingsValueChevron()
@@ -49,7 +49,7 @@ struct SettingsView: View {
                             }
                             SettingsDivider()
                             NavigationLink {
-                                AccountsView()
+                                AccountsView().hidesTabBar()
                             } label: {
                                 SettingsRow(icon: "building.columns", title: "Accounts") {
                                     SettingsValueChevron(value: "\(store.accounts.count)")
@@ -71,17 +71,19 @@ struct SettingsView: View {
 
                         SettingsSectionHeader(title: "Automations")
                         SettingsCard {
-                            Button {
-                                if premium.isPremium {
-                                    showRecurringSoon = true
-                                } else {
-                                    showPaywall = true
+                            if premium.isPremium {
+                                NavigationLink {
+                                    RecurringView().hidesTabBar()
+                                } label: {
+                                    SettingsRow(icon: "arrow.triangle.2.circlepath", title: "Recurring transactions") {
+                                        SettingsValueChevron(value: "\(store.recurringRules.count)")
+                                    }
                                 }
-                            } label: {
-                                SettingsRow(icon: "arrow.triangle.2.circlepath", title: "Recurring transactions") {
-                                    if premium.isPremium {
-                                        SettingsValueChevron(value: "Soon")
-                                    } else {
+                            } else {
+                                Button {
+                                    showPaywall = true
+                                } label: {
+                                    SettingsRow(icon: "arrow.triangle.2.circlepath", title: "Recurring transactions") {
                                         PremiumBadge()
                                     }
                                 }
@@ -91,7 +93,7 @@ struct SettingsView: View {
                         SettingsSectionHeader(title: "Preferences")
                         SettingsCard {
                             NavigationLink {
-                                CurrencyPickerView()
+                                CurrencyPickerView().hidesTabBar()
                             } label: {
                                 SettingsRow(icon: "dollarsign.circle", title: "Currency") {
                                     SettingsValueChevron(value: settings.currencyCode)
@@ -99,7 +101,7 @@ struct SettingsView: View {
                             }
                             SettingsDivider()
                             NavigationLink {
-                                ReminderView()
+                                ReminderView().hidesTabBar()
                             } label: {
                                 SettingsRow(icon: "bell", title: "Reminder") {
                                     SettingsValueChevron(value: settings.reminderFrequency.label)
@@ -107,7 +109,7 @@ struct SettingsView: View {
                             }
                             SettingsDivider()
                             NavigationLink {
-                                MonthStartDayView()
+                                MonthStartDayView().hidesTabBar()
                             } label: {
                                 SettingsRow(icon: "calendar", title: "Month start day") {
                                     SettingsValueChevron(value: ordinal(settings.monthStartDay))
@@ -191,6 +193,21 @@ struct SettingsView: View {
                             } label: {
                                 SettingsRow(icon: "rectangle.portrait.and.arrow.right", title: "Sign out", iconTint: AppColors.danger, titleColor: AppColors.danger)
                             }
+                            SettingsDivider()
+                            Button {
+                                showDeleteAccountConfirm = true
+                            } label: {
+                                SettingsRow(icon: "person.crop.circle.badge.xmark", title: "Delete account", iconTint: AppColors.danger, titleColor: AppColors.danger)
+                            }
+                        }
+
+                        SettingsSectionHeader(title: "Legal & support")
+                        SettingsCard {
+                            settingsLink("hand.raised", "Privacy policy", "https://clientvault.org/numera/privacy")
+                            SettingsDivider()
+                            settingsLink("doc.text", "Terms of use", "https://clientvault.org/numera/terms")
+                            SettingsDivider()
+                            settingsLink("questionmark.circle", "Support", "https://clientvault.org/numera/support")
                         }
 
                         Text("Numera — your money, clearly.")
@@ -226,15 +243,22 @@ struct SettingsView: View {
         } message: {
             Text("Deletes every transaction, budget, account, and custom category. Default categories are restored. This cannot be undone.")
         }
+        .confirmationDialog("Delete account?", isPresented: $showDeleteAccountConfirm, titleVisibility: .visible) {
+            Button("Delete account", role: .destructive) {
+                Haptics.warning()
+                Task {
+                    do { try await authManager.deleteAccount() }
+                    catch { store.errorMessage = "Couldn't delete your account. Please try again." }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This permanently deletes your account and all your data. This cannot be undone.")
+        }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
         }
         .manageSubscriptionsSheet(isPresented: $showManageSubscriptions)
-        .alert("Recurring transactions", isPresented: $showRecurringSoon) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("Coming soon — your Pro subscription will include it at launch.")
-        }
         .sheet(item: $exportItem) { item in
             ShareSheet(activityItems: [item.url])
                 .presentationDetents([.medium, .large])
@@ -338,6 +362,18 @@ struct SettingsView: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .ordinal
         return formatter.string(from: NSNumber(value: n)) ?? "\(n)"
+    }
+
+    // MARK: - Legal & support
+
+    private func settingsLink(_ icon: String, _ title: String, _ urlString: String) -> some View {
+        Link(destination: URL(string: urlString)!) {
+            SettingsRow(icon: icon, title: title) {
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(AppColors.textTertiary)
+            }
+        }
     }
 }
 

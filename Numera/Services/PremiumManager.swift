@@ -5,8 +5,8 @@ import StoreKit
 // always qualify as StoreKit.Transaction in this file.
 
 enum PremiumProduct: String, CaseIterable {
-    case monthly  = "org.clientvault.numera.pro.monthly"
-    case yearly   = "org.clientvault.numera.pro.yearly"
+    case monthly  = "org.clientvault.numera.pro.monthly.v2"
+    case yearly   = "org.clientvault.numera.pro.yearly.v2"
     case lifetime = "org.clientvault.numera.pro.lifetime"
 }
 

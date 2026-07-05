@@ -14,6 +14,7 @@ Apply these in order via **Supabase Dashboard → SQL Editor → New query**.
 | `20260703000000_create_categories.sql` | **Schema v2** — user-editable `categories` (emoji, color, kind, sort order) + default seed trigger + backfill |
 | `20260703000001_rewire_category_refs.sql` | **Schema v2** — `transactions.category_id` / `budgets.category_id` FKs, drops the `transaction_category` enum |
 | `20260703000002_accounts_emoji.sql` | **Schema v2** — `accounts.emoji` (replaces `sf_symbol`) + default "Main account" seed |
+| `20260706000000_create_recurring_rules.sql` | **Numera Pro** — `recurring_rules` (recurring transaction templates) + RLS + due-index |
 
 Run them one file at a time, top to bottom. Each depends on the previous.
 

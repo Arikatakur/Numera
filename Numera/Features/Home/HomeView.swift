@@ -8,9 +8,11 @@ struct HomeView: View {
     @Environment(AuthManager.self) private var authManager
     @Environment(DataStore.self) private var store
     @Environment(AppSettings.self) private var settings
+    @Environment(PremiumManager.self) private var premium
 
     @State private var pickedPeriod: Period?
     @State private var showMonthPicker = false
+    @State private var showPaywall = false
 
     private var period: Period { pickedPeriod ?? store.currentPeriod }
 
@@ -60,6 +62,9 @@ struct HomeView: View {
                 startDay: settings.monthStartDay,
                 earliest: store.transactions.last?.date
             )
+        }
+        .sheet(isPresented: $showPaywall) {
+            PaywallView()
         }
     }
 
@@ -207,6 +212,18 @@ struct HomeView: View {
 
     @ViewBuilder
     private var safeToSpendSection: some View {
+        if premium.isPremium {
+            unlockedSafeToSpendCard
+        } else {
+            PremiumLockCard(
+                title: "SAFE TO SPEND",
+                buttonTitle: "Unlock safe-to-spend",
+                height: 170
+            ) { showPaywall = true }
+        }
+    }
+
+    private var unlockedSafeToSpendCard: some View {
         NumeraCard(padding: AppSpacing.xl) {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 Text("SAFE TO SPEND")
@@ -311,4 +328,5 @@ struct HomeView: View {
         .environment(AuthManager())
         .environment(DataStore.preview())
         .environment(AppSettings.shared)
+        .environment(PremiumManager.preview(isPremium: true))
 }

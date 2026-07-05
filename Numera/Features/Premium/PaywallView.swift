@@ -10,9 +10,8 @@ struct PaywallView: View {
     @State private var selected: PremiumProduct = .yearly
     @State private var trialEligible = false
 
-    // Replace before App Store review: standard Apple EULA + a real privacy page.
-    private let termsURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
-    private let privacyURL = URL(string: "https://github.com/Arikatakur/Numera")!
+    private let termsURL = URL(string: "https://clientvault.org/numera/terms")!
+    private let privacyURL = URL(string: "https://clientvault.org/numera/privacy")!
 
     var body: some View {
         ZStack {
@@ -31,7 +30,7 @@ struct PaywallView: View {
 
                     VStack(alignment: .leading, spacing: AppSpacing.base) {
                         featureRow("Unlock budgeting", detail: "Monthly budget, category limits, safe to spend")
-                        featureRow("Recurring transactions", detail: "Auto-log rent, salary, subscriptions", soon: true)
+                        featureRow("Recurring transactions", detail: "Auto-log rent, salary, subscriptions")
                         featureRow("Export all your data", detail: "Full CSV export, anytime")
                         featureRow("Support Numera development 🫶", detail: nil)
                     }
@@ -105,26 +104,16 @@ struct PaywallView: View {
         .padding(.top, AppSpacing.xl)
     }
 
-    private func featureRow(_ title: String, detail: String?, soon: Bool = false) -> some View {
+    private func featureRow(_ title: String, detail: String?) -> some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 20))
                 .foregroundColor(AppColors.accent)
 
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(title)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(AppColors.textPrimary)
-                    if soon {
-                        Text("SOON")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(.black)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Capsule().fill(AppColors.warning))
-                    }
-                }
+                Text(title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(AppColors.textPrimary)
                 if let detail {
                     Text(detail)
                         .font(.system(size: 13))
