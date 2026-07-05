@@ -5,6 +5,21 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
+## [Unreleased]
+
+### Changed
+- Renamed the monthly/yearly Pro subscription product IDs to
+  `org.clientvault.numera.pro.monthly.v2` / `...yearly.v2` (App Store Connect
+  now uses `.v2` IDs for these two; lifetime is unchanged). Updated
+  `PremiumManager`, `Numera.storekit`, `HANDOFF.md`, and `appstore-review.md`
+  to match.
+- Home's **Safe to Spend** card is now Pro-gated, matching the Budget tab it
+  reports on: free users see a blurred `PremiumLockCard` ("Unlock
+  safe-to-spend") instead of real budget data; Pro users see the card
+  unchanged.
+
+---
+
 ## [0.11.0] — 2026-07-03
 
 Numera Pro subscriptions (StoreKit 2). Budgeting, recurring, and CSV export are premium.
