@@ -4,21 +4,26 @@ import Foundation
 //
 // CSV format (header row included on export, tolerated on import):
 //   date,type,category,account,title,note,amount,currency
-//   2026-07-03,expense,Food,Main account,Blue Wave Sushi,,245.00,USD
+//   03/07/2026,expense,Food,Main account,Blue Wave Sushi,,245.00,USD
+//
+// Import accepts DD/MM/YYYY (template default), YYYY-MM-DD (older exports),
+// and ISO-8601 timestamps.
 
 extension DataStore {
     // MARK: - Export
 
+    static let csvHeader = "date,type,category,account,title,note,amount,currency"
+
     /// Writes all transactions to a temp CSV file and returns its URL (for ShareLink).
     func exportCSVFile() -> URL? {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        let rowDate = DateFormatter()
+        rowDate.dateFormat = "dd/MM/yyyy"
+        rowDate.locale = Locale(identifier: "en_US_POSIX")
 
-        var lines = ["date,type,category,account,title,note,amount,currency"]
+        var lines = [Self.csvHeader]
         for tx in transactions.sorted(by: { $0.date < $1.date }) {
             let fields = [
-                dateFormatter.string(from: tx.date),
+                rowDate.string(from: tx.date),
                 tx.type.rawValue,
                 category(tx.categoryId)?.name ?? "",
                 account(tx.accountId)?.name ?? tx.accountName,
@@ -30,13 +35,45 @@ extension DataStore {
             lines.append(fields.map(Self.csvEscape).joined(separator: ","))
         }
 
+        return writeTempCSV(lines, prefix: "numera-export")
+    }
+
+    /// A ready-to-fill template: the header plus a few worked example rows using
+    /// the user's own account/categories and currency. Dates are DD/MM/YYYY.
+    func templateCSVFile() -> URL? {
+        let accountName = accounts.first?.name ?? "Main account"
+        let expenseCat = categories(of: .expense).first?.name ?? "Food"
+        let incomeCat = categories(of: .income).first?.name ?? "Salary"
+        let currency = settings.currencyCode
+
+        let rowDate = DateFormatter()
+        rowDate.dateFormat = "dd/MM/yyyy"
+        rowDate.locale = Locale(identifier: "en_US_POSIX")
+        let today = rowDate.string(from: .now)
+
+        let examples = [
+            [today, "expense", expenseCat, accountName, "Coffee & pastry", "Delete this row", "18.50", currency],
+            [today, "income", incomeCat, accountName, "Monthly salary", "", "9500.00", currency],
+            [today, "expense", "Transport", accountName, "Taxi home", "", "42.00", currency],
+        ]
+
+        var lines = [Self.csvHeader]
+        lines.append(contentsOf: examples.map { $0.map(Self.csvEscape).joined(separator: ",") })
+        return writeTempCSV(lines, prefix: "numera-import-template")
+    }
+
+    private func writeTempCSV(_ lines: [String], prefix: String) -> URL? {
+        let stamp = DateFormatter()
+        stamp.dateFormat = "yyyy-MM-dd"
+        stamp.locale = Locale(identifier: "en_US_POSIX")
+
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("numera-export-\(dateFormatter.string(from: .now)).csv")
+            .appendingPathComponent("\(prefix)-\(stamp.string(from: .now)).csv")
         do {
             try lines.joined(separator: "\n").write(to: url, atomically: true, encoding: .utf8)
             return url
         } catch {
-            fail("Couldn't create the export file.", error)
+            fail("Couldn't create the CSV file.", error)
             return nil
         }
     }
@@ -54,10 +91,6 @@ extension DataStore {
             return 0
         }
 
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
-
         var imported: [Transaction] = []
         for line in text.split(whereSeparator: \.isNewline) {
             let fields = Self.parseCSVLine(String(line))
@@ -65,14 +98,7 @@ extension DataStore {
             if fields[0].lowercased() == "date" { continue }  // header
 
             let rawDate = fields[0].trimmingCharacters(in: .whitespaces)
-            let date: Date
-            if let parsed = dateFormatter.date(from: rawDate) {
-                date = parsed
-            } else if rawDate.contains("T") {
-                date = SupaDate.parse(rawDate)
-            } else {
-                continue
-            }
+            guard let date = Self.parseCSVDate(rawDate) else { continue }
 
             guard let type = TransactionType(rawValue: fields[1].lowercased().trimmingCharacters(in: .whitespaces)),
                   let amount = Decimal(string: fields[6], locale: Locale(identifier: "en_US_POSIX")),
@@ -181,6 +207,19 @@ extension DataStore {
     }
 
     // MARK: - CSV parsing
+
+    /// Parses a CSV date cell. Accepts DD/MM/YYYY (template default),
+    /// YYYY-MM-DD (older exports), and ISO-8601 timestamps.
+    static func parseCSVDate(_ raw: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        for format in ["dd/MM/yyyy", "yyyy-MM-dd", "d/M/yyyy"] {
+            formatter.dateFormat = format
+            if let date = formatter.date(from: raw) { return date }
+        }
+        if raw.contains("T") { return SupaDate.parse(raw) }
+        return nil
+    }
 
     /// Minimal RFC-4180-ish line parser (quoted fields, doubled quotes).
     static func parseCSVLine(_ line: String) -> [String] {

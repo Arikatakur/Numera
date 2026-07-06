@@ -9,12 +9,7 @@ struct SettingsCard<Content: View>: View {
         VStack(spacing: 0) {
             content()
         }
-        .background(AppColors.surfaceCard)
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
-                .stroke(AppColors.borderSubtle, lineWidth: 1)
-        )
+        .glassSurface(cornerRadius: AppRadius.card)
     }
 }
 

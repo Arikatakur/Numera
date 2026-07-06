@@ -1,5 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 /// Settings hub — Quanto structure (General / Preferences / Privacy / Data /
 /// About) rendered with Numera's card language.
@@ -8,6 +7,8 @@ struct SettingsView: View {
     @Environment(DataStore.self) private var store
     @Environment(AppSettings.self) private var settings
     @Environment(PremiumManager.self) private var premium
+    @Environment(\.requestReview) private var requestReview
+    @Environment(\.openURL) private var openURL
 
     private struct ExportItem: Identifiable {
         let url: URL
@@ -17,9 +18,7 @@ struct SettingsView: View {
     @State private var showSignOutConfirm = false
     @State private var showEraseConfirm = false
     @State private var showDeleteAccountConfirm = false
-    @State private var showImporter = false
     @State private var exportItem: ExportItem?
-    @State private var importMessage: String?
     @State private var showPaywall = false
     @State private var showManageSubscriptions = false
 
@@ -165,8 +164,8 @@ struct SettingsView: View {
                                 }
                             }
                             SettingsDivider()
-                            Button {
-                                showImporter = true
+                            NavigationLink {
+                                ImportTransactionsView().hidesTabBar()
                             } label: {
                                 SettingsRow(icon: "square.and.arrow.down", title: "Import data (CSV)") {
                                     SettingsValueChevron()
@@ -201,7 +200,39 @@ struct SettingsView: View {
                             }
                         }
 
-                        SettingsSectionHeader(title: "Legal & support")
+                        SettingsSectionHeader(title: "Support & feedback")
+                        SettingsCard {
+                            Button {
+                                Haptics.tap()
+                                rateApp()
+                            } label: {
+                                SettingsRow(icon: "star", title: "Rate on App Store") {
+                                    SettingsValueChevron()
+                                }
+                            }
+                            SettingsDivider()
+                            forumRow("hand.thumbsup", "Help us improve", type: "improvement")
+                            SettingsDivider()
+                            forumRow("ladybug", "Report a bug", type: "bug")
+                            SettingsDivider()
+                            forumRow("lightbulb", "Feature request", type: "feature")
+                        }
+
+                        SettingsSectionHeader(title: "Other")
+                        SettingsCard {
+                            Button {
+                                Haptics.tap()
+                                openInstagram()
+                            } label: {
+                                SettingsRow(icon: "camera", title: "Follow creator on IG") {
+                                    Image(systemName: "arrow.up.right")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(AppColors.textTertiary)
+                                }
+                            }
+                        }
+
+                        SettingsSectionHeader(title: "Legal")
                         SettingsCard {
                             settingsLink("hand.raised", "Privacy policy", "https://clientvault.org/numera/privacy")
                             SettingsDivider()
@@ -210,11 +241,16 @@ struct SettingsView: View {
                             settingsLink("questionmark.circle", "Support", "https://clientvault.org/numera/support")
                         }
 
-                        Text("Numera — your money, clearly.")
-                            .font(.system(size: 13))
-                            .foregroundColor(AppColors.textTertiary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.top, AppSpacing.sm)
+                        VStack(spacing: 4) {
+                            Text("Numera — your money, clearly.")
+                                .font(.system(size: 13))
+                                .foregroundColor(AppColors.textTertiary)
+                            Text("Version \(AppInfo.versionString)")
+                                .font(.system(size: 12))
+                                .foregroundColor(AppColors.textTertiary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, AppSpacing.sm)
 
                         Spacer().frame(height: 120)
                     }
@@ -263,27 +299,35 @@ struct SettingsView: View {
             ShareSheet(activityItems: [item.url])
                 .presentationDetents([.medium, .large])
         }
-        .fileImporter(
-            isPresented: $showImporter,
-            allowedContentTypes: [.commaSeparatedText, .plainText],
-            allowsMultipleSelection: false
-        ) { result in
-            guard case .success(let urls) = result, let url = urls.first else { return }
-            Task {
-                let count = await store.importCSV(from: url)
-                if count > 0 {
-                    Haptics.success()
-                    importMessage = "Imported \(count) transaction\(count == 1 ? "" : "s")."
-                }
+    }
+
+    // MARK: - Support & feedback actions
+
+    private func rateApp() {
+        if !AppInfo.appStoreID.isEmpty,
+           let url = URL(string: "https://apps.apple.com/app/id\(AppInfo.appStoreID)?action=write-review") {
+            openURL(url)
+        } else {
+            requestReview()
+        }
+    }
+
+    private func forumRow(_ icon: String, _ title: String, type: String) -> some View {
+        Button {
+            Haptics.tap()
+            openURL(AppInfo.forumComposeURL(type: type))
+        } label: {
+            SettingsRow(icon: icon, title: title) {
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(AppColors.textTertiary)
             }
         }
-        .alert("Import complete", isPresented: Binding(
-            get: { importMessage != nil },
-            set: { if !$0 { importMessage = nil } }
-        )) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(importMessage ?? "")
+    }
+
+    private func openInstagram() {
+        openURL(AppInfo.instagramAppURL) { accepted in
+            if !accepted { openURL(AppInfo.instagramURL) }
         }
     }
 
@@ -375,17 +419,6 @@ struct SettingsView: View {
             }
         }
     }
-}
-
-/// UIActivityViewController wrapper for CSV export.
-private struct ShareSheet: UIViewControllerRepresentable {
-    let activityItems: [Any]
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
-    }
-
-    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 
 #Preview {

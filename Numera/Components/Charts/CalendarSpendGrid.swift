@@ -8,6 +8,8 @@ struct CalendarSpendGrid: View {
     let totals: [Date: Decimal]
     /// Calendar weekday unit: 1 = Sunday, 2 = Monday.
     let firstWeekday: Int
+    /// Tapped day handler. When set, every cell becomes a button.
+    var onSelectDay: ((Date) -> Void)? = nil
 
     @Environment(AppSettings.self) private var settings: AppSettings?
 
@@ -38,7 +40,17 @@ struct CalendarSpendGrid: View {
                 Color.clear.frame(height: 46)
             }
             ForEach(days, id: \.self) { day in
-                cell(day)
+                if let onSelectDay {
+                    Button {
+                        Haptics.select()
+                        onSelectDay(day)
+                    } label: {
+                        cell(day)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    cell(day)
+                }
             }
         }
     }
