@@ -115,7 +115,7 @@ struct AddTransactionView: View {
                 }
                 ToolbarItem(placement: .principal) {
                     Text(editing == nil ? "New Entry" : "Edit Entry")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -127,7 +127,7 @@ struct AddTransactionView: View {
                             }
                         }
                         Button("Save") { save() }
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(amount > 0 ? AppColors.accent : AppColors.textTertiary)
                             .disabled(amount <= 0)
                     }
@@ -207,7 +207,7 @@ struct AddTransactionView: View {
                     withAnimation(.easeInOut(duration: 0.2)) { transactionType = type }
                 } label: {
                     Text(type.label.uppercased())
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
                         .foregroundColor(transactionType == type ? .black : AppColors.textSecondary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
@@ -227,10 +227,10 @@ struct AddTransactionView: View {
     private var amountDisplay: some View {
         HStack(alignment: .firstTextBaseline, spacing: 4) {
             Text(settings.currencySymbol)
-                .font(.system(size: 28, weight: .bold))
+                .font(.system(size: 28, weight: .bold, design: .rounded))
                 .foregroundColor(AppColors.textSecondary)
             Text(amountString)
-                .font(.system(size: 56, weight: .bold))
+                .font(.system(size: 56, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .foregroundColor(AppColors.textPrimary)
                 .tracking(-1)
@@ -289,18 +289,18 @@ struct AddTransactionView: View {
     private func pillBody(icon: String?, emoji: String?, label: String) -> some View {
         HStack(spacing: 6) {
             if let emoji {
-                Text(emoji).font(.system(size: 13))
+                Text(emoji).font(.system(size: 13, design: .rounded))
             } else if let icon {
                 Image(systemName: icon)
-                    .font(.system(size: 13))
+                    .font(.system(size: 13, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
             }
             Text(label)
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 14, weight: .medium, design: .rounded))
                 .foregroundColor(AppColors.textPrimary)
                 .lineLimit(1)
             Image(systemName: "chevron.down")
-                .font(.system(size: 11))
+                .font(.system(size: 11, design: .rounded))
                 .foregroundColor(AppColors.textSecondary)
         }
         .padding(.horizontal, 14)
@@ -315,10 +315,10 @@ struct AddTransactionView: View {
     private var titleField: some View {
         HStack(spacing: AppSpacing.sm) {
             Image(systemName: "text.alignleft")
-                .font(.system(size: 15))
+                .font(.system(size: 15, design: .rounded))
                 .foregroundColor(AppColors.textTertiary)
             TextField("What was this for?", text: $titleText)
-                .font(.system(size: 15))
+                .font(.system(size: 15, design: .rounded))
                 .foregroundColor(AppColors.textPrimary)
                 .tint(AppColors.accent)
         }
@@ -365,7 +365,7 @@ struct AddTransactionView: View {
                     size: 58
                 )
                 Text(category.name)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
                     .foregroundColor(isSelected ? AppColors.textPrimary : AppColors.textSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -385,7 +385,7 @@ struct AddTransactionView: View {
                     handleKey(key)
                 } label: {
                     Text(key)
-                        .font(.system(size: 26, weight: .regular))
+                        .font(.system(size: 26, weight: .regular, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 62)
@@ -456,7 +456,7 @@ struct AddTransactionView: View {
                             HStack(spacing: AppSpacing.md) {
                                 Text(account.emoji)
                                 Text(account.name)
-                                    .font(.system(size: 16, weight: .medium))
+                                    .font(.system(size: 16, weight: .medium, design: .rounded))
                                     .foregroundColor(AppColors.textPrimary)
                                 Spacer()
                                 if activeAccount?.id == account.id {
@@ -506,7 +506,7 @@ struct AddTransactionView: View {
                                         size: 58
                                     )
                                     Text(category.name)
-                                        .font(.system(size: 12, weight: .medium))
+                                        .font(.system(size: 12, weight: .medium, design: .rounded))
                                         .foregroundColor(category.id == activeCategoryId ? AppColors.textPrimary : AppColors.textSecondary)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)

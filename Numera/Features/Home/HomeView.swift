@@ -77,10 +77,10 @@ struct HomeView: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(greeting)
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
                 Text("Your money, clearly.")
-                    .font(.system(size: 15))
+                    .font(.system(size: 15, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                     .padding(.top, 2)
             }
@@ -88,10 +88,10 @@ struct HomeView: View {
             Button { showMonthPicker = true } label: {
                 HStack(spacing: 4) {
                     Text(PeriodMath.monthLabel(period))
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
                 }
                 .padding(.horizontal, 12)
@@ -149,9 +149,9 @@ struct HomeView: View {
                     Button { onShowInsights() } label: {
                         HStack(spacing: 4) {
                             Text("View Insights")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.system(size: 11, weight: .semibold, design: .rounded))
                         }
                         .foregroundColor(AppColors.accent)
                     }
@@ -167,9 +167,9 @@ struct HomeView: View {
             HStack(spacing: AppSpacing.sm) {
                 HStack(spacing: 4) {
                     Image(systemName: isDown ? "arrow.down" : "arrow.up")
-                        .font(.system(size: 11, weight: .bold))
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
                     Text("\(abs(Int(change.rounded())))% \(isDown ? "less" : "more")")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
                 }
                 .foregroundColor(isDown ? .black : AppColors.textPrimary)
                 .padding(.horizontal, 10).padding(.vertical, 5)
@@ -177,12 +177,12 @@ struct HomeView: View {
                 .cornerRadius(AppRadius.pill)
 
                 Text("than last month")
-                    .font(.system(size: 13))
+                    .font(.system(size: 13, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
             }
         } else {
             Text("Spending this month")
-                .font(.system(size: 13))
+                .font(.system(size: 13, design: .rounded))
                 .foregroundColor(AppColors.textSecondary)
         }
     }
@@ -196,8 +196,14 @@ struct HomeView: View {
             } else {
                 DonutChart(segments: segments, lineWidth: 8)
             }
-            Text(top.first?.category.emoji ?? "✨")
-                .font(.system(size: 18))
+            if let emoji = top.first?.category.emoji {
+                Text(emoji)
+                    .font(.system(size: 18, design: .rounded))
+            } else {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundColor(AppColors.accent)
+            }
         }
         .frame(width: 72, height: 72)
     }
@@ -206,7 +212,7 @@ struct HomeView: View {
         HStack(spacing: 5) {
             Circle().fill(color).frame(width: 7, height: 7)
             Text(label)
-                .font(.system(size: 13))
+                .font(.system(size: 13, design: .rounded))
                 .foregroundColor(AppColors.textSecondary)
                 .lineLimit(1)
         }
@@ -235,37 +241,37 @@ struct HomeView: View {
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         MoneyText(amount: perDay, size: 36)
                         Text("/ day")
-                            .font(.system(size: 17))
+                            .font(.system(size: 17, design: .rounded))
                             .foregroundColor(AppColors.textSecondary)
                     }
 
                     Text("What's left of your monthly budget, split across the remaining days.")
-                        .font(.system(size: 14))
+                        .font(.system(size: 14, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
 
                     Button { onShowBudget() } label: {
                         HStack(spacing: 4) {
                             Text("Details")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold, design: .rounded))
                             Image(systemName: "arrow.right")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
                         }
                         .foregroundColor(AppColors.accent)
                     }
                     .padding(.top, AppSpacing.xs)
                 } else {
                     Text("No monthly budget yet")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
                     Text("Set one to see how much you can safely spend each day.")
-                        .font(.system(size: 14))
+                        .font(.system(size: 14, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
                     Button { onShowBudget() } label: {
                         HStack(spacing: 4) {
                             Text("Set budget")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold, design: .rounded))
                             Image(systemName: "arrow.right")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
                         }
                         .foregroundColor(AppColors.accent)
                     }
@@ -289,7 +295,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: AppSpacing.base) {
             HStack {
                 Text("Latest Activity")
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
                 Spacer()
                 Button { onShowActivity() } label: {
@@ -303,7 +309,7 @@ struct HomeView: View {
                     let recent = Array(store.transactions.prefix(3))
                     if recent.isEmpty {
                         Text("No transactions yet — tap + to add your first")
-                            .font(.system(size: 14))
+                            .font(.system(size: 14, design: .rounded))
                             .foregroundColor(AppColors.textTertiary)
                             .frame(maxWidth: .infinity)
                             .padding(AppSpacing.xl)

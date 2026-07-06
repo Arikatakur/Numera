@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Live analytics for the selected period: category donut + breakdown,
-/// income vs expenses history, income left, calendar heat grid, cash flow.
+/// Live analytics for the selected range (weekly / monthly / quarterly /
+/// yearly): category donut + breakdown, income vs expenses history, income
+/// left, calendar heat grid, cash flow.
 struct InsightsView: View {
     let onShowActivity: () -> Void
 
@@ -9,6 +10,7 @@ struct InsightsView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(PremiumManager.self) private var premium
 
+    @State private var unit: PeriodUnit = .month
     @State private var pickedPeriod: Period?
     @State private var showMonthPicker = false
     @State private var incomeLeftAsPercent = false
@@ -17,7 +19,7 @@ struct InsightsView: View {
 
     /// Donut segment picked by tapping the ring (index into `donutSegments`).
     @State private var selectedSegment: Int?
-    /// Month focused by tapping a bar — scoped to its own card, the rest of
+    /// Period focused by tapping a bar — scoped to its own card, the rest of
     /// the page keeps showing `period`.
     @State private var incomeExpensesFocus: Period?
     @State private var incomeLeftFocus: Period?
@@ -28,12 +30,37 @@ struct InsightsView: View {
         var id: TimeInterval { date.timeIntervalSince1970 }
     }
 
-    private var period: Period { pickedPeriod ?? store.currentPeriod }
-    private var totals: [CategoryTotal] { store.categoryTotals(in: period) }
-    private var series: [(period: Period, income: Decimal, expenses: Decimal)] {
-        store.monthlySeries(endingAt: period, count: 6)
+    private var period: Period {
+        if unit == .month { return pickedPeriod ?? store.currentPeriod }
+        return PeriodMath.period(
+            of: unit,
+            containing: .now,
+            startDay: settings.monthStartDay,
+            firstWeekday: settings.firstWeekday
+        )
     }
+
+    private var totals: [CategoryTotal] { store.categoryTotals(in: period) }
+
+    private var series: [(period: Period, income: Decimal, expenses: Decimal)] {
+        let count = unit == .year ? 5 : 6
+        return (0..<count).reversed().map { offset in
+            let p = shifted(period, by: -offset)
+            return (p, store.totalIncome(in: p), store.totalExpenses(in: p))
+        }
+    }
+
     private var hasData: Bool { !store.transactions(in: period).isEmpty }
+
+    private func shifted(_ p: Period, by amount: Int) -> Period {
+        PeriodMath.shift(
+            p,
+            by: amount,
+            unit: unit,
+            startDay: settings.monthStartDay,
+            firstWeekday: settings.firstWeekday
+        )
+    }
 
     var body: some View {
         NavigationStack {
@@ -42,7 +69,7 @@ struct InsightsView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: AppSpacing.lg) {
-                        PageTitle(text: "Insights")
+                        rangePicker
 
                         summaryDonutCard
 
@@ -50,7 +77,9 @@ struct InsightsView: View {
                             categoryBreakdown
                             incomeVsExpensesCard
                             incomeLeftCard
-                            calendarCard
+                            if unit == .month {
+                                calendarCard
+                            }
                             cashFlowCard
                             highestDayCard
                         } else {
@@ -73,17 +102,21 @@ struct InsightsView: View {
                         Spacer().frame(height: 80)
                     }
                     .padding(.horizontal, AppSpacing.screenMargin)
-                    .padding(.top, AppSpacing.sm)
+                    .padding(.top, AppSpacing.xs)
                 }
                 .refreshable { await store.bootstrap() }
             }
-            .navigationBarHidden(true)
+            .navigationTitle("Insights")
+            .navigationBarTitleDisplayMode(.large)
         }
-        // A new page month resets the per-card selections.
+        // A new page range resets the per-card selections.
         .onChange(of: period) { _, _ in
             selectedSegment = nil
             incomeExpensesFocus = nil
             incomeLeftFocus = nil
+        }
+        .onChange(of: unit) { _, _ in
+            Haptics.select()
         }
         .sheet(isPresented: $showMonthPicker) {
             SelectMonthSheet(
@@ -98,6 +131,18 @@ struct InsightsView: View {
         .sheet(item: $selectedDay) { selection in
             DayTransactionsSheet(date: selection.date)
         }
+    }
+
+    // MARK: - Range picker
+
+    /// Native segmented control (glassy on iOS 26) driving the whole page.
+    private var rangePicker: some View {
+        Picker("Range", selection: $unit) {
+            ForEach(PeriodUnit.allCases) { unit in
+                Text(unit.rawValue).tag(unit)
+            }
+        }
+        .pickerStyle(.segmented)
     }
 
     // MARK: - Summary donut
@@ -129,23 +174,21 @@ struct InsightsView: View {
                         )
                     }
 
-                    if let selected = selectedSegment, selected < donutSegments.count {
-                        selectedSegmentCenter(selected)
-                            .transition(.opacity.combined(with: .scale(scale: 0.94)))
-                    } else {
-                        VStack(spacing: 6) {
-                            Button { showMonthPicker = true } label: {
-                                HStack(spacing: 4) {
-                                    Text(monthTitle)
-                                        .font(.system(size: 15))
-                                        .foregroundColor(AppColors.textSecondary)
-                                    Image(systemName: "chevron.down")
-                                        .font(.system(size: 11, weight: .semibold))
-                                        .foregroundColor(AppColors.textTertiary)
-                                }
-                            }
-                            MoneyText(amount: store.totalExpenses(in: period), size: 34)
-                            changeBadge
+                    Group {
+                        if let selected = selectedSegment, selected < donutSegments.count {
+                            selectedSegmentCenter(selected)
+                                .transition(.opacity.combined(with: .scale(scale: 0.94)))
+                        } else {
+                            defaultDonutCenter
+                        }
+                    }
+                    // Absorb taps in the donut hole (so they can't select a
+                    // ring segment) and let a tap clear the selection.
+                    .frame(width: 196, height: 196)
+                    .contentShape(Circle())
+                    .onTapGesture {
+                        if selectedSegment != nil {
+                            withAnimation(.snappy(duration: 0.2)) { selectedSegment = nil }
                         }
                     }
                 }
@@ -155,8 +198,37 @@ struct InsightsView: View {
         }
     }
 
-    private var monthTitle: String {
-        period == store.currentPeriod ? "This month" : PeriodMath.monthLabel(period)
+    private var defaultDonutCenter: some View {
+        VStack(spacing: 6) {
+            if unit == .month {
+                Button { showMonthPicker = true } label: {
+                    HStack(spacing: 4) {
+                        Text(periodTitle)
+                            .font(.system(size: 15, design: .rounded))
+                            .foregroundColor(AppColors.textSecondary)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundColor(AppColors.textTertiary)
+                    }
+                }
+            } else {
+                Text(periodTitle)
+                    .font(.system(size: 15, design: .rounded))
+                    .foregroundColor(AppColors.textSecondary)
+            }
+            MoneyText(amount: store.totalExpenses(in: period), size: 34)
+            changeBadge
+        }
+    }
+
+    private var periodTitle: String {
+        PeriodMath.title(period, unit: unit)
+    }
+
+    /// "No data for this month" / "…for Q1 2026".
+    private var periodDescription: String {
+        let title = PeriodMath.title(period, unit: unit)
+        return title.hasPrefix("This") ? title.lowercased() : title
     }
 
     /// Donut center while a ring segment is selected: that category's spend.
@@ -167,39 +239,42 @@ struct InsightsView: View {
             if index < top.count {
                 let item = top[index]
                 Text(item.category.emoji)
-                    .font(.system(size: 26))
+                    .font(.system(size: 26, design: .rounded))
                 Text(item.category.name)
-                    .font(.system(size: 15))
+                    .font(.system(size: 15, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                     .lineLimit(1)
                 MoneyText(amount: item.total, size: 30)
                 Text("\(Int((item.share * 100).rounded()))% of spending")
-                    .font(.system(size: 12))
+                    .font(.system(size: 12, design: .rounded))
                     .foregroundColor(AppColors.textTertiary)
             } else {
                 let rest = totals.dropFirst(5)
                 Text("Other")
-                    .font(.system(size: 15))
+                    .font(.system(size: 15, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                 MoneyText(amount: rest.reduce(Decimal(0)) { $0 + $1.total }, size: 30)
                 Text("\(Int((rest.reduce(0.0) { $0 + $1.share } * 100).rounded()))% of spending")
-                    .font(.system(size: 12))
+                    .font(.system(size: 12, design: .rounded))
                     .foregroundColor(AppColors.textTertiary)
             }
         }
-        .padding(.horizontal, AppSpacing.xxl)
+        .padding(.horizontal, AppSpacing.xl)
     }
 
     @ViewBuilder
     private var changeBadge: some View {
-        if let change = store.expenseChange(in: period) {
+        let previous = shifted(period, by: -1)
+        let previousTotal = store.totalExpenses(in: previous)
+        if previousTotal > 0 {
+            let change = (((store.totalExpenses(in: period) - previousTotal) / previousTotal * 100) as NSDecimalNumber).doubleValue
             let isDown = change <= 0
-            let previousLabel = PeriodMath.shortLabel(store.shiftPeriod(period, by: -1))
+            let previousLabel = unit == .week ? "last week" : PeriodMath.shortLabel(previous, unit: unit)
             HStack(spacing: 4) {
                 Image(systemName: isDown ? "arrow.down.circle.fill" : "arrow.up.circle.fill")
-                    .font(.system(size: 13))
+                    .font(.system(size: 13, design: .rounded))
                 Text("\(abs(Int(change.rounded())))% from \(previousLabel)")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
             }
             .foregroundColor(isDown ? AppColors.accent : AppColors.expense)
         }
@@ -214,12 +289,12 @@ struct InsightsView: View {
                     EmojiIconTile(emoji: item.category.emoji, colorHex: item.category.colorHex, size: 44)
 
                     Text(item.category.name)
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
                         .lineLimit(1)
 
                     Text("\(item.count)")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
@@ -231,7 +306,7 @@ struct InsightsView: View {
                     MoneyText(amount: item.total, size: 15)
 
                     Text("\(Int((item.share * 100).rounded()))%")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .monospacedDigit()
                         .foregroundColor(AppColors.textSecondary)
                         .padding(.horizontal, 8)
@@ -252,7 +327,7 @@ struct InsightsView: View {
     // MARK: - Income vs expenses
 
     private var incomeVsExpensesCard: some View {
-        // Tapping a bar focuses that month within THIS card only — the legend
+        // Tapping a bar focuses that period within THIS card only — the legend
         // above follows it; the rest of the page stays on `period`.
         let focus = incomeExpensesFocus ?? period
         return NumeraCard {
@@ -261,13 +336,13 @@ struct InsightsView: View {
                     legendValue(color: AppColors.income, label: "Income", amount: store.totalIncome(in: focus))
                     legendValue(color: AppColors.chartPurple, label: "Expenses", amount: store.totalExpenses(in: focus))
                     Spacer()
-                    monthTag(focus)
+                    periodTag(focus)
                 }
 
                 MonthlyBarsChart(
                     groups: series.map { entry in
                         MonthlyBarGroup(
-                            label: PeriodMath.shortLabel(entry.period),
+                            label: PeriodMath.shortLabel(entry.period, unit: unit),
                             primary: (entry.income as NSDecimalNumber).doubleValue,
                             secondary: (entry.expenses as NSDecimalNumber).doubleValue,
                             isSelected: entry.period == focus
@@ -283,10 +358,10 @@ struct InsightsView: View {
         }
     }
 
-    /// Small capsule naming the month a card's numbers refer to.
-    private func monthTag(_ focus: Period) -> some View {
-        Text(PeriodMath.shortLabel(focus))
-            .font(.system(size: 13, weight: .semibold))
+    /// Small capsule naming the period a card's numbers refer to.
+    private func periodTag(_ focus: Period) -> some View {
+        Text(PeriodMath.shortLabel(focus, unit: unit))
+            .font(.system(size: 13, weight: .semibold, design: .rounded))
             .foregroundColor(AppColors.textSecondary)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
@@ -299,7 +374,7 @@ struct InsightsView: View {
             HStack(spacing: 6) {
                 Circle().fill(color).frame(width: 8, height: 8)
                 Text(label)
-                    .font(.system(size: 13))
+                    .font(.system(size: 13, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
             }
             MoneyText(amount: amount, size: 18)
@@ -317,10 +392,8 @@ struct InsightsView: View {
             VStack(alignment: .leading, spacing: AppSpacing.base) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(focus == store.currentPeriod
-                             ? "Income left this month"
-                             : "Income left in \(PeriodMath.shortLabel(focus))")
-                            .font(.system(size: 15))
+                        Text(incomeLeftTitle(for: focus))
+                            .font(.system(size: 15, design: .rounded))
                             .foregroundColor(AppColors.textSecondary)
                         if incomeLeftAsPercent {
                             Text(percentLeftText(net: net, income: income))
@@ -337,7 +410,7 @@ struct InsightsView: View {
                     groups: series.map { entry in
                         let leftover = (entry.income - entry.expenses) as NSDecimalNumber
                         return MonthlyBarGroup(
-                            label: PeriodMath.shortLabel(entry.period),
+                            label: PeriodMath.shortLabel(entry.period, unit: unit),
                             primary: max(0, leftover.doubleValue),
                             secondary: 0,
                             isSelected: entry.period == focus
@@ -352,6 +425,19 @@ struct InsightsView: View {
                 )
             }
         }
+    }
+
+    private func incomeLeftTitle(for focus: Period) -> String {
+        let noun: String
+        switch unit {
+        case .week:    noun = "week"
+        case .month:   noun = "month"
+        case .quarter: noun = "quarter"
+        case .year:    noun = "year"
+        }
+        return focus.contains(.now)
+            ? "Income left this \(noun)"
+            : "Income left in \(PeriodMath.shortLabel(focus, unit: unit))"
     }
 
     /// Share of income still unspent; overspending never shows a negative —
@@ -382,7 +468,7 @@ struct InsightsView: View {
             action()
         } label: {
             Text(symbol)
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 14, weight: .bold, design: .rounded))
                 .foregroundColor(isActive ? .black : AppColors.textSecondary)
                 .frame(width: 42, height: 32)
                 .background(isActive ? AppColors.accent : Color.clear)
@@ -392,21 +478,30 @@ struct InsightsView: View {
 
     // MARK: - Calendar
 
+    /// Solid (non-glass) container: the day cells inside are Liquid Glass, and
+    /// glass must not stack on glass.
     private var calendarCard: some View {
-        NumeraCard(padding: AppSpacing.base) {
-            VStack(alignment: .leading, spacing: AppSpacing.base) {
-                Text("CALENDAR")
-                    .labelCapsStyle()
-                    .padding(.top, AppSpacing.xs)
+        VStack(alignment: .leading, spacing: AppSpacing.base) {
+            Text("CALENDAR")
+                .labelCapsStyle()
+                .padding(.top, AppSpacing.xs)
 
-                CalendarSpendGrid(
-                    period: period,
-                    totals: Dictionary(uniqueKeysWithValues: store.dailyTotals(in: period).map { ($0.date, $0.total) }),
-                    firstWeekday: settings.firstWeekday,
-                    onSelectDay: { selectedDay = DaySelection(date: $0) }
-                )
-            }
+            CalendarSpendGrid(
+                period: period,
+                totals: Dictionary(uniqueKeysWithValues: store.dailyTotals(in: period).map { ($0.date, $0.total) }),
+                firstWeekday: settings.firstWeekday,
+                onSelectDay: { selectedDay = DaySelection(date: $0) }
+            )
         }
+        .padding(AppSpacing.base)
+        .background(
+            RoundedRectangle(cornerRadius: AppRadius.hero, style: .continuous)
+                .fill(AppColors.surfaceCard.opacity(0.55))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppRadius.hero, style: .continuous)
+                .stroke(AppColors.borderSubtle, lineWidth: 1)
+        )
     }
 
     // MARK: - Cash flow
@@ -438,7 +533,7 @@ struct InsightsView: View {
                     }
                     Spacer()
                     Text("Income − expenses")
-                        .font(.system(size: 12))
+                        .font(.system(size: 12, design: .rounded))
                         .foregroundColor(AppColors.textTertiary)
                 }
             }
@@ -451,7 +546,7 @@ struct InsightsView: View {
                 HStack(spacing: 5) {
                     Circle().fill(color).frame(width: 7, height: 7)
                     Text(label)
-                        .font(.system(size: 14))
+                        .font(.system(size: 14, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
                 }
                 Spacer()
@@ -478,11 +573,11 @@ struct InsightsView: View {
                         Text("HIGHEST SPENDING DAY")
                             .labelCapsStyle()
                         Text(fullDayLabel(highest.date))
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.system(size: 17, weight: .semibold, design: .rounded))
                             .foregroundColor(AppColors.textPrimary)
                         if let topName = topCategoryName(on: highest.date) {
                             Text("Mostly \(topName)")
-                                .font(.system(size: 13))
+                                .font(.system(size: 13, design: .rounded))
                                 .foregroundColor(AppColors.textSecondary)
                         }
                     }
@@ -495,7 +590,7 @@ struct InsightsView: View {
 
     private func fullDayLabel(_ date: Date) -> String {
         let fmt = DateFormatter()
-        fmt.dateFormat = "EEEE, MMM d"
+        fmt.dateFormat = unit == .year ? "EEEE, MMM d yyyy" : "EEEE, MMM d"
         return fmt.string(from: date)
     }
 
@@ -517,18 +612,18 @@ struct InsightsView: View {
         NumeraCard {
             VStack(spacing: AppSpacing.base) {
                 Image(systemName: "chart.pie")
-                    .font(.system(size: 34))
+                    .font(.system(size: 34, design: .rounded))
                     .foregroundColor(AppColors.textTertiary)
-                Text("No data for \(PeriodMath.monthLabel(period))")
-                    .font(.system(size: 17, weight: .semibold))
+                Text("No data for \(periodDescription)")
+                    .font(.system(size: 17, weight: .semibold, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
                 Text("Add transactions and your analytics will build themselves.")
-                    .font(.system(size: 14))
+                    .font(.system(size: 14, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                     .multilineTextAlignment(.center)
                 Button { onShowActivity() } label: {
                     Text("Go to Activity")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundColor(AppColors.accent)
                 }
             }

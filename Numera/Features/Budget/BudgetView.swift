@@ -42,8 +42,6 @@ struct BudgetView: View {
                 if premium.isPremium {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: AppSpacing.lg) {
-                            PageTitle(text: "Budget")
-
                             if let overall = store.overallBudget {
                                 overallCard(overall)
                             } else {
@@ -55,14 +53,15 @@ struct BudgetView: View {
                             Spacer().frame(height: 80)
                         }
                         .padding(.horizontal, AppSpacing.screenMargin)
-                        .padding(.top, AppSpacing.sm)
+                        .padding(.top, AppSpacing.xs)
                     }
                     .refreshable { await store.bootstrap() }
                 } else {
                     lockedView
                 }
             }
-            .navigationBarHidden(true)
+            .navigationTitle("Budget")
+            .navigationBarTitleDisplayMode(.large)
         }
         .sheet(item: $editorTarget) { target in
             BudgetEditSheet(target: target)
@@ -78,18 +77,16 @@ struct BudgetView: View {
     private var lockedView: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: AppSpacing.xl) {
-                PageTitle(text: "Budget")
-
                 ZStack {
                     BudgetRing(progress: 0.72, color: AppColors.accent, lineWidth: 14)
                     VStack(spacing: 5) {
                         Text("Left this month")
-                            .font(.system(size: 14))
+                            .font(.system(size: 14, design: .rounded))
                             .foregroundColor(AppColors.textSecondary)
                         Text("$1,320")
                             .moneyStyle(size: 32)
                         Text("$680 / $2,000")
-                            .font(.system(size: 13))
+                            .font(.system(size: 13, design: .rounded))
                             .monospacedDigit()
                             .foregroundColor(AppColors.textTertiary)
                     }
@@ -99,10 +96,10 @@ struct BudgetView: View {
 
                 VStack(spacing: AppSpacing.sm) {
                     Text("Budgeting")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
                     Text("Set limits to how much you want to spend on each category.")
-                        .font(.system(size: 15))
+                        .font(.system(size: 15, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
                         .multilineTextAlignment(.center)
                 }
@@ -129,22 +126,20 @@ struct BudgetView: View {
             : 0
         let remainingFraction = max(0, 1 - spentFraction)
 
-        return NumeraCard {
+        // The whole card opens the editor (which shows this card with the
+        // edit controls inside) — no pencil badge.
+        return Button {
+            editorTarget = .edit(overall)
+        } label: {
+            NumeraCard {
             VStack(spacing: AppSpacing.base) {
                 HStack {
                     Text(PeriodMath.monthLabel(period).uppercased())
                         .labelCapsStyle()
                     Spacer()
-                    Button {
-                        editorTarget = .edit(overall)
-                    } label: {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(AppColors.textSecondary)
-                            .frame(width: 34, height: 34)
-                            .background(Color.white.opacity(0.06))
-                            .clipShape(Circle())
-                    }
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundColor(AppColors.textTertiary)
                 }
 
                 ZStack {
@@ -155,7 +150,7 @@ struct BudgetView: View {
                     )
                     VStack(spacing: 5) {
                         Text("Left this month")
-                            .font(.system(size: 14))
+                            .font(.system(size: 14, design: .rounded))
                             .foregroundColor(AppColors.textSecondary)
                         MoneyText(
                             amount: remaining,
@@ -165,7 +160,7 @@ struct BudgetView: View {
                         HStack(spacing: 4) {
                             MoneyText(amount: spent, size: 13, color: AppColors.textSecondary)
                             Text("/")
-                                .font(.system(size: 13))
+                                .font(.system(size: 13, design: .rounded))
                                 .foregroundColor(AppColors.textTertiary)
                             MoneyText(amount: overall.amount, size: 13, color: AppColors.textSecondary)
                         }
@@ -174,6 +169,21 @@ struct BudgetView: View {
                 .frame(width: 210, height: 210)
                 .padding(.vertical, AppSpacing.sm)
             }
+            }
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button {
+                editorTarget = .edit(overall)
+            } label: {
+                Label("Edit budget", systemImage: "pencil")
+            }
+            Button(role: .destructive) {
+                Haptics.warning()
+                Task { await store.deleteBudget(id: overall.id) }
+            } label: {
+                Label("Remove budget", systemImage: "trash")
+            }
         }
     }
 
@@ -181,13 +191,13 @@ struct BudgetView: View {
         NumeraCard {
             VStack(spacing: AppSpacing.base) {
                 Image(systemName: "target")
-                    .font(.system(size: 34))
+                    .font(.system(size: 34, design: .rounded))
                     .foregroundColor(AppColors.accent)
                 Text("Budgeting")
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
                 Text("Set a monthly limit and see what's safe to spend every day.")
-                    .font(.system(size: 14))
+                    .font(.system(size: 14, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                     .multilineTextAlignment(.center)
                 PrimaryButton(title: "Set monthly budget") {
@@ -205,7 +215,7 @@ struct BudgetView: View {
     private var categoryGrid: some View {
         VStack(alignment: .leading, spacing: AppSpacing.base) {
             Text("Category limits")
-                .font(.system(size: 20, weight: .bold))
+                .font(.system(size: 20, weight: .bold, design: .rounded))
                 .foregroundColor(AppColors.textPrimary)
 
             let columns = [GridItem(.flexible(), spacing: AppSpacing.md), GridItem(.flexible(), spacing: AppSpacing.md)]
@@ -237,7 +247,7 @@ struct BudgetView: View {
                     )
                     .frame(width: 72, height: 72)
                     Text(category.emoji)
-                        .font(.system(size: 26))
+                        .font(.system(size: 26, design: .rounded))
                 }
 
                 VStack(spacing: 2) {
@@ -247,7 +257,7 @@ struct BudgetView: View {
                         color: remaining < 0 ? AppColors.expense : AppColors.textPrimary
                     )
                     Text(remaining < 0 ? "\(category.name) over" : "\(category.name) left")
-                        .font(.system(size: 12))
+                        .font(.system(size: 12, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
                         .lineLimit(1)
                 }
@@ -255,17 +265,6 @@ struct BudgetView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, AppSpacing.lg)
             .liquidGlass(cornerRadius: AppRadius.card)
-            .overlay(alignment: .topTrailing) {
-                // Editing affordance — the whole card opens the editor; this
-                // badge makes that discoverable.
-                Image(systemName: "pencil")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(AppColors.textSecondary)
-                    .frame(width: 26, height: 26)
-                    .background(Color.white.opacity(0.07), in: Circle())
-                    .padding(AppSpacing.sm)
-                    .allowsHitTesting(false)
-            }
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -289,12 +288,12 @@ struct BudgetView: View {
         } label: {
             VStack(spacing: AppSpacing.md) {
                 Image(systemName: "plus")
-                    .font(.system(size: 24, weight: .semibold))
+                    .font(.system(size: 24, weight: .semibold, design: .rounded))
                     .foregroundColor(AppColors.accent)
                     .frame(width: 72, height: 72)
                     .background(Circle().fill(AppColors.accent.opacity(0.12)))
                 Text("Add limit")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
             }
             .frame(maxWidth: .infinity)
@@ -321,6 +320,7 @@ struct BudgetEditSheet: View {
     @State private var amountText: String
     @State private var selectedCategoryId: UUID?
     @State private var showDeleteConfirm = false
+    @FocusState private var amountFocused: Bool
 
     init(target: BudgetView.EditorTarget) {
         self.target = target
@@ -368,31 +368,36 @@ struct BudgetEditSheet: View {
             ZStack {
                 AppColors.background.ignoresSafeArea()
 
-                VStack(spacing: AppSpacing.xl) {
-                    if !isOverall {
-                        categoryPicker
-                    }
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: AppSpacing.lg) {
+                        // The budget card itself, editing inline: the ring
+                        // preview follows the amount as you type.
+                        cardPreview
 
-                    amountField
+                        if !isOverall {
+                            categoryPicker
+                        }
 
-                    PrimaryButton(title: "Save") { save() }
-                        .opacity(canSave ? 1 : 0.4)
-                        .disabled(!canSave)
+                        amountField
 
-                    if case .edit(let budget) = target {
-                        Button {
-                            showDeleteConfirm = true
-                        } label: {
-                            Text(budget.categoryId == nil ? "Remove monthly budget" : "Remove limit")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(AppColors.danger)
+                        PrimaryButton(title: "Save") { save() }
+                            .opacity(canSave ? 1 : 0.4)
+                            .disabled(!canSave)
+
+                        if case .edit(let budget) = target {
+                            Button {
+                                showDeleteConfirm = true
+                            } label: {
+                                Text(budget.categoryId == nil ? "Remove monthly budget" : "Remove limit")
+                                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                    .foregroundColor(AppColors.danger)
+                            }
                         }
                     }
-
-                    Spacer()
+                    .padding(.horizontal, AppSpacing.screenMargin)
+                    .padding(.top, AppSpacing.base)
+                    .padding(.bottom, AppSpacing.xl)
                 }
-                .padding(.horizontal, AppSpacing.screenMargin)
-                .padding(.top, AppSpacing.xl)
             }
             .navigationTitle(isOverall ? "Monthly budget" : "Category limit")
             .navigationBarTitleDisplayMode(.inline)
@@ -404,7 +409,15 @@ struct BudgetEditSheet: View {
             }
         }
         .preferredColorScheme(.dark)
-        .presentationDetents([.height(isOverall ? 320 : 400)])
+        .presentationDetents([.height(isOverall ? 560 : 620), .large])
+        .presentationDragIndicator(.visible)
+        .onAppear {
+            // New budgets go straight to typing; editing shows the card first.
+            switch target {
+            case .edit: break
+            case .overall, .newCategory: amountFocused = true
+            }
+        }
         .confirmationDialog("Remove this budget?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
             Button("Remove", role: .destructive) {
                 if case .edit(let budget) = target {
@@ -415,6 +428,80 @@ struct BudgetEditSheet: View {
             }
             Button("Cancel", role: .cancel) {}
         }
+    }
+
+    // MARK: - Card preview (the card, editing inside)
+
+    /// Live version of the tapped budget card: same ring, same numbers,
+    /// recomputed from the amount field as you type.
+    @ViewBuilder
+    private var cardPreview: some View {
+        let period = store.currentPeriod
+        if isOverall {
+            let spent = store.totalExpenses(in: period)
+            ringPreview(
+                spent: spent,
+                limit: amount,
+                color: AppColors.accent,
+                emoji: nil,
+                caption: "Left this month"
+            )
+        } else if let category = store.category(activeCategoryId) {
+            let spent = store.spent(categoryId: category.id, in: period)
+            ringPreview(
+                spent: spent,
+                limit: amount,
+                color: Color(hex: category.colorHex),
+                emoji: category.emoji,
+                caption: "\(category.name) left"
+            )
+        }
+    }
+
+    private func ringPreview(spent: Decimal, limit: Decimal, color: Color, emoji: String?, caption: String) -> some View {
+        let remaining = limit - spent
+        let spentFraction = limit > 0 ? ((spent / limit) as NSDecimalNumber).doubleValue : 1
+        let remainingFraction = max(0, 1 - spentFraction)
+
+        return VStack(spacing: AppSpacing.md) {
+            ZStack {
+                BudgetRing(
+                    progress: remainingFraction,
+                    color: remaining < 0 ? AppColors.danger : color,
+                    lineWidth: 10
+                )
+                .frame(width: 132, height: 132)
+
+                VStack(spacing: 3) {
+                    if let emoji {
+                        Text(emoji)
+                            .font(.system(size: 22, design: .rounded))
+                    }
+                    MoneyText(
+                        amount: remaining,
+                        size: 22,
+                        color: remaining < 0 ? AppColors.expense : AppColors.textPrimary
+                    )
+                }
+            }
+
+            VStack(spacing: 2) {
+                Text(remaining < 0 ? caption.replacingOccurrences(of: " left", with: " over") : caption)
+                    .font(.system(size: 13, design: .rounded))
+                    .foregroundColor(AppColors.textSecondary)
+                HStack(spacing: 4) {
+                    MoneyText(amount: spent, size: 12, color: AppColors.textTertiary)
+                    Text("/")
+                        .font(.system(size: 12, design: .rounded))
+                        .foregroundColor(AppColors.textTertiary)
+                    MoneyText(amount: max(0, limit), size: 12, color: AppColors.textTertiary)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, AppSpacing.lg)
+        .liquidGlass(cornerRadius: AppRadius.card)
+        .animation(.snappy(duration: 0.25), value: amountText)
     }
 
     private var categoryPicker: some View {
@@ -439,17 +526,17 @@ struct BudgetEditSheet: View {
                 if let category = store.category(activeCategoryId) {
                     EmojiIconTile(emoji: category.emoji, colorHex: category.colorHex, size: 40)
                     Text(category.name)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
                 } else {
                     Text("Pick a category")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
                 }
                 Spacer()
                 if !isLocked {
                     Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 13))
+                        .font(.system(size: 13, design: .rounded))
                         .foregroundColor(AppColors.textTertiary)
                 }
             }
@@ -462,11 +549,12 @@ struct BudgetEditSheet: View {
     private var amountField: some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text(settings.currencySymbol)
-                .font(.system(size: 26, weight: .bold))
+                .font(.system(size: 26, weight: .bold, design: .rounded))
                 .foregroundColor(AppColors.textSecondary)
             TextField("0", text: $amountText)
                 .keyboardType(.decimalPad)
-                .font(.system(size: 44, weight: .bold))
+                .focused($amountFocused)
+                .font(.system(size: 44, weight: .bold, design: .rounded))
                 .monospacedDigit()
                 .foregroundColor(AppColors.textPrimary)
                 .tint(AppColors.accent)

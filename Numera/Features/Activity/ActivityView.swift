@@ -60,26 +60,35 @@ struct ActivityView: View {
 
     // MARK: - Filtering
 
+    private func matchesFilters(_ tx: Transaction) -> Bool {
+        let matchesType: Bool = {
+            switch typeFilter {
+            case .expenses: return tx.type == .expense
+            case .income:   return tx.type == .income
+            case .all:      return true
+            }
+        }()
+        let matchesAccount = accountFilter == nil || tx.accountId == accountFilter
+        let matchesCategory = categoryFilter == nil || tx.categoryId == categoryFilter
+        let matchesSearch = searchText.isEmpty
+            || tx.title.localizedCaseInsensitiveContains(searchText)
+            || (tx.note ?? "").localizedCaseInsensitiveContains(searchText)
+        return matchesType && matchesAccount && matchesCategory && matchesSearch
+    }
+
+    /// Whole history (Quanto-style): the list keeps scrolling into previous
+    /// months — only the filters apply, not the selected month.
     private var filtered: [Transaction] {
-        store.transactions(in: period).filter { tx in
-            let matchesType: Bool = {
-                switch typeFilter {
-                case .expenses: return tx.type == .expense
-                case .income:   return tx.type == .income
-                case .all:      return true
-                }
-            }()
-            let matchesAccount = accountFilter == nil || tx.accountId == accountFilter
-            let matchesCategory = categoryFilter == nil || tx.categoryId == categoryFilter
-            let matchesSearch = searchText.isEmpty
-                || tx.title.localizedCaseInsensitiveContains(searchText)
-                || (tx.note ?? "").localizedCaseInsensitiveContains(searchText)
-            return matchesType && matchesAccount && matchesCategory && matchesSearch
-        }
+        store.transactions.filter(matchesFilters)
+    }
+
+    /// Selected month only — drives the hero total and the day-bars chart.
+    private var periodFiltered: [Transaction] {
+        store.transactions(in: period).filter(matchesFilters)
     }
 
     private var focusTotal: Decimal {
-        filtered.filter { $0.type == focusType }.reduce(0) { $0 + $1.amount }
+        periodFiltered.filter { $0.type == focusType }.reduce(0) { $0 + $1.amount }
     }
 
     private var grouped: [(day: Date, label: String, total: Decimal, txs: [Transaction])] {
@@ -97,7 +106,8 @@ struct ActivityView: View {
         if calendar.isDateInToday(day) { return "Today" }
         if calendar.isDateInYesterday(day) { return "Yesterday" }
         let fmt = DateFormatter()
-        fmt.dateFormat = "EEEE, d MMM"
+        let sameYear = calendar.component(.year, from: day) == calendar.component(.year, from: .now)
+        fmt.dateFormat = sameYear ? "EEEE, d MMM" : "EEEE, d MMM yyyy"
         return fmt.string(from: day)
     }
 
@@ -108,10 +118,10 @@ struct ActivityView: View {
             Button { showMonthPicker = true } label: {
                 HStack(spacing: 5) {
                     Text(PeriodMath.monthLabel(period))
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundColor(AppColors.textTertiary)
                 }
             }
@@ -126,7 +136,7 @@ struct ActivityView: View {
 
     private var chartValues: [Double] {
         let calendar = Calendar.current
-        let relevant = filtered.filter { $0.type == focusType }
+        let relevant = periodFiltered.filter { $0.type == focusType }
         let byDay = Dictionary(grouping: relevant) { calendar.startOfDay(for: $0.date) }
         return PeriodMath.days(in: period).map { day in
             let total = byDay[day]?.reduce(Decimal(0)) { $0 + $1.amount } ?? 0
@@ -158,7 +168,7 @@ struct ActivityView: View {
 
     @ViewBuilder
     private var chart: some View {
-        if filtered.isEmpty && searchText.isEmpty {
+        if periodFiltered.isEmpty && searchText.isEmpty {
             EmptyView()
         } else {
             DayBarsChart(
@@ -188,7 +198,7 @@ struct ActivityView: View {
                     }
                 } label: {
                     let icon = Image(systemName: "magnifyingglass")
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
                         .foregroundColor(searchActive ? .black : AppColors.textPrimary)
                         .frame(width: 38, height: 38)
                     if searchActive {
@@ -249,10 +259,10 @@ struct ActivityView: View {
     private func filterChip(_ label: String, highlighted: Bool) -> some View {
         HStack(spacing: 5) {
             Text(label)
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 14, weight: .medium, design: .rounded))
                 .lineLimit(1)
             Image(systemName: "chevron.down")
-                .font(.system(size: 10, weight: .semibold))
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
         }
         .foregroundColor(AppColors.textPrimary)
         .padding(.horizontal, 14)
@@ -267,9 +277,9 @@ struct ActivityView: View {
         HStack(spacing: AppSpacing.sm) {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(AppColors.textTertiary)
-                .font(.system(size: 15))
+                .font(.system(size: 15, design: .rounded))
             TextField("Search transactions", text: $searchText)
-                .font(.system(size: 15))
+                .font(.system(size: 15, design: .rounded))
                 .foregroundColor(AppColors.textPrimary)
                 .tint(AppColors.accent)
                 .autocorrectionDisabled()
@@ -288,26 +298,27 @@ struct ActivityView: View {
         if grouped.isEmpty {
             VStack(spacing: AppSpacing.base) {
                 Image(systemName: searchText.isEmpty ? "tray" : "magnifyingglass")
-                    .font(.system(size: 36))
+                    .font(.system(size: 36, design: .rounded))
                     .foregroundColor(AppColors.textTertiary)
                 Text(searchText.isEmpty ? "Nothing here yet" : "No results")
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                 if searchText.isEmpty {
-                    Text("Tap + to add a transaction for \(PeriodMath.monthLabel(period)).")
-                        .font(.system(size: 14))
+                    Text("Tap + to add your first transaction.")
+                        .font(.system(size: 14, design: .rounded))
                         .foregroundColor(AppColors.textTertiary)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.top, AppSpacing.xxl)
         } else {
-            VStack(spacing: AppSpacing.lg) {
+            // Lazy: the list now spans the whole history, not one month.
+            LazyVStack(spacing: AppSpacing.lg) {
                 ForEach(grouped, id: \.day) { group in
                     VStack(alignment: .leading, spacing: AppSpacing.sm) {
                         HStack {
                             Text(group.label)
-                                .font(.system(size: 15))
+                                .font(.system(size: 15, design: .rounded))
                                 .foregroundColor(AppColors.textSecondary)
                             Spacer()
                             if group.total > 0 {

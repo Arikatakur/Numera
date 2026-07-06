@@ -48,12 +48,12 @@ struct SettingsRow<Trailing: View>: View {
                         .foregroundColor(iconTint)
                 } else {
                     Image(systemName: icon)
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
                         .foregroundColor(iconTint)
                 }
             }
             Text(title)
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: 16, weight: .medium, design: .rounded))
                 .foregroundColor(titleColor)
                 .lineLimit(1)
             Spacer(minLength: AppSpacing.sm)
@@ -92,11 +92,11 @@ struct SettingsValueChevron: View {
         HStack(spacing: 6) {
             if !value.isEmpty {
                 Text(value)
-                    .font(.system(size: 15))
+                    .font(.system(size: 15, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
             }
             Image(systemName: "chevron.right")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundColor(AppColors.textTertiary)
         }
     }
@@ -108,7 +108,7 @@ struct SettingsSectionHeader: View {
 
     var body: some View {
         Text(title)
-            .font(.system(size: 15))
+            .font(.system(size: 15, design: .rounded))
             .foregroundColor(AppColors.textSecondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, AppSpacing.xs)

@@ -23,12 +23,12 @@ struct WelcomeView: View {
                         .frame(height: 44)
 
                     Text("NUMERA")
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
                         .kerning(5)
                         .foregroundColor(AppColors.textPrimary)
 
                     Text("Understand your money.")
-                        .font(.system(size: 14))
+                        .font(.system(size: 14, design: .rounded))
                         .kerning(0.5)
                         .foregroundColor(AppColors.textSecondary.opacity(0.65))
                 }
@@ -39,7 +39,7 @@ struct WelcomeView: View {
                 VStack(spacing: 12) {
                     if let error = errorMessage {
                         Text(error)
-                            .font(.system(size: 13))
+                            .font(.system(size: 13, design: .rounded))
                             .foregroundColor(AppColors.expense)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, AppSpacing.sm)
@@ -60,7 +60,7 @@ struct WelcomeView: View {
                         showEmailAuth = true
                     } label: {
                         Label("Continue with Email", systemImage: "envelope")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
                             .foregroundColor(AppColors.textPrimary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 52)
@@ -72,7 +72,7 @@ struct WelcomeView: View {
                 .padding(.horizontal, AppSpacing.screenMargin)
 
                 Text("Your data stays private. No tracking by default.")
-                    .font(.system(size: 12))
+                    .font(.system(size: 12, design: .rounded))
                     .foregroundColor(AppColors.textTertiary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, AppSpacing.xl)

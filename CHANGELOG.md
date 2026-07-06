@@ -5,6 +5,38 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
+## [0.14.0] — 2026-07-06
+
+Apple-native everywhere: SF Rounded (Quanto) type, real Swift Charts, native large titles, an Insights range selector (weekly → yearly), full activity history, glassy calendar days, budget editing inside the card, and an instant (+) button.
+
+### Added
+- **Insights range selector.** A native segmented control (Weekly / Monthly / Quarterly / Yearly) at the top of Insights drives every card. New `PeriodUnit` + unit-aware `PeriodMath.period(of:containing:)`, `shift(_:by:unit:)`, `title(_:unit:)`, `shortLabel(_:unit:)` (weeks respect the first-day-of-week setting; months keep the month-start day; quarters/years use calendar boundaries). The history charts show the last 6 weeks/months/quarters (5 years); the month picker and calendar apply to Monthly; the change badge compares against the previous week/month/quarter/year.
+- **"How we calculate the average" sheet.** Tapping the average value on the Activity chart opens a Quanto-style bottom sheet (wave-over-dash glyph, one-paragraph explanation, white "Got it" pill) — `AverageInfoSheet` in `DayBarsChart.swift`. The ⓘ badge is gone; the label is just the number, per the reference screenshots.
+- **Full activity history.** The Activity list now shows every month (grouped by day, lazily rendered), not just the selected one — the month picker still drives the hero total and chart. Day headers outside the current year include the year. `SelectMonthSheet` always offers years back to **2020** (further if older data exists).
+- **Budget editing inside the card.** Tapping a budget card (overall or category limit) opens the editor sheet with the card itself at the top — a live ring preview that re-renders from the amount field as you type — plus the amount, Save, and Remove inside. Pencil badges/buttons removed everywhere; the overall card is now fully tappable with an edit/remove context menu.
+
+### Changed
+- **SF Pro Rounded everywhere (the Quanto look).** `AppTypography` switched from the `PlusJakartaSans` custom fonts — which were never registered and silently fell back to plain SF — to the system **rounded** design. Every `.system(size:)` call in the app now passes `design: .rounded`, the root view sets `.fontDesign(.rounded)`, and `UINavigationBar` large/inline titles adopt SF Rounded via appearance attributes (fonts only — bar backgrounds untouched so iOS 26 keeps its automatic glass).
+- **Native Swift Charts.** All graphs rebuilt on Apple's Charts framework, themed to Numera only:
+  - `DayBarsChart` — `BarMark` day bars (rounded, thin, dimmed stubs on empty days), dashed `RuleMark` average with its value as a trailing annotation, clean right-axis `0` / niced-max labels, sparse single-line day labels.
+  - `MonthlyBarsChart` — grouped income/expense `BarMark` pairs (`.position(by:)`), native `.chartXSelection` bar taps, the selected period's axis label highlighted in a capsule, explicit category-order domain.
+  - `DonutChart` — `SectorMark` ring with rounded caps and angular insets, native `.chartAngleSelection` segment taps, and the empty track drawn in `chartBackground` aligned to the plot frame. The Insights donut hole absorbs taps (clears the selection) so center taps can't select a slice.
+- **Native large titles.** Insights, Budget, and Settings use `.navigationTitle` large titles that collapse into the system (glass on iOS 26) bar on scroll, like stock Apple apps.
+- **Glassy calendar days.** `CalendarSpendGrid` cells are interactive Liquid Glass blended in one `LiquidGlassGroup`; today is accent-tinted glass. The calendar card container switched to a solid subtle card (glass must not stack on glass).
+- **What's New card refresh.** Emoji tiles (🚀 ✨ 🔁 …) replaced with SF Symbols on mint tiles; contents updated for 0.14. Home's mini-donut ✨ fallback is now an SF sparkles symbol.
+- TestFlight notes (`fastlane/changelog.txt`) rewritten for this build.
+
+### Fixed
+- **Laggy floating (+).** The add sheet's state moved into a tiny `AddTransactionFAB` view, so tapping (+) no longer re-renders the whole `TabView` tree first — on Insights that recomputation delayed the sheet noticeably.
+- **Calendar day numbers overflowing.** Day cells are fixed-height with scaling amount text (min 0.5×), so a day gaining data can no longer grow the card or push digits out of bounds.
+- **Wrapping axis day labels.** Two-digit day labels (16 / 23 / 30) can no longer wrap vertically — native `AxisValueLabel`s render on one line (replaces the old manual `fixedSize` workaround).
+
+### Removed
+- `Components/PageTitle.swift` — replaced by native large titles.
+- `PlusJakartaSans` font references (dead: fonts were never bundled/registered).
+
+---
+
 ## [0.13.0] — 2026-07-06
 
 Native Apple chrome + chart interactivity: system tab bar, interactive Liquid Glass on controls, per-card month focus in Insights, and alignment/percent fixes.

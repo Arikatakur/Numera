@@ -24,7 +24,7 @@ struct ImportTransactionsView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: AppSpacing.lg) {
                     Text("Import your data using the template below.")
-                        .font(.system(size: 15))
+                        .font(.system(size: 15, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
 
                     SettingsCard {
@@ -90,10 +90,10 @@ struct ImportTransactionsView: View {
 
     private var hint: some View {
         (
-            Text("Hint: ").font(.system(size: 15, weight: .semibold)).foregroundColor(AppColors.textPrimary)
+            Text("Hint: ").font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundColor(AppColors.textPrimary)
             + Text("Make sure dates are written as DD/MM/YYYY").foregroundColor(AppColors.textSecondary)
         )
-        .font(.system(size: 15))
+        .font(.system(size: 15, design: .rounded))
         .fixedSize(horizontal: false, vertical: true)
     }
 }

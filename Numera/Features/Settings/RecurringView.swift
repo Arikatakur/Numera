@@ -26,7 +26,7 @@ struct RecurringView: View {
                         .padding(.horizontal, AppSpacing.screenMargin)
 
                         Text("Recurring entries are added automatically when they come due.")
-                            .font(.system(size: 13))
+                            .font(.system(size: 13, design: .rounded))
                             .foregroundColor(AppColors.textTertiary)
                             .frame(maxWidth: .infinity)
                             .padding(.horizontal, AppSpacing.screenMargin)
@@ -48,11 +48,11 @@ struct RecurringView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(rule.title)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
                     .foregroundColor(rule.isActive ? AppColors.textPrimary : AppColors.textTertiary)
                     .lineLimit(1)
                 Text(subtitle(rule))
-                    .font(.system(size: 13))
+                    .font(.system(size: 13, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                     .lineLimit(1)
             }
@@ -76,7 +76,7 @@ struct RecurringView: View {
                 }
             } label: {
                 Image(systemName: "ellipsis")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                     .frame(width: 32, height: 32)
             }
@@ -113,13 +113,13 @@ struct RecurringView: View {
     private var emptyState: some View {
         VStack(spacing: AppSpacing.base) {
             Image(systemName: "arrow.triangle.2.circlepath")
-                .font(.system(size: 44))
+                .font(.system(size: 44, design: .rounded))
                 .foregroundColor(AppColors.textTertiary)
             Text("No recurring transactions")
-                .font(.system(size: 17, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold, design: .rounded))
                 .foregroundColor(AppColors.textPrimary)
             Text("Add one by choosing Repeat when you create an entry.")
-                .font(.system(size: 14))
+                .font(.system(size: 14, design: .rounded))
                 .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, AppSpacing.xl)

@@ -7,7 +7,7 @@ struct PrimaryButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 16, weight: .bold))
+                .font(.system(size: 16, weight: .bold, design: .rounded))
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
@@ -29,7 +29,7 @@ struct FloatingAddButton: View {
             action()
         } label: {
             Image(systemName: "plus")
-                .font(.system(size: 24, weight: .semibold))
+                .font(.system(size: 24, weight: .semibold, design: .rounded))
                 .foregroundColor(.black)
                 .frame(width: 60, height: 60)
                 .liquidGlassControl(Circle(), tint: AppColors.accent, fallbackFill: AppColors.accent)
@@ -52,7 +52,7 @@ struct FloatingPillButton: View {
             action()
         } label: {
             Text(title)
-                .font(.system(size: 16, weight: .bold))
+                .font(.system(size: 16, weight: .bold, design: .rounded))
                 .foregroundColor(.black)
                 .padding(.horizontal, 28)
                 .padding(.vertical, 15)
@@ -70,7 +70,7 @@ struct CategoryChip: View {
 
     var body: some View {
         let text = Text(label)
-            .font(.system(size: 13, weight: .semibold))
+            .font(.system(size: 13, weight: .semibold, design: .rounded))
             .foregroundColor(isSelected ? .black : AppColors.textPrimary)
             .padding(.horizontal, 14)
             .padding(.vertical, 7)

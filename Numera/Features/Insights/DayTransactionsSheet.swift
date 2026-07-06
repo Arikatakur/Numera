@@ -86,7 +86,7 @@ struct DayTransactionsSheet: View {
             HStack(spacing: 6) {
                 Circle().fill(color).frame(width: 8, height: 8)
                 Text(label)
-                    .font(.system(size: 13))
+                    .font(.system(size: 13, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
             }
             MoneyText(amount: amount, size: 20)
@@ -125,13 +125,13 @@ struct DayTransactionsSheet: View {
     private var emptyState: some View {
         VStack(spacing: AppSpacing.base) {
             Image(systemName: "tray")
-                .font(.system(size: 40))
+                .font(.system(size: 40, design: .rounded))
                 .foregroundColor(AppColors.textTertiary)
             Text("No transactions")
-                .font(.system(size: 17, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold, design: .rounded))
                 .foregroundColor(AppColors.textPrimary)
             Text("Nothing was logged on this day.")
-                .font(.system(size: 14))
+                .font(.system(size: 14, design: .rounded))
                 .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
         }

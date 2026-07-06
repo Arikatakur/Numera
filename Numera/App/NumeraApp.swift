@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 @main
 struct NumeraApp: App {
@@ -7,6 +8,22 @@ struct NumeraApp: App {
     @State private var dataStore      = DataStore()
     @State private var premiumManager = PremiumManager()
     @State private var showLaunch     = true
+
+    init() {
+        // SF Rounded for navigation titles, matching the app's rounded type.
+        // Fonts only — backgrounds are untouched so the system bars keep
+        // their automatic Liquid Glass on iOS 26.
+        let large = UIFont.systemFont(ofSize: 34, weight: .bold)
+        if let descriptor = large.fontDescriptor.withDesign(.rounded) {
+            UINavigationBar.appearance().largeTitleTextAttributes =
+                [.font: UIFont(descriptor: descriptor, size: 34)]
+        }
+        let inline = UIFont.systemFont(ofSize: 17, weight: .semibold)
+        if let descriptor = inline.fontDescriptor.withDesign(.rounded) {
+            UINavigationBar.appearance().titleTextAttributes =
+                [.font: UIFont(descriptor: descriptor, size: 17)]
+        }
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -28,6 +45,9 @@ struct NumeraApp: App {
                     .zIndex(1)
                 }
             }
+            // Quanto-style soft type everywhere: rounded design for any text
+            // that doesn't set an explicit font (system controls, text styles).
+            .fontDesign(.rounded)
             .task {
                 await premiumManager.start()
             }

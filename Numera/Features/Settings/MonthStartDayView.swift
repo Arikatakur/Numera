@@ -12,7 +12,7 @@ struct MonthStartDayView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: AppSpacing.lg) {
                     Text("Specify the start day of each month so your monthly reports and summaries match your cycle.")
-                        .font(.system(size: 15))
+                        .font(.system(size: 15, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
 
                     NumeraCard(padding: AppSpacing.base) {
@@ -27,7 +27,7 @@ struct MonthStartDayView: View {
 
                     if settings.monthStartDay > 28 {
                         Text("In shorter months the period starts on the last day of the month.")
-                            .font(.system(size: 13))
+                            .font(.system(size: 13, design: .rounded))
                             .foregroundColor(AppColors.textTertiary)
                     }
 
@@ -49,7 +49,7 @@ struct MonthStartDayView: View {
             settings.monthStartDay = day
         } label: {
             Text("\(day)")
-                .font(.system(size: 15, weight: isSelected ? .bold : .medium))
+                .font(.system(size: 15, weight: isSelected ? .bold : .medium, design: .rounded))
                 .monospacedDigit()
                 .foregroundColor(isSelected ? .black : AppColors.textPrimary)
                 .frame(width: 40, height: 40)

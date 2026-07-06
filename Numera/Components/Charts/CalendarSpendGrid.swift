@@ -1,7 +1,9 @@
 import SwiftUI
 
 /// Quanto Overview calendar: a weekday-aligned grid where every day shows its
-/// spend amount. Today is highlighted with the accent.
+/// spend amount. Day cells are Liquid Glass (blended in one container); today
+/// is tinted with the accent. Cell size is fixed so amounts can never grow the
+/// grid — long values scale down instead.
 struct CalendarSpendGrid: View {
     let period: Period
     /// Totals keyed by start-of-day.
@@ -29,27 +31,30 @@ struct CalendarSpendGrid: View {
 
     var body: some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: 5), count: 7)
-        LazyVGrid(columns: columns, spacing: 5) {
-            ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
-                Text(symbol)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(AppColors.textTertiary)
-                    .frame(height: 18)
-            }
-            ForEach(0..<leadingBlanks, id: \.self) { _ in
-                Color.clear.frame(height: 46)
-            }
-            ForEach(days, id: \.self) { day in
-                if let onSelectDay {
-                    Button {
-                        Haptics.select()
-                        onSelectDay(day)
-                    } label: {
+        // One glass container so the day cells' glass blends instead of stacking.
+        LiquidGlassGroup(spacing: 5) {
+            LazyVGrid(columns: columns, spacing: 5) {
+                ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
+                    Text(symbol)
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundColor(AppColors.textTertiary)
+                        .frame(height: 18)
+                }
+                ForEach(0..<leadingBlanks, id: \.self) { _ in
+                    Color.clear.frame(height: 46)
+                }
+                ForEach(days, id: \.self) { day in
+                    if let onSelectDay {
+                        Button {
+                            Haptics.select()
+                            onSelectDay(day)
+                        } label: {
+                            cell(day)
+                        }
+                        .buttonStyle(.plain)
+                    } else {
                         cell(day)
                     }
-                    .buttonStyle(.plain)
-                } else {
-                    cell(day)
                 }
             }
         }
@@ -62,22 +67,24 @@ struct CalendarSpendGrid: View {
 
         return VStack(spacing: 2) {
             Text("\(dayNumber)")
-                .font(.system(size: 11, weight: .medium))
+                .font(.system(size: 11, weight: .medium, design: .rounded))
                 .foregroundColor(isToday ? .black.opacity(0.75) : AppColors.textTertiary)
             Text(amountLabel(total))
-                .font(.system(size: 10, weight: .semibold))
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(0.5)
                 .foregroundColor(
                     isToday ? .black : (total > 0 ? AppColors.textPrimary : AppColors.textTertiary.opacity(0.7))
                 )
         }
+        .padding(.horizontal, 3)
         .frame(maxWidth: .infinity)
         .frame(height: 46)
-        .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(isToday ? AppColors.accent : Color.white.opacity(0.04))
+        .liquidGlassControl(
+            RoundedRectangle(cornerRadius: 10, style: .continuous),
+            tint: isToday ? AppColors.accent : nil,
+            fallbackFill: isToday ? AppColors.accent : Color.white.opacity(0.05)
         )
     }
 

@@ -35,11 +35,11 @@ struct TransactionRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(transaction.title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
                     .lineLimit(1)
                 Text(subtitle)
-                    .font(.system(size: 13))
+                    .font(.system(size: 13, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                     .lineLimit(1)
             }
