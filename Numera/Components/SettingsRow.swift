@@ -28,6 +28,9 @@ struct SettingsRow<Trailing: View>: View {
     let title: String
     var iconTint: Color = AppColors.textSecondary
     var titleColor: Color = AppColors.textPrimary
+    /// Custom asset-catalog glyph (template-rendered) instead of an SF Symbol —
+    /// used for brand rows like Instagram that have no SF Symbol.
+    var assetIcon: String? = nil
     @ViewBuilder var trailing: () -> Trailing
 
     var body: some View {
@@ -36,9 +39,18 @@ struct SettingsRow<Trailing: View>: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(Color.white.opacity(0.06))
                     .frame(width: 40, height: 40)
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(iconTint)
+                if let assetIcon {
+                    Image(assetIcon)
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 18, height: 18)
+                        .foregroundColor(iconTint)
+                } else {
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(iconTint)
+                }
             }
             Text(title)
                 .font(.system(size: 16, weight: .medium))
@@ -55,7 +67,20 @@ struct SettingsRow<Trailing: View>: View {
 
 extension SettingsRow where Trailing == EmptyView {
     init(icon: String, title: String, iconTint: Color = AppColors.textSecondary, titleColor: Color = AppColors.textPrimary) {
-        self.init(icon: icon, title: title, iconTint: iconTint, titleColor: titleColor) { EmptyView() }
+        self.init(icon: icon, title: title, iconTint: iconTint, titleColor: titleColor, assetIcon: nil) { EmptyView() }
+    }
+}
+
+extension SettingsRow {
+    /// Row with a custom asset glyph (e.g. a brand logo) and a trailing accessory.
+    init(
+        assetIcon: String,
+        title: String,
+        iconTint: Color = AppColors.textSecondary,
+        titleColor: Color = AppColors.textPrimary,
+        @ViewBuilder trailing: @escaping () -> Trailing
+    ) {
+        self.init(icon: "", title: title, iconTint: iconTint, titleColor: titleColor, assetIcon: assetIcon, trailing: trailing)
     }
 }
 

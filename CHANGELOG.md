@@ -21,6 +21,17 @@ App Store submission prep — the three review blockers plus recurring transacti
 - **`App/AppInfo.swift`** — central metadata (Instagram handle, App Store ID, forum URLs, version string). Placeholders (`instagramHandle`, `appStoreID`) are marked with TODOs to fill before release.
 - **Import template flow.** `Features/Settings/ImportTransactionsView.swift` — the Import row now opens a dedicated screen with **Download template** (a ready-to-fill CSV using your own account/categories/currency) and **Import data**, plus a "dates as DD/MM/YYYY" hint. `DataStore.templateCSVFile()` generates the template; the app version now also appears under the Settings footer tagline.
 - `Components/ShareSheet.swift` — extracted the share wrapper so both export and template download reuse it.
+- **Instagram brand glyph** — added `instagram.logo` (template-rendered, 1x/2x/3x) to `Assets.xcassets` since SF Symbols has no Instagram logo, and a `SettingsRow(assetIcon:)` variant so brand rows can use custom glyphs. The "Follow creator on IG" row now shows the real Instagram mark instead of a camera symbol.
+- **Notification permission alert** — setting a reminder now surfaces an actionable "Turn on notifications" alert with an **Open Settings** button when permission is denied (authorization is requested with `[.alert, .sound, .badge]` before scheduling, and the reminder is only scheduled once granted).
+
+### Changed
+- **Liquid Glass (iOS 26+), gated.** `glassSurface(...)` now applies real `.glassEffect(.regular, in: .rect(...))` on iOS 26 and keeps the `.ultraThinMaterial` treatment as the iOS 17–25 fallback — double-gated with `#if compiler(>=6.2)` (SDK) and `#available(iOS 26, *)` (runtime) so it builds on any Xcode. Flows to every card, chart card, and the floating tab bar. Chart data keeps a plain (non-glass) background for legibility, per the design skill.
+- **Follow creator on IG** now opens the Instagram app via `UIApplication.canOpenURL`/`open` (handle constant `AppInfo.instagramHandle = "saleemyousef"`), with a web fallback only when the app isn't installed.
+
+### Fixed
+- **"Follow creator on IG" cancel bug** — cancelling the system "Open in Instagram?" prompt no longer opened the web profile. Root cause was the old `openURL(completion:)` fallback firing the web URL on a cancelled/failed app-open; replaced with an up-front `canOpenURL` decision.
+- **Activity chart date labels** — two-digit day labels (16, 23, 30) no longer wrap onto a second line; they render on one line at natural width.
+- **Home Safe-to-Spend card** is now hidden entirely until Budget is unlocked (Pro), instead of showing a locked placeholder; it animates back in when Pro is active.
 
 ### Changed
 - **App Store–style glass cards.** Added a shared `View.glassSurface(cornerRadius:)` modifier (translucent `.ultraThinMaterial` + dark brand tint + hairline highlight) and adopted it in every card container — `NumeraCard`, `NumeraCardSmall`, `SettingsCard`, and `PremiumLockCard` — so cards across the app read as one frosted-glass system.
