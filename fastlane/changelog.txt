@@ -1,0 +1,11 @@
+Numera 0.13 — native chrome & smarter charts
+
+• New native Apple tab bar (Liquid Glass on iOS 26) — smoother tab switching.
+• Glass controls everywhere: chips, pills, the + button and budget cards.
+• Insights: tap a donut slice to see that category's spend; tap a bar to focus that month inside its card (the page month no longer jumps).
+• "Income left" % never goes negative — it clamps at 0%.
+• Tap the average value on the Activity chart to see how it's calculated.
+• Edit existing category limits from the pencil badge or long-press menu.
+• Page titles now align with the content margin.
+
+Please test: tab switching feel, donut/bars tapping in Insights, editing a category limit, and the average explainer popover.

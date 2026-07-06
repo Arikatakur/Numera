@@ -60,10 +60,16 @@ platform :ios do
                      "CODE_SIGN_IDENTITY='Apple Distribution'"
     )
 
+    # Waits for App Store Connect processing so the changelog ("What to Test")
+    # can be attached to the build. Test notes live in fastlane/changelog.txt.
     upload_to_testflight(
       api_key:                           api_key,
-      skip_waiting_for_build_processing: true,
-      changelog:                         "Automated build — commit #{ENV['GITHUB_SHA']&.slice(0, 7)}"
+      skip_waiting_for_build_processing: false,
+      changelog:                         File.read(File.join(File.dirname(__FILE__), "changelog.txt")).strip,
+      beta_app_description:              "Numera is a manual-first expense tracker: add expenses in seconds, " \
+                                         "see clear insights and budgets, automate recurring transactions — " \
+                                         "private by design.",
+      beta_app_feedback_email:           "saleempay@hotmail.com"
     )
   end
 

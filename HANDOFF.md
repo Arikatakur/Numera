@@ -22,6 +22,79 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
+## Session — Native tab bar, interactive glass, Insights interactivity (2026-07-06, later)
+
+Branch: `feature/liquid-glass-ui`. Changelog version: **0.13.0** (previous push
+retro-tagged **0.12.0**, shipped as TestFlight 1.0.0 build 20).
+
+**What changed**
+- **Native tab bar:** system `TabView` + SF Symbol `tabItem`s replaces the
+  custom `GlassTabBar` pill and the laggy `.page` style. iOS 26 gives the bar
+  real Liquid Glass by itself. `AppTab` → `App/AppTab.swift`; `.hidesTabBar()`
+  now also applies `.toolbar(.hidden, for: .tabBar)`; `TabBarVisibility` only
+  drives the floating (+). Bottom scroll spacers 110/120 → 80.
+- **Interactive glass controls:** `liquidGlassControl(_:tint:fallbackFill:)` +
+  `LiquidGlassGroup` in `Components/LiquidGlass.swift`. Adopted by Activity
+  chips/search/search field, Home month pill, SelectMonthSheet pills/cells,
+  `PrimaryButton` + floating (+) (accent-tinted), `CategoryChip`, Budget limit
+  cards, budget editor category picker. Controls inside glass cards stay
+  non-glass (HIG: no glass on glass).
+- **Insights:** donut segments tappable (center shows the category's spend;
+  `DonutChart` gained `selectedIndex`/`onSelectSegment` with angle hit-testing);
+  bar taps in "Income vs expenses" / "Income left" focus that card only
+  (`incomeExpensesFocus`/`incomeLeftFocus`, reset via `.onChange(of: period)`);
+  income-left % clamps at 0%.
+- **Average line:** dimmer dash + tappable ⓘ average label with a popover
+  explaining the formula (`DayBarsChart.averageExplanation`).
+- **Budget:** pencil badge + context menu (Edit/Remove) on category limit cards.
+- **Titles:** `Components/PageTitle.swift` (34pt, in-content) on Insights /
+  Budget / Settings; root nav bars hidden so titles align with the 20pt margin.
+- **Changelog:** restructured — `[Unreleased]` split into dated `[0.12.0]`
+  (previous push, duplicate sections merged) and `[0.13.0]` (this session).
+
+**Testing status:** Not compiled locally (Windows — CI on macOS is the only
+compiler). On-device QA wanted: native tab bar behavior on iOS 26 + fallback,
+donut tap hit-testing, per-card month focus, average popover, limit editing,
+title alignment.
+
+---
+
+## Session — Xcode 26 toolchain, LiquidGlass helper, What's New card (2026-07-06)
+
+Branch: `feature/liquid-glass-ui`.
+
+**What changed**
+- **Toolchain:** `project.yml` → `xcodeVersion: "26.0"` (deployment target stays
+  iOS 17.0); `ci.yml` + `deploy.yml` pin `xcode-version: '26.0'`. Contingency if
+  the macos-15 runner image ever drops Xcode 26.0: switch those jobs to
+  `runs-on: macos-26`.
+- **Glass:** gating extracted to `Components/LiquidGlass.swift` —
+  `liquidGlass(cornerRadius:tintFallback:)`; `glassSurface`/`materialSurface`
+  are gone. `NumeraCard(Small)`, `SettingsCard`, `PremiumLockCard`, the
+  `GlassTabBar` pill, and the error toast route through it. The toast's manual
+  stroke now exists only in the iOS 17–25 fallback; `PremiumLockCard` clips its
+  blurred placeholder to the card shape explicitly.
+- **What's New:** `Features/Home/WhatsNew.swift` — `WhatsNewCard`
+  (🚀 "Numera just got better!", X dismiss, white "What's new?" pill) +
+  `WhatsNewSheet` (release highlights). Shown on Home below the header until
+  dismissed for the current `AppInfo.shortVersion`
+  (UserDefaults key `whatsNewDismissedVersion`).
+- **Header/privacy:** Home greeting no longer shows the account name; the eye
+  toggle is removed from Home/Activity/Insights/Budget headers — Hide balances
+  lives only in Settings → Privacy & security.
+- **TestFlight notes:** new `fastlane/changelog.txt`; `beta` lane now uses
+  `skip_waiting_for_build_processing: false` and sends `changelog` (from that
+  file), `beta_app_description`, `beta_app_feedback_email`. Deploy runs take
+  longer now because they wait for App Store Connect processing.
+
+**Testing status:** Not compiled locally (Windows workspace — CI on macOS is the
+only compiler). CI on this branch must be green before merging; deploy is
+triggered via the Deploy to TestFlight workflow. On-device QA wanted: real glass
+on an iOS 26 device, material fallback on iOS 17–25, What's New dismiss
+persistence across launches, hide balances via Settings only.
+
+---
+
 ## Session — App Store prep + recurring (2026-07-06)
 
 Addressed the App Store review blockers in `appstore-review.md`, shipped recurring

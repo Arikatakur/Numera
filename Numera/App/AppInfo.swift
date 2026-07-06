@@ -5,8 +5,7 @@ import Foundation
 /// and social accounts are live.
 enum AppInfo {
     /// Instagram handle for "Follow creator on IG" (no leading @).
-    /// TODO: replace with the real creator handle before release.
-    static let instagramHandle = "numera.app"
+    static let instagramHandle = "saleemyousef"
 
     /// App Store numeric ID, e.g. "6749123456". Empty until the app is live —
     /// while empty, "Rate on App Store" falls back to the in-app review prompt.

@@ -7,43 +7,41 @@ struct ContentView: View {
     @State private var showAddTransaction = false
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            TabView(selection: $selectedTab) {
-                HomeView(
-                    onShowInsights: { selectedTab = .insights },
-                    onShowActivity: { selectedTab = .activity },
-                    onShowBudget: { selectedTab = .budget }
-                )
-                .tag(AppTab.home)
+        // System TabView: native switching (no page-swipe lag) and the system
+        // tab bar, which adopts Liquid Glass automatically on iOS 26 (HIG tab
+        // bars) — no appearance overrides, no custom bar to fight it.
+        TabView(selection: $selectedTab) {
+            HomeView(
+                onShowInsights: { selectedTab = .insights },
+                onShowActivity: { selectedTab = .activity },
+                onShowBudget: { selectedTab = .budget }
+            )
+            .tabItem { Label(AppTab.home.label, systemImage: AppTab.home.icon) }
+            .tag(AppTab.home)
 
-                ActivityView()
-                    .tag(AppTab.activity)
+            ActivityView()
+                .tabItem { Label(AppTab.activity.label, systemImage: AppTab.activity.icon) }
+                .tag(AppTab.activity)
 
-                InsightsView(onShowActivity: { selectedTab = .activity })
-                    .tag(AppTab.insights)
+            InsightsView(onShowActivity: { selectedTab = .activity })
+                .tabItem { Label(AppTab.insights.label, systemImage: AppTab.insights.icon) }
+                .tag(AppTab.insights)
 
-                BudgetView()
-                    .tag(AppTab.budget)
+            BudgetView()
+                .tabItem { Label(AppTab.budget.label, systemImage: AppTab.budget.icon) }
+                .tag(AppTab.budget)
 
-                SettingsView()
-                    .tag(AppTab.settings)
-            }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .ignoresSafeArea(edges: .bottom)
-
-            if !TabBarVisibility.shared.isHidden {
-                GlassTabBar(selected: $selectedTab)
-                    .padding(.horizontal, AppSpacing.base)
-                    .padding(.bottom, 2)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
+            SettingsView()
+                .tabItem { Label(AppTab.settings.label, systemImage: AppTab.settings.icon) }
+                .tag(AppTab.settings)
         }
+        .tint(AppColors.accent)
         .overlay(alignment: .bottomTrailing) {
             // Hidden on the Settings tab and on any pushed detail screen.
             if !TabBarVisibility.shared.isHidden && selectedTab != .settings {
                 FloatingAddButton { showAddTransaction = true }
                     .padding(.trailing, AppSpacing.screenMargin)
-                    .padding(.bottom, 96)
+                    .padding(.bottom, 64)
             }
         }
         .animation(.easeInOut(duration: 0.25), value: TabBarVisibility.shared.isHidden)
@@ -86,11 +84,7 @@ private struct ErrorToast: View {
         }
         .padding(.horizontal, AppSpacing.base)
         .padding(.vertical, 12)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(AppColors.borderGlass, lineWidth: 1)
-        )
+        .liquidGlass(cornerRadius: AppRadius.lg)
         .padding(.horizontal, AppSpacing.screenMargin)
         .transition(.move(edge: .top).combined(with: .opacity))
         .task {

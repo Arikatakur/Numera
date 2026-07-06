@@ -78,8 +78,7 @@ struct SelectMonthSheet: View {
                 .foregroundColor(AppColors.textPrimary)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
-                .background(isSelected ? Color.clear : AppColors.surfaceElevated)
-                .clipShape(Capsule())
+                .liquidGlassControl(Capsule(), fallbackFill: AppColors.surfaceElevated)
                 .overlay(
                     Capsule().stroke(
                         isSelected ? AppColors.accent : Color.clear,
@@ -103,14 +102,14 @@ struct SelectMonthSheet: View {
                 .foregroundColor(isFuture ? AppColors.textTertiary.opacity(0.5) : AppColors.textPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(AppColors.surfaceElevated.opacity(isFuture ? 0.4 : 1))
-                .clipShape(Capsule())
+                .liquidGlassControl(Capsule(), fallbackFill: AppColors.surfaceElevated.opacity(isFuture ? 0.4 : 1))
                 .overlay(
                     Capsule().stroke(
                         isSelected ? AppColors.accent : Color.clear,
                         lineWidth: 1.5
                     )
                 )
+                .opacity(isFuture ? 0.55 : 1)
         }
         .disabled(isFuture)
     }

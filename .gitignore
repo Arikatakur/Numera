@@ -69,3 +69,8 @@ yarn-error.log*
 tmp/
 temp/
 .cache/
+
+# Other
+privacy.md
+terms.md
+error-images/

@@ -11,14 +11,15 @@ struct PrimaryButton: View {
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(AppColors.accent)
-                .cornerRadius(AppRadius.pill)
+                // Accent-tinted interactive glass (solid accent on iOS 17–25).
+                .liquidGlassControl(Capsule(), tint: AppColors.accent, fallbackFill: AppColors.accent)
         }
+        .buttonStyle(.plain)
     }
 }
 
 /// Quanto-style floating (+): a circle pinned to the bottom-right, hovering
-/// above the glass tab bar.
+/// above the tab bar.
 struct FloatingAddButton: View {
     var action: () -> Void = {}
 
@@ -31,11 +32,11 @@ struct FloatingAddButton: View {
                 .font(.system(size: 24, weight: .semibold))
                 .foregroundColor(.black)
                 .frame(width: 60, height: 60)
-                .background(AppColors.accent)
-                .clipShape(Circle())
+                .liquidGlassControl(Circle(), tint: AppColors.accent, fallbackFill: AppColors.accent)
                 .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 8)
                 .shadow(color: AppColors.accent.opacity(0.25), radius: 24, x: 0, y: 6)
         }
+        .buttonStyle(.plain)
         .accessibilityLabel("Add transaction")
     }
 }
@@ -68,15 +69,18 @@ struct CategoryChip: View {
     var isSelected: Bool = false
 
     var body: some View {
-        Text(label)
+        let text = Text(label)
             .font(.system(size: 13, weight: .semibold))
             .foregroundColor(isSelected ? .black : AppColors.textPrimary)
             .padding(.horizontal, 14)
             .padding(.vertical, 7)
-            .background(isSelected ? color : AppColors.surfaceElevated)
-            .cornerRadius(AppRadius.pill)
-            .overlay(
-                Capsule().stroke(isSelected ? Color.clear : AppColors.borderGlass, lineWidth: 1)
-            )
+
+        if isSelected {
+            text
+                .background(color, in: Capsule())
+        } else {
+            text
+                .liquidGlassControl(Capsule(), fallbackFill: AppColors.surfaceElevated)
+        }
     }
 }

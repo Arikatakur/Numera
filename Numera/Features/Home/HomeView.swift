@@ -5,7 +5,6 @@ struct HomeView: View {
     let onShowActivity: () -> Void
     var onShowBudget: () -> Void = {}
 
-    @Environment(AuthManager.self) private var authManager
     @Environment(DataStore.self) private var store
     @Environment(AppSettings.self) private var settings
     @Environment(PremiumManager.self) private var premium
@@ -13,22 +12,21 @@ struct HomeView: View {
     @State private var pickedPeriod: Period?
     @State private var showMonthPicker = false
     @State private var showPaywall = false
+    @State private var showWhatsNew = false
+
+    /// Version whose "just got better" card was dismissed — the card returns
+    /// on the next release.
+    @AppStorage("whatsNewDismissedVersion") private var whatsNewDismissedVersion = ""
 
     private var period: Period { pickedPeriod ?? store.currentPeriod }
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: .now)
         switch hour {
-        case 5..<12:  return "Good morning,"
-        case 12..<17: return "Good afternoon,"
-        default:      return "Good evening,"
+        case 5..<12:  return "Good morning"
+        case 12..<17: return "Good afternoon"
+        default:      return "Good evening"
         }
-    }
-
-    private var displayName: String {
-        let email = authManager.currentUserEmail ?? ""
-        let username = email.split(separator: "@").first.map(String.init) ?? "there"
-        return username.prefix(1).uppercased() + username.dropFirst()
     }
 
     var body: some View {
@@ -39,13 +37,15 @@ struct HomeView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: AppSpacing.sectionGap) {
                         headerSection
+                        whatsNewSection
                         monthCardSection
                         safeToSpendSection
                         recentActivitySection
-                        Spacer().frame(height: 110)
+                        Spacer().frame(height: 80)
                     }
                     .padding(.horizontal, AppSpacing.screenMargin)
                     .padding(.top, AppSpacing.lg)
+                    .animation(.easeInOut(duration: 0.3), value: premium.isPremium)
                 }
                 .refreshable { await store.bootstrap() }
 
@@ -66,6 +66,9 @@ struct HomeView: View {
         .sheet(isPresented: $showPaywall) {
             PaywallView()
         }
+        .sheet(isPresented: $showWhatsNew) {
+            WhatsNewSheet()
+        }
     }
 
     // MARK: - Header
@@ -76,40 +79,42 @@ struct HomeView: View {
                 Text(greeting)
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(AppColors.textPrimary)
-                Text(displayName)
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(AppColors.textPrimary)
                 Text("Your money, clearly.")
                     .font(.system(size: 15))
                     .foregroundColor(AppColors.textSecondary)
                     .padding(.top, 2)
             }
             Spacer()
-            HStack(spacing: AppSpacing.md) {
-                Button {
-                    Haptics.tap()
-                    settings.isPrivate.toggle()
-                } label: {
-                    Image(systemName: settings.isPrivate ? "eye.slash" : "eye")
-                        .font(.system(size: 18))
+            Button { showMonthPicker = true } label: {
+                HStack(spacing: 4) {
+                    Text(PeriodMath.monthLabel(period))
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(AppColors.textPrimary)
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(AppColors.textSecondary)
                 }
-                Button { showMonthPicker = true } label: {
-                    HStack(spacing: 4) {
-                        Text(PeriodMath.monthLabel(period))
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(AppColors.textPrimary)
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(AppColors.textSecondary)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .background(AppColors.surfaceElevated)
-                    .cornerRadius(AppRadius.pill)
-                    .overlay(Capsule().stroke(AppColors.borderGlass, lineWidth: 1))
-                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .liquidGlassControl(Capsule(), fallbackFill: AppColors.surfaceElevated)
             }
+        }
+    }
+
+    // MARK: - What's new
+
+    @ViewBuilder
+    private var whatsNewSection: some View {
+        if whatsNewDismissedVersion != AppInfo.shortVersion {
+            WhatsNewCard(
+                onWhatsNew: { showWhatsNew = true },
+                onDismiss: {
+                    withAnimation(.snappy(duration: 0.3)) {
+                        whatsNewDismissedVersion = AppInfo.shortVersion
+                    }
+                }
+            )
+            .transition(.opacity.combined(with: .move(edge: .top)))
         }
     }
 
@@ -210,16 +215,13 @@ struct HomeView: View {
 
     // MARK: - Safe to Spend
 
+    // Hidden entirely until Budget is unlocked (Pro); reappears automatically
+    // when `premium.isPremium` flips. The layout change is animated in `body`.
     @ViewBuilder
     private var safeToSpendSection: some View {
         if premium.isPremium {
             unlockedSafeToSpendCard
-        } else {
-            PremiumLockCard(
-                title: "SAFE TO SPEND",
-                buttonTitle: "Unlock safe-to-spend",
-                height: 170
-            ) { showPaywall = true }
+                .transition(.opacity.combined(with: .move(edge: .top)))
         }
     }
 
