@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Settings hub — Quanto structure (General / Preferences / Privacy / Data /
 /// About) rendered with Numera's card language.
@@ -235,7 +236,7 @@ struct SettingsView: View {
                                 Haptics.tap()
                                 openInstagram()
                             } label: {
-                                SettingsRow(icon: "camera", title: "Follow creator on IG") {
+                                SettingsRow(assetIcon: "instagram.logo", title: "Follow creator on IG") {
                                     Image(systemName: "arrow.up.right")
                                         .font(.system(size: 13, weight: .semibold))
                                         .foregroundColor(AppColors.textTertiary)
@@ -336,9 +337,16 @@ struct SettingsView: View {
         }
     }
 
+    /// Opens the creator's Instagram: the app when installed, otherwise the web
+    /// profile. Uses `canOpenURL` to decide up front — the old completion-based
+    /// fallback opened the web URL when the user cancelled the system
+    /// "Open in Instagram?" prompt, which read as "Cancel still opens it".
     private func openInstagram() {
-        openURL(AppInfo.instagramAppURL) { accepted in
-            if !accepted { openURL(AppInfo.instagramURL) }
+        let appURL = AppInfo.instagramAppURL
+        if UIApplication.shared.canOpenURL(appURL) {
+            UIApplication.shared.open(appURL)
+        } else {
+            UIApplication.shared.open(AppInfo.instagramURL)
         }
     }
 

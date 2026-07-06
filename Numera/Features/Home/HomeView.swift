@@ -46,6 +46,7 @@ struct HomeView: View {
                     }
                     .padding(.horizontal, AppSpacing.screenMargin)
                     .padding(.top, AppSpacing.lg)
+                    .animation(.easeInOut(duration: 0.3), value: premium.isPremium)
                 }
                 .refreshable { await store.bootstrap() }
 
@@ -210,16 +211,13 @@ struct HomeView: View {
 
     // MARK: - Safe to Spend
 
+    // Hidden entirely until Budget is unlocked (Pro); reappears automatically
+    // when `premium.isPremium` flips. The layout change is animated in `body`.
     @ViewBuilder
     private var safeToSpendSection: some View {
         if premium.isPremium {
             unlockedSafeToSpendCard
-        } else {
-            PremiumLockCard(
-                title: "SAFE TO SPEND",
-                buttonTitle: "Unlock safe-to-spend",
-                height: 170
-            ) { showPaywall = true }
+                .transition(.opacity.combined(with: .move(edge: .top)))
         }
     }
 

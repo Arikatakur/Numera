@@ -14,7 +14,7 @@ enum ReminderScheduler {
         center.removePendingNotificationRequests(withIdentifiers: [requestId])
         guard settings.reminderFrequency != .never else { return true }
 
-        let granted = (try? await center.requestAuthorization(options: [.alert, .sound])) ?? false
+        let granted = (try? await center.requestAuthorization(options: [.alert, .sound, .badge])) ?? false
         guard granted else { return false }
 
         var match = DateComponents()

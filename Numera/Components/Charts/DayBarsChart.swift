@@ -44,11 +44,15 @@ struct DayBarsChart: View {
 
             HStack(alignment: .top, spacing: 3) {
                 ForEach(values.indices, id: \.self) { index in
+                    // Single line at natural width — two-digit days (16, 23, 30)
+                    // must never wrap onto a second line in the narrow per-day
+                    // cell. Labels are sparse, so overflow into empty cells is fine.
                     Text(labels.indices.contains(index) ? labels[index] : "")
                         .font(.system(size: 11))
                         .foregroundColor(AppColors.textTertiary)
+                        .lineLimit(1)
+                        .fixedSize()
                         .frame(maxWidth: .infinity)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }

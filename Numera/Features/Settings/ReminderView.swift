@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// "Set yourself a reminder to add your expenses." — frequency options with a
 /// native time wheel (Quanto Reminder screen). Schedules local notifications.
@@ -6,6 +7,7 @@ struct ReminderView: View {
     @Environment(AppSettings.self) private var settings
 
     @State private var permissionDenied = false
+    @State private var showPermissionAlert = false
 
     private let weekdays: [(unit: Int, name: String)] = [
         (2, "Monday"), (3, "Tuesday"), (4, "Wednesday"), (5, "Thursday"),
@@ -72,6 +74,12 @@ struct ReminderView: View {
         .navigationTitle("Reminder")
         .navigationBarTitleDisplayMode(.large)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .alert("Turn on notifications", isPresented: $showPermissionAlert) {
+            Button("Open Settings") { openSystemSettings() }
+            Button("Not now", role: .cancel) {}
+        } message: {
+            Text("Reminders need notification permission. Turn on notifications for Numera in Settings to get reminded.")
+        }
         .onChange(of: settings.reminderFrequency) { reschedule() }
         .onChange(of: settings.reminderHour) { reschedule() }
         .onChange(of: settings.reminderMinute) { reschedule() }
@@ -81,9 +89,18 @@ struct ReminderView: View {
 
     private func reschedule() {
         Task {
+            // ReminderScheduler requests authorization before it schedules, and
+            // only schedules when granted. Surface an actionable alert on denial.
             let granted = await ReminderScheduler.reschedule(settings: settings)
-            permissionDenied = !granted && settings.reminderFrequency != .never
+            let denied = !granted && settings.reminderFrequency != .never
+            permissionDenied = denied
+            if denied { showPermissionAlert = true }
         }
+    }
+
+    private func openSystemSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 
     private func optionRow(_ frequency: ReminderFrequency) -> some View {
