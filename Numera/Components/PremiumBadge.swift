@@ -80,7 +80,10 @@ struct PremiumLockCard: View {
         .frame(height: height)
         .frame(maxWidth: .infinity)
         .background(AppColors.chartTeal.opacity(0.10))
-        .glassSurface(cornerRadius: AppRadius.hero)
+        // Clip the blurred placeholder and teal wash to the card shape; on the
+        // iOS 26 path the glass no longer clips content for us.
+        .clipShape(RoundedRectangle(cornerRadius: AppRadius.hero, style: .continuous))
+        .liquidGlass(cornerRadius: AppRadius.hero)
     }
 
     /// Fake rows suggesting the locked content.

@@ -10,6 +10,8 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 App Store submission prep — the three review blockers plus recurring transactions and UX fixes.
 
 ### Added
+- **"Numera just got better" card + What's New sheet.** Quanto-style status card on Home (`Features/Home/WhatsNew.swift`): 🚀 tile, headline, X to dismiss, and a white **What's new?** pill that opens a release-highlights sheet. Dismissal is stored per app version (`whatsNewDismissedVersion`), so the card returns on the next release.
+- **TestFlight release notes.** `fastlane/changelog.txt` holds the "What to Test" notes; the `beta` lane now waits for build processing (`skip_waiting_for_build_processing: false`) and attaches `changelog` (from that file), `beta_app_description`, and `beta_app_feedback_email`.
 - **Recurring transactions (Numera Pro).** `Models/RecurringRule.swift` (weekly/monthly/yearly), `supabase/migrations/20260706000000_create_recurring_rules.sql` (table + RLS), `RecurringRuleDTO`, `Services/DataStore+Recurring.swift` (CRUD + `materializeDueRecurring()` which generates due transactions on launch and advances `next_run` idempotently), a Pro-gated **Repeat** option on the Add Transaction screen, and `Features/Settings/RecurringView.swift` to pause/resume/delete rules. Loading is resilient — if the migration hasn't been applied yet, recurring is skipped rather than breaking data load.
 - **In-app account deletion** (Apple requirement). Settings → **Delete account** with a destructive confirmation; `supabase/functions/delete-account/` Edge Function (service-role `admin.deleteUser`, cascades all data) and `AuthManager.deleteAccount()`.
 - **Real Privacy / Terms / Support pages** hosted on the ClientVault-Web site at `clientvault.org/numera/{privacy,terms,support}`, written to reflect Numera's actual behavior (Supabase account + cloud data, StoreKit purchases, reminders, CSV, in-app deletion; no analytics/ads/tracking). Linked from Settings and the paywall.
@@ -25,6 +27,9 @@ App Store submission prep — the three review blockers plus recurring transacti
 - **Notification permission alert** — setting a reminder now surfaces an actionable "Turn on notifications" alert with an **Open Settings** button when permission is denied (authorization is requested with `[.alert, .sound, .badge]` before scheduling, and the reminder is only scheduled once granted).
 
 ### Changed
+- **Toolchain pinned to Xcode 26.** `project.yml` sets `xcodeVersion: "26.0"` (deployment target stays iOS 17.0) and both workflows (`ci.yml`, `deploy.yml`) select `xcode-version: '26.0'`, so builds always use the iOS 26 SDK that real Liquid Glass requires.
+- **Glass gating centralized in `Components/LiquidGlass.swift`.** `glassSurface`/`materialSurface` are replaced by `liquidGlass(cornerRadius:tintFallback:)` — real `.glassEffect(.regular, in:)` behind `#available(iOS 26, *)`, `.ultraThinMaterial` + hairline as the iOS 17–25 fallback. `NumeraCard`, `NumeraCardSmall`, `SettingsCard`, `PremiumLockCard`, the `GlassTabBar` pill, and the error toast all route through it; the toast's manual hairline stroke now exists only in the fallback (real glass draws its own edge). `PremiumLockCard` clips its blurred placeholder to the card shape, which the iOS 26 path no longer does implicitly.
+- **Home header simplified.** The greeting no longer shows the account name — just "Good morning/afternoon/evening" and the tagline.
 - **Liquid Glass (iOS 26+), gated.** `glassSurface(...)` now applies real `.glassEffect(.regular, in: .rect(...))` on iOS 26 and keeps the `.ultraThinMaterial` treatment as the iOS 17–25 fallback — double-gated with `#if compiler(>=6.2)` (SDK) and `#available(iOS 26, *)` (runtime) so it builds on any Xcode. Flows to every card, chart card, and the floating tab bar. Chart data keeps a plain (non-glass) background for legibility, per the design skill.
 - **Follow creator on IG** now opens the Instagram app via `UIApplication.canOpenURL`/`open` (handle constant `AppInfo.instagramHandle = "saleemyousef"`), with a web fallback only when the app isn't installed.
 
@@ -54,6 +59,9 @@ App Store submission prep — the three review blockers plus recurring transacti
 - **"Income left this month" red dash.** When no income was recorded for the period, the percentage view rendered a bare `—` in expense-red that read as a stray line. The income-left value is now always white in both currency and % modes, matching the rest of the hero numbers.
 - **Add Transaction keyboard.** Focusing the title field no longer shoves the whole screen up and misaligns the keypad — keyboard avoidance is disabled on the fixed layout so the field stays put above the keyboard.
 - **`project.yml` entitlements** — corrected malformed YAML (duplicate `path`/`properties` keys nested under `info`) that would have broken `xcodegen generate` in CI and silently dropped the Sign in with Apple entitlement.
+
+### Removed
+- **Eye (privacy) toggles in page headers.** The eye button is gone from Home, Activity, Insights, and Budget — **Hide balances** now lives only in Settings → Privacy & security, so balances can't be un-hidden with a stray tap.
 
 ---
 

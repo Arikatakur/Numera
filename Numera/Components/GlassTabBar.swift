@@ -42,7 +42,7 @@ struct GlassTabBar: View {
         // Liquid Glass on iOS 26+, frosted-material fallback below (see SKILL.md).
         // This is a custom floating pill, not the system tab bar — the app has
         // no UITabBar/UITabBarAppearance overrides to remove.
-        .glassSurface(cornerRadius: 27)
+        .liquidGlass(cornerRadius: 27)
         .shadow(color: .black.opacity(0.35), radius: 24, x: 0, y: 12)
     }
 

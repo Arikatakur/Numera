@@ -22,6 +22,42 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
+## Session — Xcode 26 toolchain, LiquidGlass helper, What's New card (2026-07-06)
+
+Branch: `feature/liquid-glass-ui`.
+
+**What changed**
+- **Toolchain:** `project.yml` → `xcodeVersion: "26.0"` (deployment target stays
+  iOS 17.0); `ci.yml` + `deploy.yml` pin `xcode-version: '26.0'`. Contingency if
+  the macos-15 runner image ever drops Xcode 26.0: switch those jobs to
+  `runs-on: macos-26`.
+- **Glass:** gating extracted to `Components/LiquidGlass.swift` —
+  `liquidGlass(cornerRadius:tintFallback:)`; `glassSurface`/`materialSurface`
+  are gone. `NumeraCard(Small)`, `SettingsCard`, `PremiumLockCard`, the
+  `GlassTabBar` pill, and the error toast route through it. The toast's manual
+  stroke now exists only in the iOS 17–25 fallback; `PremiumLockCard` clips its
+  blurred placeholder to the card shape explicitly.
+- **What's New:** `Features/Home/WhatsNew.swift` — `WhatsNewCard`
+  (🚀 "Numera just got better!", X dismiss, white "What's new?" pill) +
+  `WhatsNewSheet` (release highlights). Shown on Home below the header until
+  dismissed for the current `AppInfo.shortVersion`
+  (UserDefaults key `whatsNewDismissedVersion`).
+- **Header/privacy:** Home greeting no longer shows the account name; the eye
+  toggle is removed from Home/Activity/Insights/Budget headers — Hide balances
+  lives only in Settings → Privacy & security.
+- **TestFlight notes:** new `fastlane/changelog.txt`; `beta` lane now uses
+  `skip_waiting_for_build_processing: false` and sends `changelog` (from that
+  file), `beta_app_description`, `beta_app_feedback_email`. Deploy runs take
+  longer now because they wait for App Store Connect processing.
+
+**Testing status:** Not compiled locally (Windows workspace — CI on macOS is the
+only compiler). CI on this branch must be green before merging; deploy is
+triggered via the Deploy to TestFlight workflow. On-device QA wanted: real glass
+on an iOS 26 device, material fallback on iOS 17–25, What's New dismiss
+persistence across launches, hide balances via Settings only.
+
+---
+
 ## Session — App Store prep + recurring (2026-07-06)
 
 Addressed the App Store review blockers in `appstore-review.md`, shipped recurring

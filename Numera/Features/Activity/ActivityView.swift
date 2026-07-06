@@ -105,35 +105,17 @@ struct ActivityView: View {
 
     private var heroSection: some View {
         VStack(spacing: AppSpacing.md) {
-            HStack {
-                Spacer()
-                Button {
-                    Haptics.tap()
-                    settings.isPrivate.toggle()
-                } label: {
-                    Image(systemName: settings.isPrivate ? "eye.slash" : "eye")
-                        .font(.system(size: 17))
+            Button { showMonthPicker = true } label: {
+                HStack(spacing: 5) {
+                    Text(PeriodMath.monthLabel(period))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(AppColors.textSecondary)
-                        .frame(width: 36, height: 36)
-                        .background(AppColors.surfaceElevated)
-                        .clipShape(Circle())
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(AppColors.textTertiary)
                 }
             }
-            .padding(.horizontal, AppSpacing.screenMargin)
-            .overlay {
-                VStack(spacing: 4) {
-                    Button { showMonthPicker = true } label: {
-                        HStack(spacing: 5) {
-                            Text(PeriodMath.monthLabel(period))
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(AppColors.textSecondary)
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(AppColors.textTertiary)
-                        }
-                    }
-                }
-            }
+            .frame(height: 36)
 
             MoneyText(amount: focusTotal, size: 44)
 

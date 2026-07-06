@@ -1,0 +1,8 @@
+Numera just got better!
+
+• New Liquid Glass design: cards, charts and the tab bar now use Apple's real glass material on iOS 26 (frosted look on iOS 17–25).
+• New "Numera just got better" card on Home — tap "What's new?" for release highlights, or dismiss it with the X.
+• Cleaner Home header without the account name.
+• Hide balances moved to one place: Settings → Privacy & security (the eye button is gone from page headers).
+
+Please test: adding and editing transactions, the Insights charts, budgets, hiding balances from Settings, and dismissing the What's new card.

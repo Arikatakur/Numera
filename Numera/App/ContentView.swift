@@ -86,11 +86,7 @@ private struct ErrorToast: View {
         }
         .padding(.horizontal, AppSpacing.base)
         .padding(.vertical, 12)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(AppColors.borderGlass, lineWidth: 1)
-        )
+        .liquidGlass(cornerRadius: AppRadius.lg)
         .padding(.horizontal, AppSpacing.screenMargin)
         .transition(.move(edge: .top).combined(with: .opacity))
         .task {

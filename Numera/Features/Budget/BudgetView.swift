@@ -4,7 +4,6 @@ import SwiftUI
 /// budget plus per-category limit cards with progress rings.
 struct BudgetView: View {
     @Environment(DataStore.self) private var store
-    @Environment(AppSettings.self) private var settings
     @Environment(PremiumManager.self) private var premium
 
     enum EditorTarget: Identifiable {
@@ -63,17 +62,6 @@ struct BudgetView: View {
             }
             .navigationTitle("Budget")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        Haptics.tap()
-                        settings.isPrivate.toggle()
-                    } label: {
-                        Image(systemName: settings.isPrivate ? "eye.slash" : "eye")
-                            .foregroundColor(AppColors.textSecondary)
-                    }
-                }
-            }
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .sheet(item: $editorTarget) { target in

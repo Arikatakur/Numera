@@ -70,17 +70,6 @@ struct InsightsView: View {
             }
             .navigationTitle("Insights")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        Haptics.tap()
-                        settings.isPrivate.toggle()
-                    } label: {
-                        Image(systemName: settings.isPrivate ? "eye.slash" : "eye")
-                            .foregroundColor(AppColors.textSecondary)
-                    }
-                }
-            }
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .sheet(isPresented: $showMonthPicker) {

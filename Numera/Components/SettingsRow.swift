@@ -9,7 +9,7 @@ struct SettingsCard<Content: View>: View {
         VStack(spacing: 0) {
             content()
         }
-        .glassSurface(cornerRadius: AppRadius.card)
+        .liquidGlass(cornerRadius: AppRadius.card)
     }
 }
 
