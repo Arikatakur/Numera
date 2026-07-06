@@ -211,6 +211,17 @@ struct SettingsView: View {
                                 }
                             }
                             SettingsDivider()
+                            Button {
+                                Haptics.tap()
+                                openURL(AppInfo.forumURL)
+                            } label: {
+                                SettingsRow(icon: "bubble.left.and.bubble.right", title: "Feedback & roadmap") {
+                                    Image(systemName: "arrow.up.right")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(AppColors.textTertiary)
+                                }
+                            }
+                            SettingsDivider()
                             forumRow("hand.thumbsup", "Help us improve", type: "improvement")
                             SettingsDivider()
                             forumRow("ladybug", "Report a bug", type: "bug")
