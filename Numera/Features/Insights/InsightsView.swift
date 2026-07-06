@@ -13,6 +13,13 @@ struct InsightsView: View {
     @State private var showMonthPicker = false
     @State private var incomeLeftAsPercent = false
     @State private var showPaywall = false
+    @State private var selectedDay: DaySelection?
+
+    /// Identifiable wrapper so a tapped calendar date can drive `.sheet(item:)`.
+    private struct DaySelection: Identifiable {
+        let date: Date
+        var id: TimeInterval { date.timeIntervalSince1970 }
+    }
 
     private var period: Period { pickedPeriod ?? store.currentPeriod }
     private var totals: [CategoryTotal] { store.categoryTotals(in: period) }
@@ -85,6 +92,9 @@ struct InsightsView: View {
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
+        }
+        .sheet(item: $selectedDay) { selection in
+            DayTransactionsSheet(date: selection.date)
         }
     }
 
@@ -248,9 +258,9 @@ struct InsightsView: View {
                             .foregroundColor(AppColors.textSecondary)
                         if incomeLeftAsPercent {
                             Text(percentLeftText(net: net, income: income))
-                                .moneyStyle(size: 30, color: net < 0 ? AppColors.expense : AppColors.textPrimary)
+                                .moneyStyle(size: 30, color: AppColors.textPrimary)
                         } else {
-                            MoneyText(amount: net, size: 30, color: net < 0 ? AppColors.expense : AppColors.textPrimary)
+                            MoneyText(amount: net, size: 30, color: AppColors.textPrimary)
                         }
                     }
                     Spacer()
@@ -322,7 +332,8 @@ struct InsightsView: View {
                 CalendarSpendGrid(
                     period: period,
                     totals: Dictionary(uniqueKeysWithValues: store.dailyTotals(in: period).map { ($0.date, $0.total) }),
-                    firstWeekday: settings.firstWeekday
+                    firstWeekday: settings.firstWeekday,
+                    onSelectDay: { selectedDay = DaySelection(date: $0) }
                 )
             }
         }

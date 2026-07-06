@@ -47,6 +47,8 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         ITSAppUsesNonExemptEncryption: false
         NSFaceIDUsageDescription: "Numera uses Face ID to keep your financial data private."
+        LSApplicationQueriesSchemes:
+          - instagram
     entitlements:
       path: Numera/Numera.entitlements
       properties:

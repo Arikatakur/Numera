@@ -80,12 +80,7 @@ struct PremiumLockCard: View {
         .frame(height: height)
         .frame(maxWidth: .infinity)
         .background(AppColors.chartTeal.opacity(0.10))
-        .background(AppColors.surfaceCard)
-        .clipShape(RoundedRectangle(cornerRadius: AppRadius.hero, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: AppRadius.hero, style: .continuous)
-                .stroke(AppColors.borderGlass, lineWidth: 1)
-        )
+        .glassSurface(cornerRadius: AppRadius.hero)
     }
 
     /// Fake rows suggesting the locked content.
