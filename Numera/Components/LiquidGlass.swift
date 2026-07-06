@@ -42,4 +42,54 @@ extension View {
         )
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
+
+    /// Interactive Liquid Glass for tappable controls on the base layer —
+    /// chips, pills, search fields, floating buttons. `tint` colors the glass
+    /// (Apple HIG: sparingly, for the prominent action). Never apply inside a
+    /// glass card: glass must not stack on glass.
+    /// Fallback: `fallbackFill` in the same shape + hairline border.
+    @ViewBuilder
+    func liquidGlassControl<S: Shape>(
+        _ shape: S,
+        tint: Color? = nil,
+        fallbackFill: some ShapeStyle
+    ) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26, *) {
+            self.glassEffect(
+                (tint.map { Glass.regular.tint($0) } ?? .regular).interactive(),
+                in: shape
+            )
+        } else {
+            controlFallback(shape, fill: fallbackFill)
+        }
+        #else
+        controlFallback(shape, fill: fallbackFill)
+        #endif
+    }
+
+    private func controlFallback<S: Shape>(_ shape: S, fill: some ShapeStyle) -> some View {
+        background(fill, in: shape)
+            .overlay(shape.stroke(AppColors.borderGlass, lineWidth: 1))
+    }
+}
+
+/// Blends the glass of nearby controls (Apple's `GlassEffectContainer`) on
+/// iOS 26; renders content unchanged on iOS 17–25. Wrap rows of glass chips
+/// or grouped glass buttons in this.
+struct LiquidGlassGroup<Content: View>: View {
+    var spacing: CGFloat? = nil
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26, *) {
+            GlassEffectContainer(spacing: spacing) { content() }
+        } else {
+            content()
+        }
+        #else
+        content()
+        #endif
+    }
 }

@@ -42,6 +42,8 @@ struct BudgetView: View {
                 if premium.isPremium {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: AppSpacing.lg) {
+                            PageTitle(text: "Budget")
+
                             if let overall = store.overallBudget {
                                 overallCard(overall)
                             } else {
@@ -50,7 +52,7 @@ struct BudgetView: View {
 
                             categoryGrid
 
-                            Spacer().frame(height: 120)
+                            Spacer().frame(height: 80)
                         }
                         .padding(.horizontal, AppSpacing.screenMargin)
                         .padding(.top, AppSpacing.sm)
@@ -60,9 +62,7 @@ struct BudgetView: View {
                     lockedView
                 }
             }
-            .navigationTitle("Budget")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .navigationBarHidden(true)
         }
         .sheet(item: $editorTarget) { target in
             BudgetEditSheet(target: target)
@@ -78,6 +78,8 @@ struct BudgetView: View {
     private var lockedView: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: AppSpacing.xl) {
+                PageTitle(text: "Budget")
+
                 ZStack {
                     BudgetRing(progress: 0.72, color: AppColors.accent, lineWidth: 14)
                     VStack(spacing: 5) {
@@ -110,9 +112,10 @@ struct BudgetView: View {
                 }
                 .padding(.horizontal, AppSpacing.xxl)
 
-                Spacer().frame(height: 120)
+                Spacer().frame(height: 80)
             }
             .padding(.horizontal, AppSpacing.screenMargin)
+            .padding(.top, AppSpacing.sm)
         }
     }
 
@@ -251,14 +254,33 @@ struct BudgetView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, AppSpacing.lg)
-            .background(AppColors.surfaceCard)
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
-                    .stroke(AppColors.borderSubtle, lineWidth: 1)
-            )
+            .liquidGlass(cornerRadius: AppRadius.card)
+            .overlay(alignment: .topTrailing) {
+                // Editing affordance — the whole card opens the editor; this
+                // badge makes that discoverable.
+                Image(systemName: "pencil")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(AppColors.textSecondary)
+                    .frame(width: 26, height: 26)
+                    .background(Color.white.opacity(0.07), in: Circle())
+                    .padding(AppSpacing.sm)
+                    .allowsHitTesting(false)
+            }
         }
         .buttonStyle(.plain)
+        .contextMenu {
+            Button {
+                editorTarget = .edit(budget)
+            } label: {
+                Label("Edit limit", systemImage: "pencil")
+            }
+            Button(role: .destructive) {
+                Haptics.warning()
+                Task { await store.deleteBudget(id: budget.id) }
+            } label: {
+                Label("Remove limit", systemImage: "trash")
+            }
+        }
     }
 
     private var addCategoryCard: some View {
@@ -277,8 +299,7 @@ struct BudgetView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, AppSpacing.lg)
-            .background(AppColors.surfaceCard.opacity(0.6))
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous))
+            .liquidGlass(cornerRadius: AppRadius.card, tintFallback: 0.2)
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                     .strokeBorder(AppColors.borderGlass, style: StrokeStyle(lineWidth: 1, dash: [6, 5]))
@@ -433,12 +454,7 @@ struct BudgetEditSheet: View {
                 }
             }
             .padding(AppSpacing.base)
-            .background(AppColors.surfaceCard)
-            .clipShape(RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
-                    .stroke(AppColors.borderGlass, lineWidth: 1)
-            )
+            .liquidGlass(cornerRadius: AppRadius.lg)
         }
         .disabled(isLocked)
     }

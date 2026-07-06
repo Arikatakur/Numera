@@ -38,7 +38,7 @@ struct ActivityView: View {
                         chipsSection
                         if searchActive { searchField }
                         listSection
-                        Spacer().frame(height: 120)
+                        Spacer().frame(height: 80)
                     }
                     .padding(.top, AppSpacing.sm)
                 }
@@ -165,6 +165,7 @@ struct ActivityView: View {
                 values: chartValues,
                 labels: chartLabels,
                 average: chartAverage,
+                averageExplanation: "Daily average: this month's total \(typeFilter == .income ? "income" : "spending") divided by the days elapsed so far. Past months divide by all their days.",
                 barColor: typeFilter == .income ? AppColors.income : AppColors.accent,
                 height: 150
             )
@@ -175,6 +176,9 @@ struct ActivityView: View {
 
     private var chipsSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
+            // Adjacent glass chips share one container so their glass blends
+            // (Apple's GlassEffectContainer) instead of stacking.
+            LiquidGlassGroup(spacing: AppSpacing.sm) {
             HStack(spacing: AppSpacing.sm) {
                 Button {
                     Haptics.tap()
@@ -183,12 +187,15 @@ struct ActivityView: View {
                         if !searchActive { searchText = "" }
                     }
                 } label: {
-                    Image(systemName: "magnifyingglass")
+                    let icon = Image(systemName: "magnifyingglass")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(searchActive ? .black : AppColors.textPrimary)
                         .frame(width: 38, height: 38)
-                        .background(searchActive ? AppColors.accent : AppColors.surfaceElevated)
-                        .clipShape(Circle())
+                    if searchActive {
+                        icon.background(AppColors.accent, in: Circle())
+                    } else {
+                        icon.liquidGlassControl(Circle(), fallbackFill: AppColors.surfaceElevated)
+                    }
                 }
 
                 Menu {
@@ -235,6 +242,7 @@ struct ActivityView: View {
                 }
             }
             .padding(.horizontal, AppSpacing.screenMargin)
+            }
         }
     }
 
@@ -249,10 +257,9 @@ struct ActivityView: View {
         .foregroundColor(AppColors.textPrimary)
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(AppColors.surfaceElevated)
-        .clipShape(Capsule())
+        .liquidGlassControl(Capsule(), fallbackFill: AppColors.surfaceElevated)
         .overlay(
-            Capsule().stroke(highlighted ? AppColors.accent.opacity(0.6) : AppColors.borderGlass, lineWidth: 1)
+            Capsule().stroke(highlighted ? AppColors.accent.opacity(0.6) : Color.clear, lineWidth: 1)
         )
     }
 
@@ -269,9 +276,7 @@ struct ActivityView: View {
         }
         .padding(.horizontal, AppSpacing.base)
         .padding(.vertical, 12)
-        .background(AppColors.surfaceCard)
-        .clipShape(Capsule())
-        .overlay(Capsule().stroke(AppColors.borderGlass, lineWidth: 1))
+        .liquidGlassControl(Capsule(), fallbackFill: AppColors.surfaceCard)
         .padding(.horizontal, AppSpacing.screenMargin)
         .transition(.move(edge: .top).combined(with: .opacity))
     }

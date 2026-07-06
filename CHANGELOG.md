@@ -5,9 +5,33 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
-## [Unreleased]
+## [0.13.0] — 2026-07-06
 
-App Store submission prep — the three review blockers plus recurring transactions and UX fixes.
+Native Apple chrome + chart interactivity: system tab bar, interactive Liquid Glass on controls, per-card month focus in Insights, and alignment/percent fixes.
+
+### Added
+- **Donut segment tap.** Tapping a slice of the Insights summary donut dims the others and swaps the center to that category's spend — emoji, name, amount, and share. Tap the slice again (or off the ring) to return to the month total.
+- **Per-card month focus in Insights.** Tapping a bar in "Income vs expenses" or "Income left" focuses that month inside that card only — the legend/title and a small month tag follow along; the page period no longer changes.
+- **Average-line explainer.** The average value on the Activity chart is now a tappable ⓘ label that opens a popover explaining the calculation (this month's total ÷ days elapsed so far; past months ÷ all their days).
+- **Edit affordance on category limits.** Each Budget limit card now shows a pencil badge and a context menu (**Edit limit** / **Remove limit**); tapping the card opens the editor as before.
+- `Components/PageTitle.swift` — shared 34pt in-content page title.
+
+### Changed
+- **Native Apple tab bar (HIG).** Replaced the custom floating pill + paged `TabView` with the system `TabView` and SF Symbol tab items — the bar adopts real Liquid Glass automatically on iOS 26, tab switching is smooth (the page-style `TabView` was the lag), and pushed screens hide it the system way (`.toolbar(.hidden, for: .tabBar)`). `GlassTabBar` removed; `AppTab` now lives in `App/AppTab.swift` with native icons (house / list.bullet / chart.pie / wallet.pass / gearshape).
+- **Interactive Liquid Glass on controls.** New `liquidGlassControl(_:tint:fallbackFill:)` and `LiquidGlassGroup` (Apple's `GlassEffectContainer`) in `Components/LiquidGlass.swift`, adopted by the Activity filter chips + search, the Home month pill, Select-month year pills and month cells, `PrimaryButton` and the floating (+) (accent-tinted glass), `CategoryChip`, the Budget limit cards, and the budget editor's category picker. iOS 17–25 keeps the previous solid surfaces as the fallback. Controls nested inside glass cards stay non-glass (no glass on glass).
+- **Page titles aligned.** Insights, Budget, and Settings titles moved in-content so they align with the 20pt content margin like Home, instead of hugging the screen edge on the system large-title margin.
+- **Average line lighter.** The dashed average line is dimmer (white 25%) with a tertiary label so it reads as a guide, not data.
+- Bottom scroll spacers trimmed to 80pt — the native tab bar insets scroll content automatically.
+
+### Fixed
+- **"Income left" percent clamps at 0%.** Overspending (or a month with no income) shows 0% instead of a negative percentage or a dash.
+- **Wrong-looking numbers after tapping a chart bar.** A bar tap used to switch the entire page's month, so a 5,000 spend in May could suddenly read as a different month's small value elsewhere on the page; bar selection is now scoped to its own card (see Added).
+
+---
+
+## [0.12.0] — 2026-07-06
+
+App Store submission prep + Liquid Glass groundwork — the three review blockers, recurring transactions, the glass design system, the What's New card, and UX fixes. First TestFlight build with release notes (1.0.0 build 20).
 
 ### Added
 - **"Numera just got better" card + What's New sheet.** Quanto-style status card on Home (`Features/Home/WhatsNew.swift`): 🚀 tile, headline, X to dismiss, and a white **What's new?** pill that opens a release-highlights sheet. Dismissal is stored per app version (`whatsNewDismissedVersion`), so the card returns on the next release.
@@ -33,12 +57,6 @@ App Store submission prep — the three review blockers plus recurring transacti
 - **Liquid Glass (iOS 26+), gated.** `glassSurface(...)` now applies real `.glassEffect(.regular, in: .rect(...))` on iOS 26 and keeps the `.ultraThinMaterial` treatment as the iOS 17–25 fallback — double-gated with `#if compiler(>=6.2)` (SDK) and `#available(iOS 26, *)` (runtime) so it builds on any Xcode. Flows to every card, chart card, and the floating tab bar. Chart data keeps a plain (non-glass) background for legibility, per the design skill.
 - **Follow creator on IG** now opens the Instagram app via `UIApplication.canOpenURL`/`open` (handle constant `AppInfo.instagramHandle = "saleemyousef"`), with a web fallback only when the app isn't installed.
 
-### Fixed
-- **"Follow creator on IG" cancel bug** — cancelling the system "Open in Instagram?" prompt no longer opened the web profile. Root cause was the old `openURL(completion:)` fallback firing the web URL on a cancelled/failed app-open; replaced with an up-front `canOpenURL` decision.
-- **Activity chart date labels** — two-digit day labels (16, 23, 30) no longer wrap onto a second line; they render on one line at natural width.
-- **Home Safe-to-Spend card** is now hidden entirely until Budget is unlocked (Pro), instead of showing a locked placeholder; it animates back in when Pro is active.
-
-### Changed
 - **App Store–style glass cards.** Added a shared `View.glassSurface(cornerRadius:)` modifier (translucent `.ultraThinMaterial` + dark brand tint + hairline highlight) and adopted it in every card container — `NumeraCard`, `NumeraCardSmall`, `SettingsCard`, and `PremiumLockCard` — so cards across the app read as one frosted-glass system.
 - **CSV import/export now uses DD/MM/YYYY** to match the import template and hint. Import still accepts older `YYYY-MM-DD` exports and ISO timestamps (`DataStore.parseCSVDate`); export rows switched to `dd/MM/yyyy`.
 - Renamed the monthly/yearly Pro subscription product IDs to
@@ -56,6 +74,9 @@ App Store submission prep — the three review blockers plus recurring transacti
 - Settings sub-pages (Categories, Accounts, Currency, Reminder, Month start, Recurring) hide the floating tab bar + add button while pushed, so it no longer overlaps their content.
 
 ### Fixed
+- **"Follow creator on IG" cancel bug** — cancelling the system "Open in Instagram?" prompt no longer opened the web profile. Root cause was the old `openURL(completion:)` fallback firing the web URL on a cancelled/failed app-open; replaced with an up-front `canOpenURL` decision.
+- **Activity chart date labels** — two-digit day labels (16, 23, 30) no longer wrap onto a second line; they render on one line at natural width.
+- **Home Safe-to-Spend card** is now hidden entirely until Budget is unlocked (Pro), instead of showing a locked placeholder; it animates back in when Pro is active.
 - **"Income left this month" red dash.** When no income was recorded for the period, the percentage view rendered a bare `—` in expense-red that read as a stray line. The income-left value is now always white in both currency and % modes, matching the rest of the hero numbers.
 - **Add Transaction keyboard.** Focusing the title field no longer shoves the whole screen up and misaligns the keypad — keyboard avoidance is disabled on the fixed layout so the field stays put above the keyboard.
 - **`project.yml` entitlements** — corrected malformed YAML (duplicate `path`/`properties` keys nested under `info`) that would have broken `xcodegen generate` in CI and silently dropped the Sign in with Apple entitlement.

@@ -41,7 +41,7 @@ struct HomeView: View {
                         monthCardSection
                         safeToSpendSection
                         recentActivitySection
-                        Spacer().frame(height: 110)
+                        Spacer().frame(height: 80)
                     }
                     .padding(.horizontal, AppSpacing.screenMargin)
                     .padding(.top, AppSpacing.lg)
@@ -96,9 +96,7 @@ struct HomeView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 7)
-                .background(AppColors.surfaceElevated)
-                .cornerRadius(AppRadius.pill)
-                .overlay(Capsule().stroke(AppColors.borderGlass, lineWidth: 1))
+                .liquidGlassControl(Capsule(), fallbackFill: AppColors.surfaceElevated)
             }
         }
     }

@@ -15,6 +15,13 @@ struct InsightsView: View {
     @State private var showPaywall = false
     @State private var selectedDay: DaySelection?
 
+    /// Donut segment picked by tapping the ring (index into `donutSegments`).
+    @State private var selectedSegment: Int?
+    /// Month focused by tapping a bar — scoped to its own card, the rest of
+    /// the page keeps showing `period`.
+    @State private var incomeExpensesFocus: Period?
+    @State private var incomeLeftFocus: Period?
+
     /// Identifiable wrapper so a tapped calendar date can drive `.sheet(item:)`.
     private struct DaySelection: Identifiable {
         let date: Date
@@ -35,6 +42,8 @@ struct InsightsView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: AppSpacing.lg) {
+                        PageTitle(text: "Insights")
+
                         summaryDonutCard
 
                         if hasData {
@@ -61,16 +70,20 @@ struct InsightsView: View {
                             ) { showPaywall = true }
                         }
 
-                        Spacer().frame(height: 120)
+                        Spacer().frame(height: 80)
                     }
                     .padding(.horizontal, AppSpacing.screenMargin)
                     .padding(.top, AppSpacing.sm)
                 }
                 .refreshable { await store.bootstrap() }
             }
-            .navigationTitle("Insights")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .navigationBarHidden(true)
+        }
+        // A new page month resets the per-card selections.
+        .onChange(of: period) { _, _ in
+            selectedSegment = nil
+            incomeExpensesFocus = nil
+            incomeLeftFocus = nil
         }
         .sheet(isPresented: $showMonthPicker) {
             SelectMonthSheet(
@@ -106,22 +119,34 @@ struct InsightsView: View {
                     if donutSegments.isEmpty {
                         Circle().stroke(AppColors.surfaceHigh.opacity(0.6), lineWidth: 18)
                     } else {
-                        DonutChart(segments: donutSegments, lineWidth: 18)
+                        DonutChart(
+                            segments: donutSegments,
+                            lineWidth: 18,
+                            selectedIndex: selectedSegment,
+                            onSelectSegment: { index in
+                                withAnimation(.snappy(duration: 0.2)) { selectedSegment = index }
+                            }
+                        )
                     }
 
-                    VStack(spacing: 6) {
-                        Button { showMonthPicker = true } label: {
-                            HStack(spacing: 4) {
-                                Text(monthTitle)
-                                    .font(.system(size: 15))
-                                    .foregroundColor(AppColors.textSecondary)
-                                Image(systemName: "chevron.down")
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundColor(AppColors.textTertiary)
+                    if let selected = selectedSegment, selected < donutSegments.count {
+                        selectedSegmentCenter(selected)
+                            .transition(.opacity.combined(with: .scale(scale: 0.94)))
+                    } else {
+                        VStack(spacing: 6) {
+                            Button { showMonthPicker = true } label: {
+                                HStack(spacing: 4) {
+                                    Text(monthTitle)
+                                        .font(.system(size: 15))
+                                        .foregroundColor(AppColors.textSecondary)
+                                    Image(systemName: "chevron.down")
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundColor(AppColors.textTertiary)
+                                }
                             }
+                            MoneyText(amount: store.totalExpenses(in: period), size: 34)
+                            changeBadge
                         }
-                        MoneyText(amount: store.totalExpenses(in: period), size: 34)
-                        changeBadge
                     }
                 }
                 .frame(width: 240, height: 240)
@@ -132,6 +157,37 @@ struct InsightsView: View {
 
     private var monthTitle: String {
         period == store.currentPeriod ? "This month" : PeriodMath.monthLabel(period)
+    }
+
+    /// Donut center while a ring segment is selected: that category's spend.
+    /// Segments are `totals.prefix(5)` plus an optional "other" remainder.
+    private func selectedSegmentCenter(_ index: Int) -> some View {
+        let top = Array(totals.prefix(5))
+        return VStack(spacing: 5) {
+            if index < top.count {
+                let item = top[index]
+                Text(item.category.emoji)
+                    .font(.system(size: 26))
+                Text(item.category.name)
+                    .font(.system(size: 15))
+                    .foregroundColor(AppColors.textSecondary)
+                    .lineLimit(1)
+                MoneyText(amount: item.total, size: 30)
+                Text("\(Int((item.share * 100).rounded()))% of spending")
+                    .font(.system(size: 12))
+                    .foregroundColor(AppColors.textTertiary)
+            } else {
+                let rest = totals.dropFirst(5)
+                Text("Other")
+                    .font(.system(size: 15))
+                    .foregroundColor(AppColors.textSecondary)
+                MoneyText(amount: rest.reduce(Decimal(0)) { $0 + $1.total }, size: 30)
+                Text("\(Int((rest.reduce(0.0) { $0 + $1.share } * 100).rounded()))% of spending")
+                    .font(.system(size: 12))
+                    .foregroundColor(AppColors.textTertiary)
+            }
+        }
+        .padding(.horizontal, AppSpacing.xxl)
     }
 
     @ViewBuilder
@@ -196,12 +252,16 @@ struct InsightsView: View {
     // MARK: - Income vs expenses
 
     private var incomeVsExpensesCard: some View {
-        NumeraCard {
+        // Tapping a bar focuses that month within THIS card only — the legend
+        // above follows it; the rest of the page stays on `period`.
+        let focus = incomeExpensesFocus ?? period
+        return NumeraCard {
             VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                HStack(spacing: AppSpacing.xl) {
-                    legendValue(color: AppColors.income, label: "Income", amount: store.totalIncome(in: period))
-                    legendValue(color: AppColors.chartPurple, label: "Expenses", amount: store.totalExpenses(in: period))
+                HStack(alignment: .top, spacing: AppSpacing.xl) {
+                    legendValue(color: AppColors.income, label: "Income", amount: store.totalIncome(in: focus))
+                    legendValue(color: AppColors.chartPurple, label: "Expenses", amount: store.totalExpenses(in: focus))
                     Spacer()
+                    monthTag(focus)
                 }
 
                 MonthlyBarsChart(
@@ -210,15 +270,28 @@ struct InsightsView: View {
                             label: PeriodMath.shortLabel(entry.period),
                             primary: (entry.income as NSDecimalNumber).doubleValue,
                             secondary: (entry.expenses as NSDecimalNumber).doubleValue,
-                            isSelected: entry.period == period
+                            isSelected: entry.period == focus
                         )
                     },
                     primaryColor: AppColors.income,
                     secondaryColor: AppColors.chartPurple,
-                    onSelect: { index in pickedPeriod = series[index].period }
+                    onSelect: { index in
+                        withAnimation(.snappy(duration: 0.2)) { incomeExpensesFocus = series[index].period }
+                    }
                 )
             }
         }
+    }
+
+    /// Small capsule naming the month a card's numbers refer to.
+    private func monthTag(_ focus: Period) -> some View {
+        Text(PeriodMath.shortLabel(focus))
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundColor(AppColors.textSecondary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.white.opacity(0.08))
+            .clipShape(Capsule())
     }
 
     private func legendValue(color: Color, label: String, amount: Decimal) -> some View {
@@ -236,13 +309,17 @@ struct InsightsView: View {
     // MARK: - Income left
 
     private var incomeLeftCard: some View {
-        let net = store.net(in: period)
-        let income = store.totalIncome(in: period)
+        // Same per-card focus as income vs expenses: bar taps stay local.
+        let focus = incomeLeftFocus ?? period
+        let net = store.net(in: focus)
+        let income = store.totalIncome(in: focus)
         return NumeraCard {
             VStack(alignment: .leading, spacing: AppSpacing.base) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Income left this month")
+                        Text(focus == store.currentPeriod
+                             ? "Income left this month"
+                             : "Income left in \(PeriodMath.shortLabel(focus))")
                             .font(.system(size: 15))
                             .foregroundColor(AppColors.textSecondary)
                         if incomeLeftAsPercent {
@@ -263,21 +340,25 @@ struct InsightsView: View {
                             label: PeriodMath.shortLabel(entry.period),
                             primary: max(0, leftover.doubleValue),
                             secondary: 0,
-                            isSelected: entry.period == period
+                            isSelected: entry.period == focus
                         )
                     },
                     primaryColor: AppColors.chartTeal,
                     secondaryHidden: true,
                     height: 110,
-                    onSelect: { index in pickedPeriod = series[index].period }
+                    onSelect: { index in
+                        withAnimation(.snappy(duration: 0.2)) { incomeLeftFocus = series[index].period }
+                    }
                 )
             }
         }
     }
 
+    /// Share of income still unspent; overspending never shows a negative —
+    /// it clamps to 0%.
     private func percentLeftText(net: Decimal, income: Decimal) -> String {
-        guard income > 0 else { return "—" }
-        let percent = ((net / income * 100) as NSDecimalNumber).doubleValue
+        guard income > 0 else { return "0%" }
+        let percent = max(0, ((net / income * 100) as NSDecimalNumber).doubleValue)
         return "\(Int(percent.rounded()))%"
     }
 

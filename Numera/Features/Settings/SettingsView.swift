@@ -32,6 +32,8 @@ struct SettingsView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                        PageTitle(text: "Settings")
+
                         profileCard
 
                         if !premium.isPremium {
@@ -264,14 +266,15 @@ struct SettingsView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.top, AppSpacing.sm)
 
-                        Spacer().frame(height: 120)
+                        Spacer().frame(height: 80)
                     }
                     .padding(.horizontal, AppSpacing.screenMargin)
                     .padding(.top, AppSpacing.sm)
                 }
             }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.large)
+            // Root bar hidden — the title lives in-content (PageTitle) so it
+            // aligns with the cards; pushed sub-pages still show their bars.
+            .navigationBarHidden(true)
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .confirmationDialog("Sign out?", isPresented: $showSignOutConfirm, titleVisibility: .visible) {

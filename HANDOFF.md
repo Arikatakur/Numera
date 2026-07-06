@@ -22,6 +22,43 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
+## Session — Native tab bar, interactive glass, Insights interactivity (2026-07-06, later)
+
+Branch: `feature/liquid-glass-ui`. Changelog version: **0.13.0** (previous push
+retro-tagged **0.12.0**, shipped as TestFlight 1.0.0 build 20).
+
+**What changed**
+- **Native tab bar:** system `TabView` + SF Symbol `tabItem`s replaces the
+  custom `GlassTabBar` pill and the laggy `.page` style. iOS 26 gives the bar
+  real Liquid Glass by itself. `AppTab` → `App/AppTab.swift`; `.hidesTabBar()`
+  now also applies `.toolbar(.hidden, for: .tabBar)`; `TabBarVisibility` only
+  drives the floating (+). Bottom scroll spacers 110/120 → 80.
+- **Interactive glass controls:** `liquidGlassControl(_:tint:fallbackFill:)` +
+  `LiquidGlassGroup` in `Components/LiquidGlass.swift`. Adopted by Activity
+  chips/search/search field, Home month pill, SelectMonthSheet pills/cells,
+  `PrimaryButton` + floating (+) (accent-tinted), `CategoryChip`, Budget limit
+  cards, budget editor category picker. Controls inside glass cards stay
+  non-glass (HIG: no glass on glass).
+- **Insights:** donut segments tappable (center shows the category's spend;
+  `DonutChart` gained `selectedIndex`/`onSelectSegment` with angle hit-testing);
+  bar taps in "Income vs expenses" / "Income left" focus that card only
+  (`incomeExpensesFocus`/`incomeLeftFocus`, reset via `.onChange(of: period)`);
+  income-left % clamps at 0%.
+- **Average line:** dimmer dash + tappable ⓘ average label with a popover
+  explaining the formula (`DayBarsChart.averageExplanation`).
+- **Budget:** pencil badge + context menu (Edit/Remove) on category limit cards.
+- **Titles:** `Components/PageTitle.swift` (34pt, in-content) on Insights /
+  Budget / Settings; root nav bars hidden so titles align with the 20pt margin.
+- **Changelog:** restructured — `[Unreleased]` split into dated `[0.12.0]`
+  (previous push, duplicate sections merged) and `[0.13.0]` (this session).
+
+**Testing status:** Not compiled locally (Windows — CI on macOS is the only
+compiler). On-device QA wanted: native tab bar behavior on iOS 26 + fallback,
+donut tap hit-testing, per-card month focus, average popover, limit editing,
+title alignment.
+
+---
+
 ## Session — Xcode 26 toolchain, LiquidGlass helper, What's New card (2026-07-06)
 
 Branch: `feature/liquid-glass-ui`.
