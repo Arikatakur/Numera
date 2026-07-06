@@ -20,7 +20,7 @@ struct EmojiIconTile: View {
             )
             .overlay(
                 Text(emoji)
-                    .font(.system(size: size * 0.48))
+                    .font(.system(size: size * 0.48, design: .rounded))
             )
             .frame(width: size, height: size)
     }

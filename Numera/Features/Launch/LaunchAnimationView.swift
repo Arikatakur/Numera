@@ -62,7 +62,7 @@ struct LaunchAnimationView: View {
                     HStack(spacing: 0) {
                         ForEach(0..<6, id: \.self) { i in
                             Text(letters[i])
-                                .font(.system(size: 25, weight: .bold))
+                                .font(.system(size: 25, weight: .bold, design: .rounded))
                                 .kerning(3.5)
                                 .foregroundColor(AppColors.textPrimary)
                                 .opacity(letterOpacity[i])
@@ -79,7 +79,7 @@ struct LaunchAnimationView: View {
                 }
 
                 Text("Understand your money.")
-                    .font(.system(size: 13.5))
+                    .font(.system(size: 13.5, design: .rounded))
                     .kerning(0.54)
                     .foregroundColor(AppColors.textSecondary.opacity(0.55))
                     .opacity(taglineOpacity)

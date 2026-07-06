@@ -1,31 +1,33 @@
 import SwiftUI
 
+/// App-wide type: SF Pro Rounded (Quanto's soft, friendly look) via the system
+/// rounded design — no bundled font files. Money keeps tabular digits.
 enum AppTypography {
     // MARK: - Display (money amounts)
     static func displayMoney(size: CGFloat = 48) -> Font {
-        .custom("PlusJakartaSans-Bold", size: size)
+        .system(size: size, weight: .bold, design: .rounded)
     }
 
     // MARK: - Headlines
-    static let headlineLarge  = Font.custom("PlusJakartaSans-Bold",   size: 28)
-    static let headlineMedium = Font.custom("PlusJakartaSans-SemiBold", size: 20)
-    static let headlineSmall  = Font.custom("PlusJakartaSans-SemiBold", size: 17)
+    static let headlineLarge  = Font.system(size: 28, weight: .bold, design: .rounded)
+    static let headlineMedium = Font.system(size: 20, weight: .semibold, design: .rounded)
+    static let headlineSmall  = Font.system(size: 17, weight: .semibold, design: .rounded)
 
     // MARK: - Body
-    static let bodyLarge      = Font.custom("PlusJakartaSans-SemiBold", size: 18)
-    static let bodyMedium     = Font.custom("PlusJakartaSans-Regular",  size: 16)
-    static let bodySmall      = Font.custom("PlusJakartaSans-Regular",  size: 14)
+    static let bodyLarge      = Font.system(size: 18, weight: .semibold, design: .rounded)
+    static let bodyMedium     = Font.system(size: 16, design: .rounded)
+    static let bodySmall      = Font.system(size: 14, design: .rounded)
 
     // MARK: - Labels
-    static let labelCaps      = Font.custom("PlusJakartaSans-Bold",    size: 12)
-    static let caption        = Font.custom("PlusJakartaSans-Regular", size: 13)
+    static let labelCaps      = Font.system(size: 12, weight: .bold, design: .rounded)
+    static let caption        = Font.system(size: 13, design: .rounded)
 }
 
 // MARK: - Convenience modifiers
 extension View {
     func moneyStyle(size: CGFloat = 34, color: Color = AppColors.textPrimary) -> some View {
         self
-            .font(.system(size: size, weight: .bold, design: .default))
+            .font(.system(size: size, weight: .bold, design: .rounded))
             .monospacedDigit()
             .foregroundColor(color)
             .tracking(-0.5)

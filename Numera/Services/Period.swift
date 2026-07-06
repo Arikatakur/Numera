@@ -14,6 +14,18 @@ struct Period: Equatable, Hashable {
     }
 }
 
+/// Aggregation window for Insights (Quanto's Weekly / Monthly / Quarterly /
+/// Yearly tabs). `month` follows the user's month-start day; the others use
+/// plain calendar boundaries.
+enum PeriodUnit: String, CaseIterable, Identifiable {
+    case week = "Weekly"
+    case month = "Monthly"
+    case quarter = "Quarterly"
+    case year = "Yearly"
+
+    var id: String { rawValue }
+}
+
 enum PeriodMath {
     /// Start-of-day on `startDay` of the given month, clamped to the month's length
     /// (start day 31 in February → Feb 28/29).
@@ -87,14 +99,121 @@ enum PeriodMath {
         return fmt.string(from: p.start)
     }
 
-    /// Every day (start-of-day) in the period, in order.
+    /// Every day (start-of-day) in the period, in order. Capped defensively —
+    /// high enough for yearly periods (366 days).
     static func days(in p: Period, calendar: Calendar = .current) -> [Date] {
         var days: [Date] = []
         var d = p.start
-        while d < p.end && days.count < 62 {
+        while d < p.end && days.count < 400 {
             days.append(d)
             d = calendar.date(byAdding: .day, value: 1, to: d) ?? p.end
         }
         return days
+    }
+
+    // MARK: - Unit-aware periods (Insights Weekly/Monthly/Quarterly/Yearly)
+
+    /// The week / month / quarter / year containing `date`. Months respect the
+    /// user's `startDay`; weeks respect `firstWeekday` (1 = Sunday, 2 = Monday).
+    static func period(
+        of unit: PeriodUnit,
+        containing date: Date,
+        startDay: Int,
+        firstWeekday: Int,
+        calendar: Calendar = .current
+    ) -> Period {
+        switch unit {
+        case .week:
+            var cal = calendar
+            cal.firstWeekday = firstWeekday
+            let interval = cal.dateInterval(of: .weekOfYear, for: date)
+                ?? DateInterval(start: cal.startOfDay(for: date), duration: 7 * 86_400)
+            return Period(start: cal.startOfDay(for: interval.start), end: cal.startOfDay(for: interval.end))
+
+        case .month:
+            return period(containing: date, startDay: startDay, calendar: calendar)
+
+        case .quarter:
+            let comps = calendar.dateComponents([.year, .month], from: date)
+            let month = comps.month ?? 1
+            let quarterStartMonth = ((month - 1) / 3) * 3 + 1
+            let start = calendar.date(from: DateComponents(year: comps.year, month: quarterStartMonth, day: 1)) ?? date
+            let end = calendar.date(byAdding: .month, value: 3, to: start) ?? date
+            return Period(start: calendar.startOfDay(for: start), end: calendar.startOfDay(for: end))
+
+        case .year:
+            let year = calendar.component(.year, from: date)
+            let start = calendar.date(from: DateComponents(year: year, month: 1, day: 1)) ?? date
+            let end = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1)) ?? date
+            return Period(start: calendar.startOfDay(for: start), end: calendar.startOfDay(for: end))
+        }
+    }
+
+    /// Shifts `p` by whole units (e.g. -1 week, +2 quarters).
+    static func shift(
+        _ p: Period,
+        by amount: Int,
+        unit: PeriodUnit,
+        startDay: Int,
+        firstWeekday: Int,
+        calendar: Calendar = .current
+    ) -> Period {
+        let component: Calendar.Component
+        let value: Int
+        switch unit {
+        case .week:    component = .weekOfYear; value = amount
+        case .month:   component = .month;      value = amount
+        case .quarter: component = .month;      value = amount * 3
+        case .year:    component = .year;       value = amount
+        }
+        let moved = calendar.date(byAdding: component, value: value, to: p.start) ?? p.start
+        return period(of: unit, containing: moved, startDay: startDay, firstWeekday: firstWeekday, calendar: calendar)
+    }
+
+    /// Title for the period: "This week", "2–8 Jun", "July", "Q3 2026", "2026".
+    static func title(_ p: Period, unit: PeriodUnit, relativeTo now: Date = .now) -> String {
+        if p.contains(now) {
+            switch unit {
+            case .week:    return "This week"
+            case .month:   return "This month"
+            case .quarter: return "This quarter"
+            case .year:    return "This year"
+            }
+        }
+        switch unit {
+        case .week:
+            let fmt = DateFormatter()
+            fmt.dateFormat = "d MMM"
+            let lastDay = Calendar.current.date(byAdding: .day, value: -1, to: p.end) ?? p.end
+            return "\(fmt.string(from: p.start)) – \(fmt.string(from: lastDay))"
+        case .month:
+            return monthLabel(p)
+        case .quarter:
+            return "Q\(quarterNumber(of: p)) \(Calendar.current.component(.year, from: p.start))"
+        case .year:
+            return String(Calendar.current.component(.year, from: p.start))
+        }
+    }
+
+    /// Compact axis/tag label: "2 Jun", "Jul", "Q3 ’26", "2026".
+    static func shortLabel(_ p: Period, unit: PeriodUnit) -> String {
+        switch unit {
+        case .week:
+            let fmt = DateFormatter()
+            fmt.dateFormat = "d MMM"
+            return fmt.string(from: p.start)
+        case .month:
+            return shortLabel(p)
+        case .quarter:
+            let year = Calendar.current.component(.year, from: p.start) % 100
+            return "Q\(quarterNumber(of: p)) ’\(String(format: "%02d", year))"
+        case .year:
+            return String(Calendar.current.component(.year, from: p.start))
+        }
+    }
+
+    private static func quarterNumber(of p: Period) -> Int {
+        let month = Calendar.current.component(.month, from: p.start)
+        return (month - 1) / 3 + 1
     }
 }

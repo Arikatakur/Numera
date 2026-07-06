@@ -43,9 +43,9 @@ struct CurrencyPickerView: View {
         HStack(spacing: AppSpacing.sm) {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(AppColors.textTertiary)
-                .font(.system(size: 15))
+                .font(.system(size: 15, design: .rounded))
             TextField("Search currency", text: $searchText)
-                .font(.system(size: 15))
+                .font(.system(size: 15, design: .rounded))
                 .foregroundColor(AppColors.textPrimary)
                 .tint(AppColors.accent)
                 .autocorrectionDisabled()
@@ -66,18 +66,18 @@ struct CurrencyPickerView: View {
         } label: {
             HStack(spacing: AppSpacing.md) {
                 Text(currency.flag)
-                    .font(.system(size: 20))
+                    .font(.system(size: 20, design: .rounded))
                 Text(currency.symbol)
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                     .frame(width: 46, alignment: .leading)
                 Text(currency.name)
-                    .font(.system(size: 16))
+                    .font(.system(size: 16, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
                 Spacer()
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 18))
+                        .font(.system(size: 18, design: .rounded))
                         .foregroundColor(AppColors.accent)
                 }
             }

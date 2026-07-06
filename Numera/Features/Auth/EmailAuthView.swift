@@ -40,7 +40,7 @@ struct EmailAuthView: View {
 
                         if let error = errorMessage {
                             Text(error)
-                                .font(.system(size: 13))
+                                .font(.system(size: 13, design: .rounded))
                                 .foregroundColor(AppColors.expense)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -78,15 +78,15 @@ struct EmailAuthView: View {
     private var confirmationCard: some View {
         VStack(spacing: AppSpacing.md) {
             Image(systemName: "envelope.badge.shield.half.filled")
-                .font(.system(size: 40))
+                .font(.system(size: 40, design: .rounded))
                 .foregroundColor(AppColors.accent)
 
             Text("Check your email")
-                .font(.system(size: 18, weight: .bold))
+                .font(.system(size: 18, weight: .bold, design: .rounded))
                 .foregroundColor(AppColors.textPrimary)
 
             Text("We sent a confirmation link to **\(email)**. Tap it to activate your account, then sign in.")
-                .font(.system(size: 14))
+                .font(.system(size: 14, design: .rounded))
                 .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
 
@@ -95,7 +95,7 @@ struct EmailAuthView: View {
                 showConfirmation = false
             } label: {
                 Text("Go to Sign In")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
                     .foregroundColor(AppColors.accent)
             }
             .padding(.top, AppSpacing.sm)
@@ -125,7 +125,7 @@ struct EmailAuthView: View {
             }
         }
         .textContentType(contentType)
-        .font(.system(size: 16))
+        .font(.system(size: 16, design: .rounded))
         .foregroundColor(AppColors.textPrimary)
         .padding(AppSpacing.base)
         .background(AppColors.surfaceElevated)

@@ -23,7 +23,7 @@ struct ReminderView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: AppSpacing.lg) {
                     Text("Set yourself a reminder to add your expenses.")
-                        .font(.system(size: 15))
+                        .font(.system(size: 15, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
 
                     VStack(spacing: AppSpacing.md) {
@@ -34,7 +34,7 @@ struct ReminderView: View {
 
                     if permissionDenied {
                         Text("Notifications are turned off for Numera. Enable them in iOS Settings → Notifications.")
-                            .font(.system(size: 13))
+                            .font(.system(size: 13, design: .rounded))
                             .foregroundColor(AppColors.warning)
                     }
 
@@ -48,7 +48,7 @@ struct ReminderView: View {
 
                     if settings.reminderFrequency != .never {
                         Text(scheduleSummary)
-                            .font(.system(size: 15))
+                            .font(.system(size: 15, design: .rounded))
                             .foregroundColor(AppColors.textSecondary)
                             .padding(.top, AppSpacing.sm)
 
@@ -111,12 +111,12 @@ struct ReminderView: View {
         } label: {
             HStack {
                 Text(frequency.label)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
                 Spacer()
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 18))
+                        .font(.system(size: 18, design: .rounded))
                         .foregroundColor(AppColors.accent)
                 }
             }

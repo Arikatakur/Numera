@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Quanto-style announcement card ("Numera just got better!"): rocket tile,
+/// Quanto-style announcement card ("Numera just got better!"): sparkles tile,
 /// headline, X to dismiss, and a white "What's new?" pill that opens
 /// `WhatsNewSheet`. Home shows it until dismissed for the current version.
 struct WhatsNewCard: View {
@@ -10,8 +10,9 @@ struct WhatsNewCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.lg) {
             HStack(alignment: .top, spacing: AppSpacing.base) {
-                Text("🚀")
-                    .font(.system(size: 22))
+                Image(systemName: "sparkles")
+                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .foregroundColor(AppColors.accent)
                     .frame(width: 44, height: 44)
                     .background(
                         RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
@@ -20,10 +21,10 @@ struct WhatsNewCard: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Numera just got better!")
-                        .font(.system(size: 17, weight: .bold))
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
-                    Text("Discover what's new, from a fresh glass look to recurring transactions.")
-                        .font(.system(size: 14))
+                    Text("Discover what's new, from the rounded glass look to native charts.")
+                        .font(.system(size: 14, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -35,7 +36,7 @@ struct WhatsNewCard: View {
                     onDismiss()
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
                         .frame(width: 28, height: 28)
                         .contentShape(Rectangle())
@@ -49,7 +50,7 @@ struct WhatsNewCard: View {
                 onWhatsNew()
             } label: {
                 Text("What's new?")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundColor(.black)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 15)
@@ -86,25 +87,25 @@ struct WhatsNewSheet: View {
                     VStack(alignment: .leading, spacing: AppSpacing.xl) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("What's new")
-                                .font(.system(size: 30, weight: .bold))
+                                .font(.system(size: 30, weight: .bold, design: .rounded))
                                 .foregroundColor(AppColors.textPrimary)
                             Text("Version \(AppInfo.shortVersion)")
-                                .font(.system(size: 14))
+                                .font(.system(size: 14, design: .rounded))
                                 .foregroundColor(AppColors.textTertiary)
                         }
                         .padding(.top, AppSpacing.xxl)
 
                         VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                            featureRow("✨", "Liquid Glass design",
-                                       "Cards, charts and the tab bar use Apple's glass material on iOS 26.")
-                            featureRow("🔁", "Recurring transactions",
+                            featureRow("sparkles", "Rounded, glassy look",
+                                       "Quanto-style rounded type and Liquid Glass on every page.")
+                            featureRow("chart.bar.xaxis", "Native charts",
+                                       "Bars, donut and calendar are now Apple-native — smoother and clearer.")
+                            featureRow("calendar", "Weekly to yearly insights",
+                                       "Switch Insights between weekly, monthly, quarterly and yearly views.")
+                            featureRow("clock.arrow.circlepath", "Full activity history",
+                                       "Scroll back through every month and jump to any year since 2020.")
+                            featureRow("arrow.triangle.2.circlepath", "Recurring transactions",
                                        "Put rent, salary and subscriptions on autopilot.")
-                            featureRow("📅", "Calendar drill-down",
-                                       "Tap any day in Insights to see exactly what you spent.")
-                            featureRow("🫣", "Hide balances",
-                                       "One switch in Settings → Privacy & security covers the whole app.")
-                            featureRow("💬", "Feedback & roadmap",
-                                       "Report bugs and vote on what Numera builds next, from Settings.")
                         }
 
                         Spacer().frame(height: AppSpacing.base)
@@ -120,21 +121,22 @@ struct WhatsNewSheet: View {
         .preferredColorScheme(.dark)
     }
 
-    private func featureRow(_ emoji: String, _ title: String, _ detail: String) -> some View {
+    private func featureRow(_ symbol: String, _ title: String, _ detail: String) -> some View {
         HStack(alignment: .top, spacing: AppSpacing.base) {
-            Text(emoji)
-                .font(.system(size: 24))
+            Image(systemName: symbol)
+                .font(.system(size: 19, weight: .semibold, design: .rounded))
+                .foregroundColor(AppColors.accent)
                 .frame(width: 46, height: 46)
                 .background(
                     RoundedRectangle(cornerRadius: AppRadius.md, style: .continuous)
-                        .fill(Color.white.opacity(0.06))
+                        .fill(AppColors.accent.opacity(0.12))
                 )
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
                 Text(detail)
-                    .font(.system(size: 14))
+                    .font(.system(size: 14, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

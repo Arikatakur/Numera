@@ -32,8 +32,6 @@ struct SettingsView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                        PageTitle(text: "Settings")
-
                         profileCard
 
                         if !premium.isPremium {
@@ -186,7 +184,7 @@ struct SettingsView: View {
                         SettingsCard {
                             SettingsRow(icon: "info.circle", title: "Version") {
                                 Text(versionText)
-                                    .font(.system(size: 15))
+                                    .font(.system(size: 15, design: .rounded))
                                     .foregroundColor(AppColors.textSecondary)
                             }
                             SettingsDivider()
@@ -220,7 +218,7 @@ struct SettingsView: View {
                             } label: {
                                 SettingsRow(icon: "bubble.left.and.bubble.right", title: "Feedback & roadmap") {
                                     Image(systemName: "arrow.up.right")
-                                        .font(.system(size: 13, weight: .semibold))
+                                        .font(.system(size: 13, weight: .semibold, design: .rounded))
                                         .foregroundColor(AppColors.textTertiary)
                                 }
                             }
@@ -240,7 +238,7 @@ struct SettingsView: View {
                             } label: {
                                 SettingsRow(assetIcon: "instagram.logo", title: "Follow creator on IG") {
                                     Image(systemName: "arrow.up.right")
-                                        .font(.system(size: 13, weight: .semibold))
+                                        .font(.system(size: 13, weight: .semibold, design: .rounded))
                                         .foregroundColor(AppColors.textTertiary)
                                 }
                             }
@@ -257,10 +255,10 @@ struct SettingsView: View {
 
                         VStack(spacing: 4) {
                             Text("Numera — your money, clearly.")
-                                .font(.system(size: 13))
+                                .font(.system(size: 13, design: .rounded))
                                 .foregroundColor(AppColors.textTertiary)
                             Text("Version \(AppInfo.versionString)")
-                                .font(.system(size: 12))
+                                .font(.system(size: 12, design: .rounded))
                                 .foregroundColor(AppColors.textTertiary)
                         }
                         .frame(maxWidth: .infinity)
@@ -272,9 +270,10 @@ struct SettingsView: View {
                     .padding(.top, AppSpacing.sm)
                 }
             }
-            // Root bar hidden — the title lives in-content (PageTitle) so it
-            // aligns with the cards; pushed sub-pages still show their bars.
-            .navigationBarHidden(true)
+            // Native large title: collapses into the system glass bar on
+            // scroll (iOS 26), like every stock Apple app.
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.large)
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .confirmationDialog("Sign out?", isPresented: $showSignOutConfirm, titleVisibility: .visible) {
@@ -334,7 +333,7 @@ struct SettingsView: View {
         } label: {
             SettingsRow(icon: icon, title: title) {
                 Image(systemName: "arrow.up.right")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundColor(AppColors.textTertiary)
             }
         }
@@ -361,10 +360,10 @@ struct SettingsView: View {
         } label: {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Try Numera Pro for free!")
-                    .font(.system(size: 17, weight: .bold))
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
                     .foregroundColor(.black)
                 Text("Unlock budgeting, recurring & export.")
-                    .font(.system(size: 14))
+                    .font(.system(size: 14, design: .rounded))
                     .foregroundColor(.black.opacity(0.7))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -391,15 +390,15 @@ struct SettingsView: View {
                         .fill(AppColors.accent.opacity(0.15))
                         .frame(width: 54, height: 54)
                     Text(initials)
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundColor(AppColors.accent)
                 }
                 VStack(alignment: .leading, spacing: 3) {
                     Text(displayName)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
                     Text(authManager.currentUserEmail ?? "—")
-                        .font(.system(size: 13))
+                        .font(.system(size: 13, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
                 }
                 Spacer()
@@ -436,7 +435,7 @@ struct SettingsView: View {
         Link(destination: URL(string: urlString)!) {
             SettingsRow(icon: icon, title: title) {
                 Image(systemName: "arrow.up.right")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundColor(AppColors.textTertiary)
             }
         }

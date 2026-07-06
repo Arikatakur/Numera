@@ -55,7 +55,7 @@ struct PaywallView: View {
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                     .frame(width: 34, height: 34)
                     .background(Color.white.opacity(0.08))
@@ -89,16 +89,16 @@ struct PaywallView: View {
                     .fill(AppColors.accent.opacity(0.15))
                     .frame(width: 56, height: 56)
                 Image(systemName: "star.fill")
-                    .font(.system(size: 24))
+                    .font(.system(size: 24, design: .rounded))
                     .foregroundColor(AppColors.accent)
             }
 
             Text(trialAvailable ? "Try Numera Pro for Free" : "Numera Pro")
-                .font(.system(size: 30, weight: .bold))
+                .font(.system(size: 30, weight: .bold, design: .rounded))
                 .foregroundColor(AppColors.textPrimary)
 
             Text("Unlock all features with zero commitment.")
-                .font(.system(size: 15))
+                .font(.system(size: 15, design: .rounded))
                 .foregroundColor(AppColors.textSecondary)
         }
         .padding(.top, AppSpacing.xl)
@@ -107,16 +107,16 @@ struct PaywallView: View {
     private func featureRow(_ title: String, detail: String?) -> some View {
         HStack(alignment: .top, spacing: AppSpacing.md) {
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 20))
+                .font(.system(size: 20, design: .rounded))
                 .foregroundColor(AppColors.accent)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
                 if let detail {
                     Text(detail)
-                        .font(.system(size: 13))
+                        .font(.system(size: 13, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
                 }
             }
@@ -160,13 +160,13 @@ struct PaywallView: View {
         } label: {
             VStack(spacing: 5) {
                 Text(spec.big)
-                    .font(.system(size: 26, weight: .bold))
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
                 Text(spec.unit)
-                    .font(.system(size: 13))
+                    .font(.system(size: 13, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                 Text(price)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(isSelected ? AppColors.accent : AppColors.textSecondary)
                     .lineLimit(1)
@@ -183,7 +183,7 @@ struct PaywallView: View {
             .overlay(alignment: .top) {
                 if spec.product == .yearly, let savings = premium.yearlySavingsPercent {
                     Text("Save \(savings)%")
-                        .font(.system(size: 11, weight: .bold))
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
                         .foregroundColor(.black)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 4)
@@ -213,7 +213,7 @@ struct PaywallView: View {
 
     private var footnote: some View {
         Text(footnoteText)
-            .font(.system(size: 13))
+            .font(.system(size: 13, design: .rounded))
             .foregroundColor(AppColors.textSecondary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
@@ -229,7 +229,7 @@ struct PaywallView: View {
                     .opacity(0.4)
                     .disabled(true)
                 Text("Products aren't configured yet. On a development build, attach the Numera.storekit configuration; on TestFlight, set up products in App Store Connect.")
-                    .font(.system(size: 12))
+                    .font(.system(size: 12, design: .rounded))
                     .foregroundColor(AppColors.textTertiary)
                     .multilineTextAlignment(.center)
             }
@@ -279,7 +279,7 @@ struct PaywallView: View {
                 }
             }
         }
-        .font(.system(size: 13))
+        .font(.system(size: 13, design: .rounded))
         .foregroundColor(AppColors.textSecondary)
         .tint(AppColors.textSecondary)
         .frame(maxWidth: .infinity)

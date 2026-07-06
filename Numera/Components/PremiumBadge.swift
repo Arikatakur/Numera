@@ -5,9 +5,9 @@ struct PremiumBadge: View {
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "star.fill")
-                .font(.system(size: 9, weight: .bold))
+                .font(.system(size: 9, weight: .bold, design: .rounded))
             Text("Premium")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
         }
         .foregroundColor(AppColors.accent)
         .padding(.horizontal, 9)
@@ -31,10 +31,10 @@ struct UnlockGradientButton: View {
             HStack(spacing: 8) {
                 if let icon {
                     Image(systemName: icon)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
                 }
                 Text(title)
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
             }
             .foregroundColor(.black)
             .frame(maxWidth: .infinity)
@@ -69,7 +69,7 @@ struct PremiumLockCard: View {
 
             VStack(spacing: AppSpacing.lg) {
                 Image(systemName: "lock.fill")
-                    .font(.system(size: 26))
+                    .font(.system(size: 26, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
 
                 UnlockGradientButton(title: buttonTitle, icon: nil, action: onUnlock)

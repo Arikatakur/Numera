@@ -20,8 +20,10 @@ struct SelectMonthSheet: View {
 
     private var years: [Int] {
         let current = Calendar.current.component(.year, from: .now)
-        let first = earliest.map { Calendar.current.component(.year, from: $0) } ?? current - 3
-        return Array(min(first, current)...current).reversed()
+        // Always reach back to 2020 (further if older data exists).
+        let earliestYear = earliest.map { Calendar.current.component(.year, from: $0) } ?? 2020
+        let first = min(earliestYear, 2020, current)
+        return Array(first...current).reversed()
     }
 
     private var monthSymbols: [String] {
@@ -39,7 +41,7 @@ struct SelectMonthSheet: View {
                     .padding(.top, AppSpacing.md)
 
                 Text("Select date")
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
 
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -74,7 +76,7 @@ struct SelectMonthSheet: View {
             selectedYear = year
         } label: {
             Text(String(year))
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 16, weight: .semibold, design: .rounded))
                 .foregroundColor(AppColors.textPrimary)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
@@ -98,7 +100,7 @@ struct SelectMonthSheet: View {
             dismiss()
         } label: {
             Text(monthSymbols.indices.contains(month - 1) ? monthSymbols[month - 1] : "\(month)")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 16, weight: .semibold, design: .rounded))
                 .foregroundColor(isFuture ? AppColors.textTertiary.opacity(0.5) : AppColors.textPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)

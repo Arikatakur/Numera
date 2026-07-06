@@ -1,11 +1,12 @@
-Numera 0.13 — native chrome & smarter charts
+Numera 0.14 — rounded look & native charts
 
-• New native Apple tab bar (Liquid Glass on iOS 26) — smoother tab switching.
-• Glass controls everywhere: chips, pills, the + button and budget cards.
-• Insights: tap a donut slice to see that category's spend; tap a bar to focus that month inside its card (the page month no longer jumps).
-• "Income left" % never goes negative — it clamps at 0%.
-• Tap the average value on the Activity chart to see how it's calculated.
-• Edit existing category limits from the pencil badge or long-press menu.
-• Page titles now align with the content margin.
+• Fresh rounded typography across the whole app (Quanto-style).
+• All charts are now native Apple charts: day bars, income vs expenses, and the category donut — smoother, clearer, no more wrapped day labels.
+• Tap the average number on the Activity chart for a "How we calculate the average" sheet (the ⓘ badge is gone).
+• Insights: new Weekly / Monthly / Quarterly / Yearly selector at the top.
+• Calendar days are now glassy, and long amounts stay inside their cells.
+• Budget: tap a card to edit inside it — live ring preview while you type; pencils removed.
+• Activity shows your full history (previous months included) and the month picker reaches back to 2020.
+• The floating + responds instantly on every tab.
 
-Please test: tab switching feel, donut/bars tapping in Insights, editing a category limit, and the average explainer popover.
+Please test: rounded font everywhere, chart taps (bars, donut, average), Insights range switching, calendar day cells, in-card budget editing, + button speed on Insights, and scrolling into past months in Activity.

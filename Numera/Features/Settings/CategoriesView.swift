@@ -38,11 +38,11 @@ struct CategoriesView: View {
                             HStack(spacing: AppSpacing.base) {
                                 EmojiIconTile(emoji: category.emoji, colorHex: category.colorHex, size: 44)
                                 Text(category.name)
-                                    .font(.system(size: 16, weight: .medium))
+                                    .font(.system(size: 16, weight: .medium, design: .rounded))
                                     .foregroundColor(AppColors.textPrimary)
                                 Spacer()
                                 Image(systemName: "line.3.horizontal")
-                                    .font(.system(size: 14))
+                                    .font(.system(size: 14, design: .rounded))
                                     .foregroundColor(AppColors.textTertiary)
                             }
                             .padding(.vertical, 6)
@@ -57,7 +57,7 @@ struct CategoriesView: View {
 
                     if visible.isEmpty {
                         Text("No \(kind.label.lowercased()) categories yet")
-                            .font(.system(size: 14))
+                            .font(.system(size: 14, design: .rounded))
                             .foregroundColor(AppColors.textTertiary)
                             .frame(maxWidth: .infinity)
                             .listRowBackground(Color.clear)
@@ -96,7 +96,7 @@ struct CategoriesView: View {
                     withAnimation(.easeInOut(duration: 0.2)) { kind = option }
                 } label: {
                     Text(option.label)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundColor(kind == option ? .black : AppColors.textSecondary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 11)
@@ -180,7 +180,7 @@ struct CategoryEditSheet: View {
                                 showDeleteConfirm = true
                             } label: {
                                 Text("Delete category")
-                                    .font(.system(size: 15, weight: .semibold))
+                                    .font(.system(size: 15, weight: .semibold, design: .rounded))
                                     .foregroundColor(AppColors.danger)
                             }
                             .padding(.bottom, AppSpacing.sm)
@@ -216,7 +216,7 @@ struct CategoryEditSheet: View {
 
     private var nameField: some View {
         TextField("Category name", text: $name)
-            .font(.system(size: 16, weight: .medium))
+            .font(.system(size: 16, weight: .medium, design: .rounded))
             .foregroundColor(AppColors.textPrimary)
             .tint(AppColors.accent)
             .padding(AppSpacing.base)
@@ -271,7 +271,7 @@ struct CategoryEditSheet: View {
                         emoji = suggestion
                     } label: {
                         Text(suggestion)
-                            .font(.system(size: 22))
+                            .font(.system(size: 22, design: .rounded))
                             .frame(width: 38, height: 38)
                             .background(
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)

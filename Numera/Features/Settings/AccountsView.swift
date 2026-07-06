@@ -29,7 +29,7 @@ struct AccountsView: View {
                 VStack(spacing: AppSpacing.xl) {
                     VStack(spacing: 6) {
                         Text("Total balance")
-                            .font(.system(size: 15))
+                            .font(.system(size: 15, design: .rounded))
                             .foregroundColor(AppColors.textSecondary)
                         MoneyText(amount: store.totalBalance, size: 40)
                     }
@@ -44,13 +44,13 @@ struct AccountsView: View {
                                     EmojiIconTile(emoji: account.emoji, size: 46)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(account.name)
-                                            .font(.system(size: 14))
+                                            .font(.system(size: 14, design: .rounded))
                                             .foregroundColor(AppColors.textSecondary)
                                         MoneyText(amount: store.currentBalance(of: account), size: 18)
                                     }
                                     Spacer()
                                     Image(systemName: "chevron.right")
-                                        .font(.system(size: 13, weight: .semibold))
+                                        .font(.system(size: 13, weight: .semibold, design: .rounded))
                                         .foregroundColor(AppColors.textTertiary)
                                 }
                                 .padding(.horizontal, AppSpacing.base)
@@ -68,7 +68,7 @@ struct AccountsView: View {
                     if !premium.isPremium {
                         HStack(spacing: AppSpacing.sm) {
                             Text("Add more accounts with Numera Pro")
-                                .font(.system(size: 13))
+                                .font(.system(size: 13, design: .rounded))
                                 .foregroundColor(AppColors.textSecondary)
                             PremiumBadge()
                         }
@@ -151,7 +151,7 @@ struct AccountEditSheet: View {
                         .padding(.top, AppSpacing.sm)
 
                     TextField("Account name", text: $name)
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
                         .tint(AppColors.accent)
                         .padding(AppSpacing.base)
@@ -167,11 +167,11 @@ struct AccountEditSheet: View {
                             .labelCapsStyle()
                         HStack(spacing: 6) {
                             Text(settings.currencySymbol)
-                                .font(.system(size: 18, weight: .bold))
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
                                 .foregroundColor(AppColors.textSecondary)
                             TextField("0", text: $balanceText)
                                 .keyboardType(.decimalPad)
-                                .font(.system(size: 24, weight: .bold))
+                                .font(.system(size: 24, weight: .bold, design: .rounded))
                                 .monospacedDigit()
                                 .foregroundColor(AppColors.textPrimary)
                                 .tint(AppColors.accent)
@@ -199,7 +199,7 @@ struct AccountEditSheet: View {
                             showDeleteConfirm = true
                         } label: {
                             Text("Delete account")
-                                .font(.system(size: 15, weight: .semibold))
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
                                 .foregroundColor(AppColors.danger)
                         }
                     }
@@ -245,7 +245,7 @@ struct AccountEditSheet: View {
                             emoji = suggestion
                         } label: {
                             Text(suggestion)
-                                .font(.system(size: 22))
+                                .font(.system(size: 22, design: .rounded))
                                 .frame(width: 40, height: 40)
                                 .background(
                                     RoundedRectangle(cornerRadius: 10, style: .continuous)
