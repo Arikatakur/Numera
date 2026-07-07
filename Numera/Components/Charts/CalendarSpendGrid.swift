@@ -29,34 +29,59 @@ struct CalendarSpendGrid: View {
         return Array(symbols[shift...]) + Array(symbols[..<shift])
     }
 
+    /// Weekday-aligned rows of 7, padded to a full week. Building the rows
+    /// explicitly (instead of a LazyVGrid) makes the grid measure its own
+    /// height eagerly — a LazyVGrid inside the glass container under-reported
+    /// its height, so the last week (26–31) spilled past the card.
+    private var weeks: [[Date?]] {
+        let cells: [Date?] = Array(repeating: nil, count: leadingBlanks) + days.map { Optional($0) }
+        return stride(from: 0, to: cells.count, by: 7).map { start in
+            var week = Array(cells[start..<min(start + 7, cells.count)])
+            while week.count < 7 { week.append(nil) }
+            return week
+        }
+    }
+
     var body: some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: 5), count: 7)
         // One glass container so the day cells' glass blends instead of stacking.
         LiquidGlassGroup(spacing: 5) {
-            LazyVGrid(columns: columns, spacing: 5) {
-                ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
-                    Text(symbol)
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        .foregroundColor(AppColors.textTertiary)
-                        .frame(height: 18)
+            VStack(spacing: 5) {
+                HStack(spacing: 5) {
+                    ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
+                        Text(symbol)
+                            .font(.system(size: 11, weight: .semibold, design: .rounded))
+                            .foregroundColor(AppColors.textTertiary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 18)
+                    }
                 }
-                ForEach(0..<leadingBlanks, id: \.self) { _ in
-                    Color.clear.frame(height: 46)
-                }
-                ForEach(days, id: \.self) { day in
-                    if let onSelectDay {
-                        Button {
-                            Haptics.select()
-                            onSelectDay(day)
-                        } label: {
-                            cell(day)
+                ForEach(Array(weeks.enumerated()), id: \.offset) { _, week in
+                    HStack(spacing: 5) {
+                        ForEach(Array(week.enumerated()), id: \.offset) { _, day in
+                            if let day {
+                                dayCell(day)
+                            } else {
+                                Color.clear.frame(maxWidth: .infinity).frame(height: 46)
+                            }
                         }
-                        .buttonStyle(.plain)
-                    } else {
-                        cell(day)
                     }
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func dayCell(_ day: Date) -> some View {
+        if let onSelectDay {
+            Button {
+                Haptics.select()
+                onSelectDay(day)
+            } label: {
+                cell(day)
+            }
+            .buttonStyle(.plain)
+        } else {
+            cell(day)
         }
     }
 

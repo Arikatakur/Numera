@@ -31,8 +31,14 @@ struct DayBarsChart: View {
     /// Empty days keep a tiny stub so the baseline reads as a row of dots.
     private var stub: Double { axisMax * 0.018 }
 
-    private var dayLabelIndices: [Double] {
-        labels.enumerated().compactMap { $0.element.isEmpty ? nil : Double($0.offset) }
+    /// Categorical keys ("0","1",…). A numeric x-scale with `.ratio` bar width
+    /// rendered the thin day bars invisibly; a category scale + fixed width
+    /// (matching MonthlyBarsChart, which works) draws them reliably.
+    private var dayKeys: [String] { values.indices.map(String.init) }
+
+    /// Only the marked days (non-empty label) get an axis tick.
+    private var markedKeys: [String] {
+        labels.indices.filter { !labels[$0].isEmpty }.map(String.init)
     }
 
     var body: some View {
@@ -40,29 +46,26 @@ struct DayBarsChart: View {
             ForEach(values.indices, id: \.self) { index in
                 let value = values[index]
                 BarMark(
-                    x: .value("Day", Double(index)),
+                    x: .value("Day", dayKeys[index]),
                     y: .value("Amount", value > 0 ? value : stub),
-                    width: .ratio(0.55)
+                    width: .fixed(5)
                 )
                 .foregroundStyle(value > 0 ? barColor : Color.white.opacity(0.07))
-                .cornerRadius(2.5)
+                .cornerRadius(2)
             }
 
             if let average, average > 0 {
                 RuleMark(y: .value("Average", average))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                     .foregroundStyle(Color.white.opacity(0.28))
-                    .annotation(position: .trailing, alignment: .center, spacing: 4) {
-                        averageLabel(average)
-                    }
             }
         }
-        .chartXScale(domain: -0.5...(Double(values.count) - 0.5))
+        .chartXScale(domain: dayKeys)
         .chartYScale(domain: 0...axisMax)
         .chartXAxis {
-            AxisMarks(values: dayLabelIndices) { value in
+            AxisMarks(values: markedKeys) { value in
                 AxisValueLabel {
-                    if let index = value.as(Double.self).map({ Int($0) }), labels.indices.contains(index) {
+                    if let key = value.as(String.self), let index = Int(key), labels.indices.contains(index) {
                         Text(labels[index])
                             .font(.system(size: 11, design: .rounded))
                             .foregroundStyle(AppColors.textTertiary)
@@ -82,35 +85,34 @@ struct DayBarsChart: View {
                 }
             }
         }
+        // The average number, positioned on the rule via the plot proxy so it's
+        // reliably tappable (a RuleMark annotation clipped its own hit area).
+        .chartOverlay { proxy in
+            GeometryReader { geo in
+                if let average, average > 0, averageExplanation != nil,
+                   let anchor = proxy.plotFrame, let y = proxy.position(forY: average) {
+                    let plot = geo[anchor]
+                    Button {
+                        Haptics.tap()
+                        showAverageInfo = true
+                    } label: {
+                        Text(MoneyFormatter.compact(average))
+                            .font(.system(size: 12, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundColor(AppColors.textSecondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 7)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .position(x: plot.maxX - 2, y: plot.minY + y)
+                }
+            }
+        }
         .chartLegend(.hidden)
         .frame(height: height)
         .sheet(isPresented: $showAverageInfo) {
             AverageInfoSheet(text: averageExplanation ?? "")
-        }
-    }
-
-    /// The average value on the right of the rule — just the number, per the
-    /// Quanto reference. Tappable when an explanation is provided.
-    @ViewBuilder
-    private func averageLabel(_ average: Double) -> some View {
-        let label = Text(MoneyFormatter.compact(average))
-            .font(.system(size: 12, design: .rounded))
-            .monospacedDigit()
-            .foregroundColor(AppColors.textSecondary)
-
-        if averageExplanation != nil {
-            Button {
-                Haptics.tap()
-                showAverageInfo = true
-            } label: {
-                label
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 3)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-        } else {
-            label
         }
     }
 }

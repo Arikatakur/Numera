@@ -14,8 +14,10 @@ struct HomeView: View {
     @State private var showPaywall = false
     @State private var showWhatsNew = false
 
-    /// Version whose "just got better" card was dismissed — the card returns
-    /// on the next release.
+    /// Version+build whose "just got better" card was dismissed — the card
+    /// returns on the next build. Keyed on the full version string (not just
+    /// the marketing version, which stays "1.0.0" across every TestFlight
+    /// build), so a new TestFlight upload always resurfaces it.
     @AppStorage("whatsNewDismissedVersion") private var whatsNewDismissedVersion = ""
 
     private var period: Period { pickedPeriod ?? store.currentPeriod }
@@ -105,12 +107,12 @@ struct HomeView: View {
 
     @ViewBuilder
     private var whatsNewSection: some View {
-        if whatsNewDismissedVersion != AppInfo.shortVersion {
+        if whatsNewDismissedVersion != AppInfo.versionString {
             WhatsNewCard(
                 onWhatsNew: { showWhatsNew = true },
                 onDismiss: {
                     withAnimation(.snappy(duration: 0.3)) {
-                        whatsNewDismissedVersion = AppInfo.shortVersion
+                        whatsNewDismissedVersion = AppInfo.versionString
                     }
                 }
             )
@@ -236,6 +238,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: AppSpacing.sm) {
                 Text("SAFE TO SPEND")
                     .labelCapsStyle(color: AppColors.accent)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 if let perDay = store.safeToSpendPerDay(in: period) {
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
