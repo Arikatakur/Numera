@@ -65,7 +65,18 @@ struct NumeraApp: App {
         if authManager.isLoading {
             AppColors.background.ignoresSafeArea()
         } else if authManager.session != nil {
-            ContentView()
+            // First-run: set up the essentials before the tabs. The flag is
+            // per-user (loaded from the profile), so reading it here re-routes
+            // automatically once it resolves and on completion.
+            switch authManager.hasCompletedOnboarding {
+            case .some(false):
+                OnboardingView()
+            case .some(true):
+                ContentView()
+            case .none:
+                // Session resolved but the profile flag is still loading.
+                AppColors.background.ignoresSafeArea()
+            }
         } else {
             WelcomeView()
         }

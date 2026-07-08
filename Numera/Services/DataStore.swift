@@ -36,6 +36,14 @@ final class DataStore {
         return store
     }
 
+    /// Preview store for first-run UI: seeded categories/accounts but no
+    /// transactions, so onboarding treats it as a brand-new user.
+    static func emptyPreview() -> DataStore {
+        let store = preview()
+        store.transactions = []
+        return store
+    }
+
     var client: SupabaseClient { SupabaseManager.shared.client }
 
     // MARK: - Lifecycle

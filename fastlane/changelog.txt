@@ -1,6 +1,7 @@
-Numera 0.14 — rounded look & native charts
+Numera 0.15 — guided welcome
 
-• Fresh rounded typography across the whole app (Quanto-style).
+• New: a guided first-run setup walks new members through their currency, month start, first account, categories, and a first (or sample) expense — with an optional reminder. Everything stays free; the Pro preview is skippable.
+• Fresh rounded typography across the whole app.
 • All charts are now native Apple charts: day bars, income vs expenses, and the category donut — smoother, clearer, no more wrapped day labels.
 • Tap the average number on the Activity chart for a "How we calculate the average" sheet (the ⓘ badge is gone).
 • Insights: new Weekly / Monthly / Quarterly / Yearly selector at the top.
@@ -8,5 +9,6 @@ Numera 0.14 — rounded look & native charts
 • Budget: tap a card to edit inside it — live ring preview while you type; pencils removed.
 • Activity shows your full history (previous months included) and the month picker reaches back to 2020.
 • The floating + responds instantly on every tab.
+• Fixes: Activity day bars render again, every chart responds to a single tap, the calendar stays inside its card, and Budget saves on the first tap.
 
-Please test: rounded font everywhere, chart taps (bars, donut, average), Insights range switching, calendar day cells, in-card budget editing, + button speed on Insights, and scrolling into past months in Activity.
+Please test: first-run onboarding on a fresh account (currency, month start, account, sample expense; the reminder prompt appears only if you pick a time; the Pro preview is skippable), then rounded font everywhere, chart taps (bars, donut, average), Insights range switching, calendar day cells, in-card budget editing, + button speed, and scrolling into past months in Activity.
