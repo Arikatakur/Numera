@@ -8,10 +8,10 @@ struct DonutSegment: Identifiable {
     let fraction: Double
 }
 
-/// Native Swift Charts donut (`SectorMark`) with rounded caps and small gaps —
-/// Quanto Summary style. Pass `onSelectSegment` to make the ring tappable via
-/// the native angle selection: tapping a segment reports its index, tapping it
-/// again reports nil.
+/// Native Swift Charts donut (`SectorMark`) with flat (butt) ends and small
+/// gaps — Quanto Summary style (not pill-capped). Pass `onSelectSegment` to
+/// make the ring tappable via the native angle selection: tapping a segment
+/// reports its index, tapping it again reports nil.
 struct DonutChart: View {
     let segments: [DonutSegment]
     var lineWidth: CGFloat = 18
@@ -30,7 +30,7 @@ struct DonutChart: View {
                     innerRadius: .inset(lineWidth),
                     angularInset: 1.2
                 )
-                .cornerRadius(lineWidth / 2)
+                .cornerRadius(2)
                 .foregroundStyle(segment.color)
                 .opacity(selectedIndex == nil || selectedIndex == index ? 1 : 0.3)
             }

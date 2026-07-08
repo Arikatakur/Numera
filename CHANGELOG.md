@@ -5,6 +5,28 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
+## [0.14.1] — 2026-07-07
+
+Chart and interaction fixes reported from the 0.14 TestFlight build: the Activity day bars now render, every chart responds to taps, the pie matches Quanto, the calendar stays inside its card, and several keyboard/button annoyances are gone.
+
+### Fixed
+- **Activity day bars were invisible.** `DayBarsChart` drew its bars on a numeric x-scale with `.ratio` width, which Swift Charts rendered as zero-width. Switched to a categorical x-scale with a fixed bar width (the same pattern as the working `MonthlyBarsChart`) so bars draw again.
+- **Average value wasn't tappable.** The "How we calculate the average" sheet is now opened from a button positioned on the rule via `chartOverlay` (the old `RuleMark` annotation clipped its own hit area).
+- **Insights bars didn't update the card.** `MonthlyBarsChart` replaced the scrub-oriented `.chartXSelection` with a `chartOverlay` tap that maps to the nearest period (`proxy.value(atX:as:)`), so a single tap on any bar — income/expenses and income-left — updates that card's focused period.
+- **Pie slices weren't selectable, especially small ones.** Insights category-breakdown rows are now buttons that select the matching donut segment (small slices pool into "Other"), so any category is one tap away and the donut center follows. Tapping a selected row again clears it.
+- **Calendar spilled past its card.** `CalendarSpendGrid` now builds explicit week rows (a `VStack`/`HStack` grid) instead of a `LazyVGrid`, which under-reported its height inside the glass container — days 26–31 stayed outside the card.
+- **Budget showed a value before one was set.** The budget editor's ring preview stays empty with a "—" placeholder until an amount is entered, instead of showing a negative "over" state computed against a zero limit.
+- **Budget Save needed many taps.** The amount field auto-focuses, so Save sat under the keypad. Save (and Remove) are pinned below the scroll area and stay above the keyboard, plus the sheet dismisses the keyboard on scroll — Save now fires on the first tap.
+- **Safe-to-spend card was narrower than Your Month.** Its content now stretches to full width so both Home cards align.
+- **What's New didn't return after a TestFlight update.** The dismissal is keyed on the full version+build string instead of the marketing version (which stays "1.0.0" across builds), so a new TestFlight upload resurfaces the card.
+- **New-entry keyboard shoved the page.** `ignoresSafeArea(.keyboard)` moved to the `NavigationStack` (the sheet's root, where avoidance is applied) so focusing the note field no longer pushes the fixed layout up.
+
+### Changed
+- **Charts match Quanto's flatter shapes.** Donut segments use flat (butt) ends instead of pill caps; monthly and day bars use a small corner radius instead of fully-rounded tops.
+- **Month start day** selected-day circle is now the mint accent (was white) to match the app.
+
+---
+
 ## [0.14.0] — 2026-07-06
 
 Apple-native everywhere: SF Rounded (Quanto) type, real Swift Charts, native large titles, an Insights range selector (weekly → yearly), full activity history, glassy calendar days, budget editing inside the card, and an instant (+) button.

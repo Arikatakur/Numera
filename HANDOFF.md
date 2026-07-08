@@ -24,6 +24,61 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
+## Session — 0.14 TestFlight chart & interaction fixes (2026-07-07, latest)
+
+Branch: `feature/liquid-glass-ui`. Changelog version: **0.14.1**. Bug batch
+reported from the 0.14.0 TestFlight build (evidence in `error-images/*-6-7.png`,
+Quanto reference `quanto-app/summary.jpg`).
+
+**What changed (files)**
+- `Components/Charts/DayBarsChart.swift` — day bars weren't rendering: a numeric
+  x-scale + `.ratio` bar width drew zero-width bars. Switched to a **categorical
+  x-scale + `.fixed(5)` width** (the pattern that works in `MonthlyBarsChart`).
+  The average value moved out of the `RuleMark` annotation into a `chartOverlay`
+  button positioned on the rule (`proxy.position(forY:)`) so its tap actually
+  hits — opens `AverageInfoSheet`. Bar corner radius 2 (was 2.5).
+- `Components/Charts/MonthlyBarsChart.swift` — `.chartXSelection` (scrub-oriented,
+  often ignored single taps) replaced with a `chartOverlay` tap that maps to the
+  nearest period via `proxy.value(atX:as:)`. Drives income/expenses + income-left
+  card focus. Bar corner radius 3 (was 6.5, fully rounded).
+- `Components/Charts/DonutChart.swift` — segment `cornerRadius` 18/2→**2** (flat
+  butt ends, Quanto `summary.jpg` look, not pill caps).
+- `Features/Insights/InsightsView.swift` — category-breakdown rows are now
+  **buttons** that select the matching donut segment (`segmentIndex(forRow:)`;
+  rows past the top-5 pool into the "Other" segment). Solves un-tappable small
+  slices and keeps the donut center in sync; selected row gets a subtle highlight.
+- `Components/Charts/CalendarSpendGrid.swift` — replaced the `LazyVGrid` (which
+  under-measured its height inside the glass container, spilling week 26–31 out
+  of the card) with explicit `VStack`/`HStack` week rows.
+- `Features/Budget/BudgetView.swift` — (1) editor ring preview stays empty with a
+  "—" placeholder until an amount is typed (no phantom "over" value); (2) Save +
+  Remove **pinned below the scroll area** (above the keyboard) + `.scrollDismisses
+  Keyboard(.interactively)` so the auto-focused amount field no longer buries Save
+  → fires on first tap.
+- `Features/Home/HomeView.swift` — safe-to-spend card content stretches full width
+  (matches Your Month); What's New dismissal keyed on `AppInfo.versionString`
+  (version+build) instead of `shortVersion`, so it resurfaces on each TestFlight
+  build (marketing version is a constant "1.0.0"; only the CI build number moves).
+- `Features/Settings/MonthStartDayView.swift` — selected-day circle is `accent`
+  (mint), was white.
+- `Features/AddTransaction/AddTransactionView.swift` — `ignoresSafeArea(.keyboard)`
+  moved from the inner `ZStack` to the `NavigationStack` (the sheet root where
+  avoidance is applied) so focusing the note/title field no longer shoves the
+  fixed keypad layout up.
+
+**Not built locally** — Windows dev box, no Xcode; CI is the compiler. Verify on
+the next TestFlight build: bars visible in Activity; average tap sheet; tapping
+every Insights chart (bars + pie/list) updates its card; calendar inside card;
+budget Save single-tap; safe-to-spend width; What's New reappears; note keyboard
+doesn't jump the New Entry page.
+
+**Known risk / to confirm:** the two `chartOverlay` tap/position approaches and
+the categorical `AxisMarks(values: [String])` rely on Swift Charts APIs already
+used elsewhere in the app — but only a real build/run confirms the day bars and
+taps behave on-device.
+
+---
+
 ## Session — Rounded type, native Swift Charts, Insights ranges (2026-07-06, latest)
 
 Branch: `feature/liquid-glass-ui`, merged into `main` at the start of the session

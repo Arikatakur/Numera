@@ -368,18 +368,30 @@ struct BudgetEditSheet: View {
             ZStack {
                 AppColors.background.ignoresSafeArea()
 
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: AppSpacing.lg) {
-                        // The budget card itself, editing inline: the ring
-                        // preview follows the amount as you type.
-                        cardPreview
+                VStack(spacing: 0) {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: AppSpacing.lg) {
+                            // The budget card itself, editing inline: the ring
+                            // preview follows the amount as you type.
+                            cardPreview
 
-                        if !isOverall {
-                            categoryPicker
+                            if !isOverall {
+                                categoryPicker
+                            }
+
+                            amountField
                         }
+                        .padding(.horizontal, AppSpacing.screenMargin)
+                        .padding(.top, AppSpacing.base)
+                        .padding(.bottom, AppSpacing.base)
+                    }
+                    .scrollDismissesKeyboard(.interactively)
 
-                        amountField
-
+                    // Actions pinned below the scroll area: the amount field
+                    // auto-focuses, so Save used to sit under the keypad and
+                    // needed several taps. Pinned, it stays above the keyboard
+                    // and fires on the first tap.
+                    VStack(spacing: AppSpacing.md) {
                         PrimaryButton(title: "Save") { save() }
                             .opacity(canSave ? 1 : 0.4)
                             .disabled(!canSave)
@@ -395,8 +407,9 @@ struct BudgetEditSheet: View {
                         }
                     }
                     .padding(.horizontal, AppSpacing.screenMargin)
-                    .padding(.top, AppSpacing.base)
-                    .padding(.bottom, AppSpacing.xl)
+                    .padding(.top, AppSpacing.sm)
+                    .padding(.bottom, AppSpacing.base)
+                    .background(AppColors.background)
                 }
             }
             .navigationTitle(isOverall ? "Monthly budget" : "Category limit")
@@ -459,15 +472,18 @@ struct BudgetEditSheet: View {
     }
 
     private func ringPreview(spent: Decimal, limit: Decimal, color: Color, emoji: String?, caption: String) -> some View {
+        // Until an amount is entered there's no budget to show — keep the ring
+        // empty and the number a placeholder rather than a scary "−spent over".
+        let hasLimit = limit > 0
         let remaining = limit - spent
-        let spentFraction = limit > 0 ? ((spent / limit) as NSDecimalNumber).doubleValue : 1
-        let remainingFraction = max(0, 1 - spentFraction)
+        let spentFraction = hasLimit ? ((spent / limit) as NSDecimalNumber).doubleValue : 0
+        let remainingFraction = hasLimit ? max(0, 1 - spentFraction) : 0
 
         return VStack(spacing: AppSpacing.md) {
             ZStack {
                 BudgetRing(
                     progress: remainingFraction,
-                    color: remaining < 0 ? AppColors.danger : color,
+                    color: !hasLimit ? AppColors.surfaceHigh : (remaining < 0 ? AppColors.danger : color),
                     lineWidth: 10
                 )
                 .frame(width: 132, height: 132)
@@ -477,16 +493,22 @@ struct BudgetEditSheet: View {
                         Text(emoji)
                             .font(.system(size: 22, design: .rounded))
                     }
-                    MoneyText(
-                        amount: remaining,
-                        size: 22,
-                        color: remaining < 0 ? AppColors.expense : AppColors.textPrimary
-                    )
+                    if hasLimit {
+                        MoneyText(
+                            amount: remaining,
+                            size: 22,
+                            color: remaining < 0 ? AppColors.expense : AppColors.textPrimary
+                        )
+                    } else {
+                        Text("—")
+                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .foregroundColor(AppColors.textTertiary)
+                    }
                 }
             }
 
             VStack(spacing: 2) {
-                Text(remaining < 0 ? caption.replacingOccurrences(of: " left", with: " over") : caption)
+                Text(hasLimit && remaining < 0 ? caption.replacingOccurrences(of: " left", with: " over") : caption)
                     .font(.system(size: 13, design: .rounded))
                     .foregroundColor(AppColors.textSecondary)
                 HStack(spacing: 4) {
@@ -494,7 +516,13 @@ struct BudgetEditSheet: View {
                     Text("/")
                         .font(.system(size: 12, design: .rounded))
                         .foregroundColor(AppColors.textTertiary)
-                    MoneyText(amount: max(0, limit), size: 12, color: AppColors.textTertiary)
+                    if hasLimit {
+                        MoneyText(amount: limit, size: 12, color: AppColors.textTertiary)
+                    } else {
+                        Text("—")
+                            .font(.system(size: 12, design: .rounded))
+                            .foregroundColor(AppColors.textTertiary)
+                    }
                 }
             }
         }

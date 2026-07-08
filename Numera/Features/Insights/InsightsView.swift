@@ -282,40 +282,63 @@ struct InsightsView: View {
 
     // MARK: - Category breakdown
 
+    /// The donut segment a breakdown row maps to: its own index within the
+    /// top-5, or the pooled "Other" segment for anything beyond. Small slices
+    /// are impossible to tap on the ring, so the list is the reliable selector.
+    private func segmentIndex(forRow row: Int) -> Int? {
+        let topCount = min(totals.count, 5)
+        if row < topCount { return row }
+        return donutSegments.count > topCount ? topCount : nil
+    }
+
+    private func toggleSegment(forRow row: Int) {
+        let target = segmentIndex(forRow: row)
+        selectedSegment = (selectedSegment == target) ? nil : target
+    }
+
     private var categoryBreakdown: some View {
         SettingsCard {
             ForEach(Array(totals.enumerated()), id: \.element.id) { index, item in
-                HStack(spacing: AppSpacing.base) {
-                    EmojiIconTile(emoji: item.category.emoji, colorHex: item.category.colorHex, size: 44)
+                let isSelected = selectedSegment != nil && selectedSegment == segmentIndex(forRow: index)
+                Button {
+                    Haptics.select()
+                    withAnimation(.snappy(duration: 0.2)) { toggleSegment(forRow: index) }
+                } label: {
+                    HStack(spacing: AppSpacing.base) {
+                        EmojiIconTile(emoji: item.category.emoji, colorHex: item.category.colorHex, size: 44)
 
-                    Text(item.category.name)
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundColor(AppColors.textPrimary)
-                        .lineLimit(1)
+                        Text(item.category.name)
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .foregroundColor(AppColors.textPrimary)
+                            .lineLimit(1)
 
-                    Text("\(item.count)")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundColor(AppColors.textSecondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(Color.white.opacity(0.08))
-                        .clipShape(Capsule())
+                        Text("\(item.count)")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundColor(AppColors.textSecondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(Color.white.opacity(0.08))
+                            .clipShape(Capsule())
 
-                    Spacer()
+                        Spacer()
 
-                    MoneyText(amount: item.total, size: 15)
+                        MoneyText(amount: item.total, size: 15)
 
-                    Text("\(Int((item.share * 100).rounded()))%")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundColor(AppColors.textSecondary)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.white.opacity(0.06))
-                        .clipShape(Capsule())
+                        Text("\(Int((item.share * 100).rounded()))%")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundColor(AppColors.textSecondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(Color.white.opacity(0.06))
+                            .clipShape(Capsule())
+                    }
+                    .padding(.horizontal, AppSpacing.base)
+                    .padding(.vertical, AppSpacing.md)
+                    .background(isSelected ? Color.white.opacity(0.05) : Color.clear)
+                    .contentShape(Rectangle())
                 }
-                .padding(.horizontal, AppSpacing.base)
-                .padding(.vertical, AppSpacing.md)
+                .buttonStyle(.plain)
 
                 if index < totals.count - 1 {
                     Divider().background(AppColors.borderSubtle).padding(.leading, 76)

@@ -54,7 +54,7 @@ struct MonthStartDayView: View {
                 .foregroundColor(isSelected ? .black : AppColors.textPrimary)
                 .frame(width: 40, height: 40)
                 .background(
-                    Circle().fill(isSelected ? AppColors.textPrimary : Color.white.opacity(0.04))
+                    Circle().fill(isSelected ? AppColors.accent : Color.white.opacity(0.04))
                 )
         }
         .buttonStyle(.plain)

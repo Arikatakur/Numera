@@ -103,10 +103,6 @@ struct AddTransactionView: View {
                     keypad
                 }
             }
-            // Custom keypad drives the amount; the only system keyboard is the
-            // title field. Disable keyboard avoidance so the fixed layout (with
-            // its bottom-pinned keypad) doesn't jump — the title sits above it.
-            .ignoresSafeArea(.keyboard, edges: .bottom)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -134,6 +130,11 @@ struct AddTransactionView: View {
                 }
             }
         }
+        // Custom keypad drives the amount; the only system keyboard is the
+        // note/title field. Disabling keyboard avoidance at the NavigationStack
+        // (the sheet's root, where avoidance is actually applied) keeps the
+        // fixed layout from jumping — the note field sits above the keyboard.
+        .ignoresSafeArea(.keyboard, edges: .bottom)
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showDatePicker) { datePicker }
         .sheet(isPresented: $showAccountPicker) { accountPicker }

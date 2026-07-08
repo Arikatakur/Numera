@@ -20,10 +20,6 @@ struct MonthlyBarsChart: View {
     var height: CGFloat = 150
     var onSelect: ((Int) -> Void)?
 
-    /// Native x-selection: set while the finger is down, cleared by the system
-    /// on release — the sticky selection lives in the caller via `onSelect`.
-    @State private var tappedLabel: String?
-
     private var maxValue: Double {
         let all = groups.flatMap { secondaryHidden ? [$0.primary] : [$0.primary, $0.secondary] }
         return max(all.max() ?? 0, 1)
@@ -59,12 +55,23 @@ struct MonthlyBarsChart: View {
             }
         }
         .chartLegend(.hidden)
-        .chartXSelection(value: $tappedLabel)
-        .onChange(of: tappedLabel) { _, selected in
-            guard let selected,
-                  let index = groups.firstIndex(where: { $0.label == selected }) else { return }
-            Haptics.select()
-            onSelect?(index)
+        // A plain tap that maps to the nearest period is far more reliable than
+        // chartXSelection (which wants a scrub) — every bar, wide or narrow,
+        // selects on a single tap.
+        .chartOverlay { proxy in
+            GeometryReader { geo in
+                Rectangle()
+                    .fill(Color.clear)
+                    .contentShape(Rectangle())
+                    .onTapGesture { location in
+                        guard let anchor = proxy.plotFrame else { return }
+                        let plot = geo[anchor]
+                        guard let label = proxy.value(atX: location.x - plot.minX, as: String.self),
+                              let index = groups.firstIndex(where: { $0.label == label }) else { return }
+                        Haptics.select()
+                        onSelect?(index)
+                    }
+            }
         }
         .frame(height: height + 30)
     }
@@ -76,7 +83,7 @@ struct MonthlyBarsChart: View {
             width: .fixed(13)
         )
         .foregroundStyle(value > 0 ? color : Color.white.opacity(0.08))
-        .cornerRadius(6.5)
+        .cornerRadius(3)
     }
 
     /// Quanto-style axis label: the selected period wears a soft capsule.
