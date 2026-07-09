@@ -23,7 +23,7 @@ struct WhatsNewCard: View {
                     Text("Numera just got better!")
                         .font(.system(size: 17, weight: .bold, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
-                    Text("Discover what's new, from the rounded glass look to native charts.")
+                    Text("Discover what's new — starting with a guided welcome for new members.")
                         .font(.system(size: 14, design: .rounded))
                         .foregroundColor(AppColors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -96,6 +96,8 @@ struct WhatsNewSheet: View {
                         .padding(.top, AppSpacing.xxl)
 
                         VStack(alignment: .leading, spacing: AppSpacing.lg) {
+                            featureRow("hand.wave.fill", "A guided welcome",
+                                       "New members set up their currency, first account and a sample expense in seconds.")
                             featureRow("sparkles", "Rounded, glassy look",
                                        "Quanto-style rounded type and Liquid Glass on every page.")
                             featureRow("chart.bar.xaxis", "Native charts",

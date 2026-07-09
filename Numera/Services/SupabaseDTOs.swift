@@ -37,6 +37,14 @@ enum SupaDate {
     }
 }
 
+// MARK: - profiles
+
+/// The subset of the `profiles` row the app reads and writes. Used both to
+/// decode the first-run flag (`select`) and to persist it (`update`).
+struct ProfileFlagsDTO: Codable {
+    var has_completed_onboarding: Bool
+}
+
 // MARK: - transactions
 
 struct TransactionDTO: Codable {

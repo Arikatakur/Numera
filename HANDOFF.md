@@ -24,7 +24,79 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
-## Session — 0.14 TestFlight chart & interaction fixes (2026-07-07, latest)
+## Session — First-run onboarding (2026-07-08, latest)
+
+Changelog version: **0.15.0**. Built the once-only first-run onboarding flow
+requested in `notes.txt`, entirely on the existing design system.
+
+**What changed**
+- **New `Numera/Features/Onboarding/` feature** (5 files):
+  - `OnboardingView.swift` — the coordinator: 10-step flow, capsule progress
+    indicator, back button (from step 2), slide/opacity transitions, and the
+    bootstrap + returning-user guard. On appear it loads the store; a user who
+    already has transactions is marked complete and sent straight to the tabs.
+    Also defines `OnboardingStep`.
+  - `OnboardingModel.swift` — `@Observable` holder for the transient selections
+    (currency, month-start mode/day, account name/emoji/balance, reminder choice).
+  - `OnboardingComponents.swift` — shared chrome reused across steps
+    (`OnboardingScaffold`, `OnboardingHeader`, `OnboardingValueProp`,
+    `OnboardingOptionRow`, `OnboardingProgressBar`, `OnboardingSecondaryButton`).
+  - `OnboardingIntroSteps.swift` — Welcome, Privacy, Pro preview, Done.
+  - `OnboardingSetupSteps.swift` — Currency, Month start, Main account,
+    Categories, First transaction, Reminder.
+- **Routing:** `NumeraApp.destination` now shows `OnboardingView` when signed in
+  and `authManager.hasCompletedOnboarding == false`, `ContentView` when `true`,
+  and a plain background while it's still `nil` (profile flag loading).
+- **Persistence (per-user, in the DB):** new migration
+  `20260708000000_profile_onboarding.sql` adds `profiles.has_completed_onboarding`
+  (existing users backfilled `true`, new sign-ups default `false`). `AuthManager`
+  loads it on `.initialSession`/`.signedIn` (`loadOnboardingState`, fails open =
+  `true` on error) and writes it via `markOnboardingComplete()` (used by the Done
+  step and the returning-user guard). `ProfileFlagsDTO` added to `SupabaseDTOs`.
+  Device-side `AppSettings.hasCompletedOnboarding` was **removed**. Currency →
+  `settings.currencyCode`, month start → `settings.monthStartDay`, reminder →
+  `settings.reminder*` + `ReminderScheduler`; account/sample-transaction/category
+  seeding go through `DataStore`. Added `DataStore.emptyPreview()` for previews.
+- **Reused, not reinvented:** the full currency picker is `CurrencyPickerView`;
+  "Add real expense" presents `AddTransactionView`; "View Pro" presents
+  `PaywallView`; cards/buttons/emoji tiles/haptics are the existing components.
+
+**Where onboarding is triggered:** `NumeraApp.destination` (App routing), gated on
+the per-user `authManager.hasCompletedOnboarding`. Completion is set on the Done
+step's "Go to Home" (and by the returning-user guard) → `markOnboardingComplete()`.
+
+**⚠️ Manual step required:** apply `supabase/migrations/20260708000000_profile_onboarding.sql`
+in the Supabase SQL editor. Until then the app is fine (the flag read fails open =
+onboarding skipped); once applied, new accounts get the first-run flow.
+
+**Assumptions made**
+- The DB already seeds default categories + a "Main account" on sign-up, so the
+  Account step **updates the seeded account in place** (never duplicates) and the
+  Categories step **confirms the seeded set** (seeds `UserCategory.seedDefaults`
+  only if the store is somehow empty) rather than inserting the slightly different
+  list literally named in `notes.txt`. This avoids duplicate/divergent categories.
+- Morning = 9:00, Evening = 21:00 daily reminders.
+- Onboarding completion is per-user (DB), so a new login on a shared device
+  onboards correctly; other prefs (currency, month start, reminder) stay in
+  device `AppSettings` as before.
+
+**Testing status:** NOT compiled locally (Windows — CI on macOS is the only
+compiler). Verified by inspection + a cross-file symbol/signature sweep against
+DataStore/AppSettings/ReminderScheduler/PaywallView/AddTransactionView. Watch the
+CI run on push. On-device QA wanted: fresh-account first launch shows onboarding
+before tabs; each step persists (currency symbol app-wide, month totals, account
+rename, sample expense appears on Home/Insights); reminder permission prompt fires
+only for Morning/Evening; paywall only on "View Pro"; onboarding does not reappear
+after completion or for an existing account with data.
+
+**Known/notes:** onboarding completion is now a **per-user DB flag**
+(`profiles.has_completed_onboarding`), so a different account on the same device
+is onboarded correctly. New files are auto-included by XcodeGen
+(`sources: [{ path: Numera }]`); no `project.yml` change needed.
+
+---
+
+## Session — 0.14 TestFlight chart & interaction fixes (2026-07-07)
 
 Branch: `feature/liquid-glass-ui`. Changelog version: **0.14.1**. Bug batch
 reported from the 0.14.0 TestFlight build (evidence in `error-images/*-6-7.png`,
@@ -79,7 +151,7 @@ taps behave on-device.
 
 ---
 
-## Session — Rounded type, native Swift Charts, Insights ranges (2026-07-06, latest)
+## Session — Rounded type, native Swift Charts, Insights ranges (2026-07-06)
 
 Branch: `feature/liquid-glass-ui`, merged into `main` at the start of the session
 (user asked to push the last update first). Changelog version: **0.14.0**.

@@ -5,6 +5,64 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
+## [0.15.0] — 2026-07-08
+
+First-run onboarding: a ten-step, once-only setup that gets a new user to value
+before the tabs — currency, month cycle, first account, categories, a first
+transaction, an optional reminder, and a non-blocking Pro preview. Built entirely
+on the existing dark/mint design system (rounded type, Liquid Glass, SF Symbols,
+haptics) so every screen feels native to Numera.
+
+### Added
+- **`Features/Onboarding/` flow.** A new `OnboardingView` coordinator drives ten
+  steps with a capsule progress indicator, a back button (from step 2), and calm
+  slide/opacity transitions: **Welcome** (three value props), **Privacy** (trust,
+  "not a banking app"), **Currency** (locale-preselected common list + full
+  `CurrencyPickerView`), **Month start** (1st / Today / Custom day grid),
+  **Main account** (name, emoji, optional starting balance), **Categories**
+  (confirms the seeded starter set), **First transaction** (add real / use sample
+  / skip), **Reminder** (Morning / Evening / Not now), **Pro preview**
+  (non-blocking), and **Done**.
+- **Shared onboarding primitives** (`OnboardingComponents.swift`): `OnboardingScaffold`
+  (header + scrollable content + pinned CTA), `OnboardingHeader`, `OnboardingValueProp`
+  (What's-New-style symbol tiles), `OnboardingOptionRow` (accent-selected cards),
+  `OnboardingProgressBar`, and `OnboardingSecondaryButton`. `OnboardingModel` holds
+  the transient selections.
+- **Per-user onboarding flag in the database.** New migration
+  `20260708000000_profile_onboarding.sql` adds `profiles.has_completed_onboarding`
+  (existing users backfilled to `true`; new sign-ups default to `false`).
+  `AuthManager` loads it from the profile when the session resolves and sets it
+  via `markOnboardingComplete()`; `NumeraApp` routes a signed-in user to
+  `OnboardingView` while it's `false`, then to the tabs. Because it lives on the
+  account (not the device), onboarding follows the user across devices and a new
+  login on the same device is onboarded correctly. Fails open (treated as
+  completed) if the flag can't be read.
+- **`DataStore.emptyPreview()`** — a seeded-but-transaction-free preview store for
+  the onboarding SwiftUI previews.
+
+### Changed
+- Onboarding **reuses the real services**: currency and month-start day persist to
+  `AppSettings`; the account step updates the seeded "Main account" in place (or
+  creates one) via `DataStore` rather than duplicating it; the sample expense is a
+  real `DataStore` transaction; the reminder schedules through `ReminderScheduler`.
+- **Returning users are never gated** — the migration backfills existing accounts
+  to `true`, and as a belt-and-braces the flow also marks itself complete if the
+  store loads any existing transactions.
+- **What's New refreshed** — the Home "What's new?" sheet leads with the guided
+  welcome (new `hand.wave.fill` tile), and the TestFlight notes
+  (`fastlane/changelog.txt`) are rewritten for 0.15.
+
+### Notes
+- **Notification permission** is requested only after the user picks Morning or
+  Evening (via `ReminderScheduler.reschedule`); "Not now" never prompts.
+- **The Pro paywall** (`PaywallView`) is presented only when the user taps
+  "View Pro" — onboarding completes with everything free.
+- No new permissions, product IDs, or dependencies. The only backend change is
+  the additive `profiles` column above (existing RLS covers it); Home/Activity/
+  Insights/Budget/Settings/StoreKit behavior is unchanged.
+
+---
+
 ## [0.14.1] — 2026-07-07
 
 Chart and interaction fixes reported from the 0.14 TestFlight build: the Activity day bars now render, every chart responds to taps, the pie matches Quanto, the calendar stays inside its card, and several keyboard/button annoyances are gone.

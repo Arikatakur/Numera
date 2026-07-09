@@ -15,6 +15,7 @@ Apply these in order via **Supabase Dashboard → SQL Editor → New query**.
 | `20260703000001_rewire_category_refs.sql` | **Schema v2** — `transactions.category_id` / `budgets.category_id` FKs, drops the `transaction_category` enum |
 | `20260703000002_accounts_emoji.sql` | **Schema v2** — `accounts.emoji` (replaces `sf_symbol`) + default "Main account" seed |
 | `20260706000000_create_recurring_rules.sql` | **Numera Pro** — `recurring_rules` (recurring transaction templates) + RLS + due-index |
+| `20260708000000_profile_onboarding.sql` | `profiles.has_completed_onboarding` (per-user first-run flag) + backfill existing users to `true` |
 
 Run them one file at a time, top to bottom. Each depends on the previous.
 
@@ -28,7 +29,7 @@ Run them one file at a time, top to bottom. Each depends on the previous.
 
 | Table | Key columns |
 |---|---|
-| `profiles` | `id` (= auth.users.id), `email`, `display_name`, `currency` |
+| `profiles` | `id` (= auth.users.id), `email`, `display_name`, `currency`, `has_completed_onboarding` |
 | `categories` | `name`, `emoji`, `color` (hex), `kind` (`expense`/`income`), `sort_order`, `is_default` |
 | `accounts` | `name`, `balance` (starting balance), `emoji` |
 | `transactions` | `type`, `amount`, `category_id` → categories, `title`, `note`, `date`, `account_id` → accounts, `account_name` (denormalized fallback) |
