@@ -24,7 +24,51 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
-## Session — Insights category multi-select fix (2026-07-12, latest)
+## Session — Button hit-target + paywall feedback fix (2026-07-12, latest)
+
+Branch: `feature/liquid-glass-ui`. Changelog version: **0.15.2**. Reported from a
+TestFlight build: "most buttons only work if you tap the middle" and "Monthly/Yearly
+paywall plans don't work, only Lifetime."
+
+**Root cause.** Numera's tappable controls are `Button { } label: { … }` with
+`.buttonStyle(.plain)`, where the label draws its own shape via `.background(…)`.
+A plain button has no chrome of its own, so its hit area is the label's drawn
+content — the padding, `Spacer` gaps, and (on background-less rows) everything but
+the text/icon were not tappable. `SettingsRow` already had `.contentShape(Rectangle())`
+and worked; the others didn't.
+
+**What changed (files)** — added `.contentShape(<visible shape>)` to each plain-button
+label so the whole control is tappable:
+- Shared components: `Components/PrimaryButton.swift` (PrimaryButton→Capsule,
+  FloatingAddButton→Circle, FloatingPillButton→Capsule), `Components/PremiumBadge.swift`
+  (UnlockGradientButton→Capsule), `Components/TransactionRow.swift` (Rectangle — the
+  core Activity/Home row, previously only icon+text tappable),
+  `Features/Onboarding/OnboardingComponents.swift` (OnboardingOptionRow→card rect,
+  OnboardingSecondaryButton→Capsule).
+- Inline buttons: `Features/Premium/PaywallView.swift` (pricing cards→card rect),
+  `Features/Budget/BudgetView.swift` (overall/category/add cards),
+  `Features/Home/WhatsNew.swift` ("What's new?"→Capsule),
+  `Features/Settings/{SettingsView,AccountsView,CurrencyPickerView,ReminderView,MonthStartDayView}.swift`,
+  `Features/Onboarding/OnboardingSetupSteps.swift` (More currencies, day grid, Skip).
+
+**Paywall Monthly/Yearly.** The `.storekit` config has all three products, so the code
+purchase path is product-agnostic. Two changes: (1) the pricing cards are now fully
+tappable so selecting Monthly/Yearly is reliable; (2) `PaywallView.buy()` no longer
+returns silently when the selected plan isn't in `premium.products` — it sets
+`premium.purchaseError` ("This plan isn't available right now"). **If Monthly/Yearly
+still never load on TestFlight, the cause is App Store Connect** — confirm both
+subscription products (`…pro.monthly.v2`, `…pro.yearly.v2`) and their subscription
+group are approved/Ready and the Paid Apps agreement is active (Lifetime, a
+non-consumable, loading proves the agreement is fine, so the subscription products
+themselves are the suspect).
+
+**Status:** Not compiled (Windows — CI is the only compiler). `.contentShape` is
+visual-neutral (only expands the hit region); low risk. Verify on device: taps land
+across each control's full area; paywall plan selection + purchase for all three.
+
+---
+
+## Session — Insights category multi-select fix (2026-07-12)
 
 Branch: `feature/liquid-glass-ui` (merged up to `main`'s 0.15.0 onboarding first).
 Changelog version: **0.15.1**. Reported from a TestFlight build (evidence in

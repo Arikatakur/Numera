@@ -191,6 +191,8 @@ struct PaywallView: View {
                         .offset(y: -11)
                 }
             }
+            // Select on a tap anywhere in the card, not just the centered text.
+            .contentShape(RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -251,7 +253,13 @@ struct PaywallView: View {
     }
 
     private func buy() {
-        guard let product = premium.product(selected) else { return }
+        guard let product = premium.product(selected) else {
+            // The App Store didn't return this plan (e.g. a subscription still
+            // pending review in App Store Connect). Surface it instead of a
+            // silent dead button.
+            premium.purchaseError = "This plan isn’t available right now. Please try again in a moment."
+            return
+        }
         Task {
             let success = await premium.purchase(product)
             if success {

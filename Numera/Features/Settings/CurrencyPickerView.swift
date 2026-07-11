@@ -84,6 +84,7 @@ struct CurrencyPickerView: View {
             .padding(.horizontal, AppSpacing.screenMargin)
             .padding(.vertical, 14)
             .background(isSelected ? Color.white.opacity(0.04) : Color.clear)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

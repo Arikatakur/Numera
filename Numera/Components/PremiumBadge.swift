@@ -47,6 +47,7 @@ struct UnlockGradientButton: View {
                 )
             )
             .clipShape(Capsule())
+            .contentShape(Capsule())
             .shadow(color: AppColors.chartTeal.opacity(0.35), radius: 16, x: 0, y: 8)
         }
     }

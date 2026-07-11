@@ -13,6 +13,9 @@ struct PrimaryButton: View {
                 .padding(.vertical, 16)
                 // Accent-tinted interactive glass (solid accent on iOS 17–25).
                 .liquidGlassControl(Capsule(), tint: AppColors.accent, fallbackFill: AppColors.accent)
+                // Make the whole capsule tappable — a plain button's hit area
+                // otherwise collapses to the drawn text ("only the middle works").
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
     }
@@ -33,6 +36,7 @@ struct FloatingAddButton: View {
                 .foregroundColor(.black)
                 .frame(width: 60, height: 60)
                 .liquidGlassControl(Circle(), tint: AppColors.accent, fallbackFill: AppColors.accent)
+                .contentShape(Circle())
                 .shadow(color: .black.opacity(0.35), radius: 16, x: 0, y: 8)
                 .shadow(color: AppColors.accent.opacity(0.25), radius: 24, x: 0, y: 6)
         }
@@ -58,6 +62,7 @@ struct FloatingPillButton: View {
                 .padding(.vertical, 15)
                 .background(AppColors.textPrimary)
                 .clipShape(Capsule())
+                .contentShape(Capsule())
                 .shadow(color: .black.opacity(0.4), radius: 18, x: 0, y: 10)
         }
     }
