@@ -170,6 +170,7 @@ struct BudgetView: View {
                 .padding(.vertical, AppSpacing.sm)
             }
             }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -265,6 +266,7 @@ struct BudgetView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, AppSpacing.lg)
             .liquidGlass(cornerRadius: AppRadius.card)
+            .contentShape(RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous))
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -303,6 +305,7 @@ struct BudgetView: View {
                 RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                     .strokeBorder(AppColors.borderGlass, style: StrokeStyle(lineWidth: 1, dash: [6, 5]))
             )
+            .contentShape(RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous))
         }
         .buttonStyle(.plain)
     }

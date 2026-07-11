@@ -186,6 +186,9 @@ struct OnboardingOptionRow: View {
                 RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous)
                     .stroke(isSelected ? AppColors.accent.opacity(0.6) : AppColors.borderGlass, lineWidth: 1)
             )
+            // Whole card tappable, not just the text (plain buttons otherwise
+            // collapse their hit area to the drawn content).
+            .contentShape(RoundedRectangle(cornerRadius: AppRadius.card, style: .continuous))
         }
         .buttonStyle(.plain)
     }
@@ -211,6 +214,7 @@ struct OnboardingSecondaryButton: View {
                 .padding(.vertical, 16)
                 .background(AppColors.surfaceElevated, in: Capsule())
                 .overlay(Capsule().stroke(AppColors.borderGlass, lineWidth: 1))
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
     }

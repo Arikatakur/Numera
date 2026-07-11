@@ -55,6 +55,7 @@ struct AccountsView: View {
                                 }
                                 .padding(.horizontal, AppSpacing.base)
                                 .padding(.vertical, AppSpacing.md)
+                                .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
 

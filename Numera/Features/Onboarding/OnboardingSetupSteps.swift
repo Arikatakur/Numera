@@ -54,6 +54,7 @@ struct CurrencyStep: View {
                     .foregroundColor(AppColors.textSecondary)
                     .padding(.horizontal, AppSpacing.base)
                     .padding(.vertical, 14)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -144,6 +145,7 @@ struct MonthStartStep: View {
                             .foregroundColor(isSelected ? .black : AppColors.textPrimary)
                             .frame(width: 36, height: 36)
                             .background(Circle().fill(isSelected ? AppColors.accent : Color.white.opacity(0.04)))
+                            .contentShape(Circle())
                     }
                     .buttonStyle(.plain)
                 }
@@ -379,6 +381,7 @@ struct FirstTransactionStep: View {
                     .foregroundColor(AppColors.textSecondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }

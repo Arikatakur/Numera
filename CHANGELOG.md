@@ -5,6 +5,14 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
+## [0.15.2] — 2026-07-12
+
+### Fixed
+- **Buttons only responded to taps near their center.** Many tappable controls are `Button`s with `.buttonStyle(.plain)` whose label draws its shape via `.background(…)`. Without an explicit `.contentShape`, a plain button's hit area collapses toward its drawn content, so the padding, the `Spacer` gap, and (on rows with no fill) everything but the text was dead. Added `.contentShape(…)` matching each control's visible shape across the shared components (`PrimaryButton`, `FloatingAddButton`, `FloatingPillButton`, `UnlockGradientButton`, `OnboardingOptionRow`, `OnboardingSecondaryButton`, `TransactionRow`) and the paywall pricing cards, budget cards, What's New / Settings CTAs, and the currency / account / reminder / month-start rows. The whole control is now tappable.
+- **Paywall "Unlock" did nothing for Monthly/Yearly when their products hadn't loaded.** `buy()` returned silently when the selected plan wasn't among the App Store products (e.g. a subscription still pending in App Store Connect), so the button looked broken while Lifetime worked. It now surfaces a clear "This plan isn't available right now" alert instead of a dead tap. (If subscriptions never load on TestFlight, the underlying cause is App Store Connect product/subscription-group status, not the app.)
+
+---
+
 ## [0.15.1] — 2026-07-12
 
 ### Fixed

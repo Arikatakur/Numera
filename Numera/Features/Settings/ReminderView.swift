@@ -128,6 +128,7 @@ struct ReminderView: View {
                 RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous)
                     .stroke(isSelected ? AppColors.accent : AppColors.borderGlass, lineWidth: isSelected ? 1.5 : 1)
             )
+            .contentShape(RoundedRectangle(cornerRadius: AppRadius.lg, style: .continuous))
         }
         .buttonStyle(.plain)
     }

@@ -57,6 +57,9 @@ struct TransactionRow: View {
         }
         .padding(.horizontal, AppSpacing.base)
         .padding(.vertical, AppSpacing.md)
+        // The row is used as a plain-button label; without this only the icon
+        // and text are tappable (the spacer gap in the middle isn't).
+        .contentShape(Rectangle())
     }
 }
 

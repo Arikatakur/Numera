@@ -56,6 +56,7 @@ struct WhatsNewCard: View {
                     .padding(.vertical, 15)
                     .background(AppColors.textPrimary)
                     .clipShape(Capsule())
+                    .contentShape(Capsule())
             }
             .buttonStyle(.plain)
         }
