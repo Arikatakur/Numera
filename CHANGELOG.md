@@ -5,6 +5,13 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
+## [0.15.1] — 2026-07-12
+
+### Fixed
+- **Insights category rows selected in bulk below the 5th item.** The list highlight was derived from the tapped row's *donut segment*, but every category past the top-5 maps to the same pooled "Other" segment — so tapping Shopping (or anything below it) lit up every row from Shopping down. Selection is now tracked by row (`selectedRow`, the single source of truth) and the donut segment is *derived* from it, so exactly one row highlights while the donut still pools the overflow into "Other". Tapping the "Other" ring maps back to a representative row.
+
+---
+
 ## [0.15.0] — 2026-07-08
 
 First-run onboarding: a ten-step, once-only setup that gets a new user to value
