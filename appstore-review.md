@@ -4,6 +4,50 @@ Date: 2026-07-05
 
 This is a working checklist for preparing Numera for App Store submission. The app is already in TestFlight, but the items below should be addressed before submitting for public App Review.
 
+## Distribution audit — 2026-07-12
+
+Seven potential blockers were found. Status below (✅ = fixed in the app repo,
+⏳ = needs your action in App Store Connect / the ClientVault-Web legal pages).
+
+1. **✅ Missing privacy manifest.** Added `Numera/Resources/PrivacyInfo.xcprivacy`
+   declaring `NSPrivacyAccessedAPICategoryUserDefaults` with approved reason
+   **`CA92.1`** (AppSettings persists only the app's own preferences), plus
+   `NSPrivacyTracking = false` and empty tracking domains. No other required-reason
+   APIs are used directly by the app (verified: no file-timestamp / disk-space /
+   system-boot-time / `mach_absolute_time` calls). Third-party SDKs (Supabase) ship
+   their own manifests.
+2. **✅ Account deletion vs. subscriptions.** The "Delete account?" dialog now warns
+   that deletion does **not** cancel an Apple subscription, and shows a **Manage
+   subscription** button (for Pro users) that opens the system manage-subscriptions
+   sheet before deleting. (`SettingsView.swift`)
+3. **✅ Hard-coded fallback paywall prices.** Removed the `$2.99 / $24.99 / $59.99`
+   fallbacks. Prices now come from StoreKit only; a `—` placeholder shows until
+   products load (the CTA is already disabled in that state). (`PaywallView.swift`,
+   `PremiumBadge`/spec)
+4. **⏳ Reviewer access.** Create a stable demo account (email + password), seed it
+   with realistic data, ensure email confirmation doesn't block reviewer login, and
+   fill the App Review notes (template in "Reviewer Access" below). Numera repo can't
+   do this — it's App Store Connect + a seeded Supabase user.
+5. **⏳ EULA clauses.** Either switch App Store Connect to Apple's **Standard EULA**,
+   or add these clauses to the Terms page (ClientVault-Web, `clientvault.org/numera/terms`):
+   the agreement is between **you and the user, not Apple**; **Apple is a third-party
+   beneficiary** entitled to enforce it; **you (not Apple) provide all support and
+   maintenance**; **you (not Apple) are responsible for product warranties and any
+   product/IP/legal claims**; and a **developer contact address**. Using Apple's
+   Standard EULA is the lowest-effort path.
+6. **⏳ Contact-email inconsistency.** The **app doesn't hard-code a support email**
+   (it links to `clientvault.org/numera/support`), so there's nothing to change in
+   Swift. Three addresses exist across the project: legal pages use
+   `saleem.y.work@hotmail.com`, App Store Connect/support uses `support@clientvault.org`,
+   and `fastlane/Fastfile` sets `beta_app_feedback_email: saleempay@hotmail.com`
+   (TestFlight only). Pick **one canonical support address** (recommend
+   `support@clientvault.org`) and use it in the legal pages, App Store Connect, and
+   optionally the Fastfile.
+7. **⏳ Canonical URL form.** The app already uses **non-www** `clientvault.org/numera/*`
+   consistently (`AppInfo.swift`, `PaywallView.swift`, `SettingsView.swift`). Make the
+   site redirect `www` → non-www (or vice-versa) and use the same form in App Store
+   Connect so links never bounce between forms.
+
 ## Likely Blockers
 
 ### 1. In-app account deletion is missing
