@@ -125,20 +125,19 @@ struct PaywallView: View {
 
     // MARK: - Pricing
 
-    /// Card layout data; fallback prices render when App Store products
-    /// aren't available yet.
+    /// Card layout data. Prices are never hard-coded — they come from StoreKit
+    /// so they always match the customer's storefront and App Store Connect.
     private struct PriceSpec: Identifiable {
         let product: PremiumProduct
         let big: String
         let unit: String
-        let fallback: String
         var id: String { product.rawValue }
     }
 
     private static let cardSpecs: [PriceSpec] = [
-        PriceSpec(product: .monthly, big: "1", unit: "Month", fallback: "$2.99"),
-        PriceSpec(product: .yearly, big: "12", unit: "Months", fallback: "$24.99"),
-        PriceSpec(product: .lifetime, big: "∞", unit: "Lifetime", fallback: "$59.99"),
+        PriceSpec(product: .monthly, big: "1", unit: "Month"),
+        PriceSpec(product: .yearly, big: "12", unit: "Months"),
+        PriceSpec(product: .lifetime, big: "∞", unit: "Lifetime"),
     ]
 
     private var pricingCards: some View {
@@ -152,7 +151,9 @@ struct PaywallView: View {
     private func pricingCard(_ spec: PriceSpec) -> some View {
         let product = premium.product(spec.product)
         let isSelected = selected == spec.product
-        let price = product?.displayPrice ?? spec.fallback
+        // StoreKit price only; a placeholder shows until products load (the CTA
+        // is disabled in that state anyway).
+        let price = product?.displayPrice ?? "—"
 
         return Button {
             Haptics.select()

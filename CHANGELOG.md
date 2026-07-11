@@ -5,6 +5,19 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
+## [0.16.1] — 2026-07-12
+
+App Store distribution-blocker fixes (see `appstore-review.md` for the full audit).
+
+### Added
+- **Privacy manifest** (`PrivacyInfo.xcprivacy`) — declares the app's `UserDefaults` access with Apple's approved reason `CA92.1`, `NSPrivacyTracking = false`, and no tracking domains, satisfying Apple's required-reason-API rule.
+
+### Changed
+- **Account deletion warns about subscriptions.** The "Delete account?" dialog now states that deletion won't cancel an Apple subscription and offers Pro users a **Manage subscription** button (opens the system sheet) before deleting, per Apple's account-deletion guidance.
+- **Paywall prices come only from StoreKit.** Removed the hard-coded `$2.99 / $24.99 / $59.99` fallbacks; a `—` placeholder shows until products load, so displayed prices always match the customer's storefront.
+
+---
+
 ## [0.16.0] — 2026-07-12
 
 ### Added

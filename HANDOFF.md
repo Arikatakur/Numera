@@ -24,7 +24,43 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
-## Session — Recurring & Budgeting insights (2026-07-12, latest)
+## Session — App Store distribution blockers (2026-07-12, latest)
+
+Branch: `fix/appstore-blockers` (stacked on `feature/premium-insights`). Changelog
+version: **0.16.1**. Worked through a 7-item distribution audit; full status in
+`appstore-review.md` ("Distribution audit — 2026-07-12").
+
+**Fixed in the app repo (3 of 7)**
+- **Privacy manifest** — new `Numera/Resources/PrivacyInfo.xcprivacy`:
+  `NSPrivacyAccessedAPICategoryUserDefaults` + reason `CA92.1` (AppSettings persists
+  only the app's own prefs), `NSPrivacyTracking=false`, empty tracking/collected
+  arrays (the nutrition label lives in App Store Connect). No other required-reason
+  APIs are used directly (grep-verified). XcodeGen bundles it via `sources: Numera`.
+- **Delete-account subscription warning** — `SettingsView.swift` delete dialog now
+  warns deletion won't cancel an Apple subscription and adds a **Manage subscription**
+  button (Pro only) that reuses the existing `.manageSubscriptionsSheet`.
+- **Paywall prices** — `PaywallView.swift`: dropped the `PriceSpec.fallback`
+  hard-coded prices; `price = product?.displayPrice ?? "—"` (StoreKit only).
+
+**Needs your action (4 of 7 — not app-repo code)**
+- **Reviewer demo account + App Review notes** — App Store Connect + a seeded Supabase
+  user (note template already in `appstore-review.md`).
+- **EULA clauses** — switch App Store Connect to Apple's Standard EULA, or add the
+  required clauses to the Terms page in **ClientVault-Web** (drafted in the audit).
+- **Canonical support email** — app hard-codes none (links to `/numera/support`);
+  pick one address (recommend `support@clientvault.org`) across legal pages + ASC +
+  optionally `fastlane/Fastfile` (`beta_app_feedback_email`).
+- **Canonical URL form** — app already uses non-www `clientvault.org/numera/*`
+  consistently; make the site + ASC agree and redirect the other form.
+
+**Status:** Not compiled (Windows — CI is the only compiler). The three code changes
+are small and low-risk; verify on CI/device: paywall shows "—" before products load
+then real prices; delete dialog shows the subscription warning + Manage button for Pro;
+manifest present in the built bundle.
+
+---
+
+## Session — Recurring & Budgeting insights (2026-07-12)
 
 Branch: `feature/liquid-glass-ui`. Changelog version: **0.16.0**. Built out the two
 premium-locked Insights sections from Quanto reference shots

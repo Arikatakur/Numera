@@ -294,6 +294,11 @@ struct SettingsView: View {
             Text("Deletes every transaction, budget, account, and custom category. Default categories are restored. This cannot be undone.")
         }
         .confirmationDialog("Delete account?", isPresented: $showDeleteAccountConfirm, titleVisibility: .visible) {
+            // Apple asks that subscribed users be told deletion won't cancel their
+            // subscription, and be able to manage it first.
+            if premium.isPremium {
+                Button("Manage subscription") { showManageSubscriptions = true }
+            }
             Button("Delete account", role: .destructive) {
                 Haptics.warning()
                 Task {
@@ -303,7 +308,7 @@ struct SettingsView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This permanently deletes your account and all your data. This cannot be undone.")
+            Text("This permanently deletes your account and all your data, and can't be undone.\n\nIt does not cancel an Apple subscription — manage or cancel that in the App Store first.")
         }
         .sheet(isPresented: $showPaywall) {
             PaywallView()
