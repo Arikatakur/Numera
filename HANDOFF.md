@@ -24,7 +24,61 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
-## Session — Button hit-target + paywall feedback fix (2026-07-12, latest)
+## Session — Recurring & Budgeting insights (2026-07-12, latest)
+
+Branch: `feature/liquid-glass-ui`. Changelog version: **0.16.0**. Built out the two
+premium-locked Insights sections from Quanto reference shots
+(`error-images/images/insight1-2.png`, `budget1.png`, `budge1.png`).
+
+**What was built.** The bottom of Insights previously showed two fake
+`PremiumLockCard` placeholders. They're now real, data-driven cards, each wrapped in
+a new `PremiumGate` so Pro users see them live and free users see a blurred preview +
+unlock CTA that opens the paywall.
+
+**New files**
+- `Components/PremiumGate.swift` — generic gate: `content()` verbatim when unlocked;
+  when locked, the content is `.blur(9)` + `.disabled` + `.allowsHitTesting(false)`
+  under a full-card `Button` (lock icon, small-caps section label, teal→mint unlock
+  pill). Gates the *real* card, unlike `PremiumLockCard` (fake rows), which is now
+  unused in-app (still defined + previewed in `PremiumBadge.swift`).
+- `Features/Insights/RecurringInsightsCard.swift` — header ("Recurring expenses this
+  month", period-aware) with a `NavigationLink` chevron into `RecurringView`, the
+  period's recurring total, and a body that is: a marker calendar on the Monthly
+  range (`RecurringMonthGrid`, private — reuses `CalendarSpendGrid`'s weekday-aligned
+  layout but shows an accent dot on recurring days + accent-glass for today), a rule
+  list on other ranges, or an empty state.
+- `Features/Insights/BudgetInsightsCard.swift` — "Budget left" for the focused period
+  over a teal `MonthlyBarsChart` (bars = `max(0, budget − expenses)`; tap-to-focus via
+  its own `@State focus`, reset on `.onChange(of: period)`); "No data" state when
+  there's no overall budget.
+
+**New `DataStore+Aggregates` helpers**
+- `budgetRemaining(in:) -> Decimal?` — overall budget − period expenses (nil if no budget).
+- `activeRecurringExpenses`, `recurringDates(for:in:)` (walks a rule's cadence out from
+  `nextRun`, bounded to 500 steps each way), `recurringExpenseTotal(in:)`,
+  `recurringExpenseDays(in:)` (start-of-day set for calendar marks).
+
+**Wiring.** `InsightsView` renders both `PremiumGate`-wrapped cards where the two
+`PremiumLockCard`s were (always shown; gated internally). `period`/`unit` are passed in.
+
+**Notes / decisions**
+- "Recurring this month" counts scheduled occurrences in the period even if already
+  materialized into real transactions — it's a "committed spend" metric, intentionally
+  distinct from actual expenses.
+- Budget history uses the *current* overall budget against each past period's expenses
+  (budgets have no per-month history in the model) — matches the reference's full/empty
+  bars.
+- New files auto-included by XcodeGen (`sources: [{ path: Numera }]`).
+
+**Status:** NOT compiled (Windows — CI on macOS is the only compiler). Reviewed by
+inspection + API cross-check against DataStore/Period/MonthlyBarsChart/CalendarSpendGrid/
+NumeraCard/MoneyText/liquidGlass. Verify on CI / device: Pro sees live cards, free sees
+blurred+unlock; recurring calendar marks a repeating rule's days; budget bars + focus;
+empty states with no rules / no budget.
+
+---
+
+## Session — Button hit-target + paywall feedback fix (2026-07-12)
 
 Branch: `feature/liquid-glass-ui`. Changelog version: **0.15.2**. Reported from a
 TestFlight build: "most buttons only work if you tap the middle" and "Monthly/Yearly

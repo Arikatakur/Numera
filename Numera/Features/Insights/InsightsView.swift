@@ -88,17 +88,20 @@ struct InsightsView: View {
                             emptyState
                         }
 
-                        if !premium.isPremium {
-                            PremiumLockCard(
-                                title: "RECURRING INSIGHTS",
-                                buttonTitle: "Unlock recurring insights"
-                            ) { showPaywall = true }
+                        PremiumGate(
+                            isUnlocked: premium.isPremium,
+                            title: "RECURRING INSIGHTS",
+                            buttonTitle: "Unlock recurring insights"
+                        ) { showPaywall = true } content: {
+                            RecurringInsightsCard(period: period, unit: unit)
+                        }
 
-                            PremiumLockCard(
-                                title: "BUDGETING INSIGHTS",
-                                buttonTitle: "Unlock budgeting insights",
-                                height: 170
-                            ) { showPaywall = true }
+                        PremiumGate(
+                            isUnlocked: premium.isPremium,
+                            title: "BUDGETING INSIGHTS",
+                            buttonTitle: "Unlock budgeting insights"
+                        ) { showPaywall = true } content: {
+                            BudgetInsightsCard(period: period, unit: unit)
                         }
 
                         Spacer().frame(height: 80)

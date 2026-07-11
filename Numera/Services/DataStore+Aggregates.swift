@@ -140,4 +140,63 @@ extension DataStore {
         }
         return remaining / Decimal(daysLeft)
     }
+
+    /// Overall budget minus the period's expenses (negative = overspent).
+    /// nil when no overall monthly budget is set.
+    func budgetRemaining(in period: Period) -> Decimal? {
+        guard let overall = overallBudget else { return nil }
+        return overall.amount - totalExpenses(in: period)
+    }
+
+    // MARK: - Recurring insights
+
+    var activeRecurringExpenses: [RecurringRule] {
+        recurringRules.filter { $0.isActive && $0.type == .expense }
+    }
+
+    /// Every date a rule lands on inside the period, walking its cadence out
+    /// from `nextRun` in both directions. Bounded so a bad cadence can't loop.
+    func recurringDates(for rule: RecurringRule, in period: Period, calendar: Calendar = .current) -> [Date] {
+        let component: Calendar.Component
+        switch rule.frequency {
+        case .weekly:  component = .weekOfYear
+        case .monthly: component = .month
+        case .yearly:  component = .year
+        }
+        // Step an anchor back to at/just-before the period start…
+        var anchor = rule.nextRun
+        var steps = 0
+        while anchor >= period.start, steps < 500 {
+            anchor = calendar.date(byAdding: component, value: -1, to: anchor) ?? anchor
+            steps += 1
+        }
+        // …then forward, collecting each occurrence that lands in the window.
+        var dates: [Date] = []
+        var date = anchor
+        steps = 0
+        while date < period.end, steps < 500 {
+            if period.contains(date) { dates.append(date) }
+            date = calendar.date(byAdding: component, value: 1, to: date) ?? period.end
+            steps += 1
+        }
+        return dates
+    }
+
+    /// Total value of recurring expense occurrences scheduled in the period.
+    func recurringExpenseTotal(in period: Period) -> Decimal {
+        activeRecurringExpenses.reduce(Decimal(0)) { sum, rule in
+            sum + rule.amount * Decimal(recurringDates(for: rule, in: period).count)
+        }
+    }
+
+    /// Start-of-day set of days a recurring expense lands on in the period.
+    func recurringExpenseDays(in period: Period, calendar: Calendar = .current) -> Set<Date> {
+        var days: Set<Date> = []
+        for rule in activeRecurringExpenses {
+            for date in recurringDates(for: rule, in: period) {
+                days.insert(calendar.startOfDay(for: date))
+            }
+        }
+        return days
+    }
 }

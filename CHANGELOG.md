@@ -5,6 +5,16 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
+## [0.16.0] — 2026-07-12
+
+### Added
+- **Recurring & Budgeting insights (Numera Pro).** The two placeholder lock cards at the bottom of Insights are now real, data-driven cards — gated so Pro subscribers see them live and free users see a blurred preview with an unlock CTA.
+  - **Recurring expenses** — the period's total recurring-expense value, a chevron into the recurring-rules manager, and (on the Monthly range) a calendar marking every day a recurring expense lands on; other ranges list the active rules. New `DataStore` helpers `recurringExpenseTotal(in:)`, `recurringExpenseDays(in:)`, `recurringDates(for:in:)`, and `activeRecurringExpenses` walk each rule's cadence out from its `nextRun`.
+  - **Budget left** — how much of the overall monthly budget is left for the focused period, over a teal history bar chart (tap a bar to focus that period, scoped to the card); shows a "No data" state until an overall budget exists. New `DataStore.budgetRemaining(in:)`.
+- **`PremiumGate`** — a reusable wrapper that shows real content when unlocked and a blurred, non-interactive preview with a lock + gradient unlock CTA when not, replacing the fake-placeholder `PremiumLockCard` in Insights.
+
+---
+
 ## [0.15.2] — 2026-07-12
 
 ### Fixed
