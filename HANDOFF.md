@@ -24,7 +24,32 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
-## Session — First-run onboarding (2026-07-08, latest)
+## Session — Insights category multi-select fix (2026-07-12, latest)
+
+Branch: `feature/liquid-glass-ui` (merged up to `main`'s 0.15.0 onboarding first).
+Changelog version: **0.15.1**. Reported from a TestFlight build (evidence in
+`error-images/insight-category.png`).
+
+**What changed (files)**
+- `Features/Insights/InsightsView.swift` — category-breakdown selection now tracks
+  the **row** (`@State selectedRow: Int?`) instead of the donut segment. Root cause:
+  `isSelected` compared the row's `segmentIndex(...)` to `selectedSegment`, and every
+  category past the top-5 maps to the same pooled "Other" segment — so selecting any
+  of them highlighted all rows from that point down. Now `selectedRow` is the single
+  source of truth: the list highlights `selectedRow == index` (exact), and
+  `selectedSegment` is a *computed* property derived from it (still pools overflow into
+  "Other" for the donut). Added `firstRow(forSegment:)` (inverse of `segmentIndex`) so
+  a donut-ring tap resolves back to a representative row; `toggleSegment(forRow:)`
+  became `toggleRow(_:)`. Reset on range change and donut-hole clear now null out
+  `selectedRow`.
+
+**Status:** Not yet compiled (CI is the only compiler on this setup — no local Xcode).
+All writes flow through `selectedRow`; the two remaining `selectedSegment` reads use
+the new computed property. Verify on the next CI run / TestFlight build.
+
+---
+
+## Session — First-run onboarding (2026-07-08)
 
 Changelog version: **0.15.0**. Built the once-only first-run onboarding flow
 requested in `notes.txt`, entirely on the existing design system.

@@ -17,8 +17,10 @@ struct InsightsView: View {
     @State private var showPaywall = false
     @State private var selectedDay: DaySelection?
 
-    /// Donut segment picked by tapping the ring (index into `donutSegments`).
-    @State private var selectedSegment: Int?
+    /// Category row currently selected (index into `totals`). Single source of
+    /// truth for selection: the list highlights exactly this row, and the donut
+    /// segment is derived from it via `selectedSegment`.
+    @State private var selectedRow: Int?
     /// Period focused by tapping a bar — scoped to its own card, the rest of
     /// the page keeps showing `period`.
     @State private var incomeExpensesFocus: Period?
@@ -111,7 +113,7 @@ struct InsightsView: View {
         }
         // A new page range resets the per-card selections.
         .onChange(of: period) { _, _ in
-            selectedSegment = nil
+            selectedRow = nil
             incomeExpensesFocus = nil
             incomeLeftFocus = nil
         }
@@ -169,7 +171,7 @@ struct InsightsView: View {
                             lineWidth: 18,
                             selectedIndex: selectedSegment,
                             onSelectSegment: { index in
-                                withAnimation(.snappy(duration: 0.2)) { selectedSegment = index }
+                                withAnimation(.snappy(duration: 0.2)) { selectedRow = index.flatMap(firstRow(forSegment:)) }
                             }
                         )
                     }
@@ -187,8 +189,8 @@ struct InsightsView: View {
                     .frame(width: 196, height: 196)
                     .contentShape(Circle())
                     .onTapGesture {
-                        if selectedSegment != nil {
-                            withAnimation(.snappy(duration: 0.2)) { selectedSegment = nil }
+                        if selectedRow != nil {
+                            withAnimation(.snappy(duration: 0.2)) { selectedRow = nil }
                         }
                     }
                 }
@@ -282,6 +284,12 @@ struct InsightsView: View {
 
     // MARK: - Category breakdown
 
+    /// Donut segment highlighted for the current selection, derived from the
+    /// selected row. Read-only — `selectedRow` is the source of truth.
+    private var selectedSegment: Int? {
+        selectedRow.flatMap(segmentIndex(forRow:))
+    }
+
     /// The donut segment a breakdown row maps to: its own index within the
     /// top-5, or the pooled "Other" segment for anything beyond. Small slices
     /// are impossible to tap on the ring, so the list is the reliable selector.
@@ -291,18 +299,26 @@ struct InsightsView: View {
         return donutSegments.count > topCount ? topCount : nil
     }
 
-    private func toggleSegment(forRow row: Int) {
-        let target = segmentIndex(forRow: row)
-        selectedSegment = (selectedSegment == target) ? nil : target
+    /// Inverse of `segmentIndex`: a representative row for a tapped donut
+    /// segment. Top-5 slices map to their own row; the pooled "Other" slice
+    /// maps to the first row beyond the top-5.
+    private func firstRow(forSegment segment: Int) -> Int? {
+        let topCount = min(totals.count, 5)
+        if segment < topCount { return segment }
+        return totals.count > topCount ? topCount : nil
+    }
+
+    private func toggleRow(_ row: Int) {
+        selectedRow = (selectedRow == row) ? nil : row
     }
 
     private var categoryBreakdown: some View {
         SettingsCard {
             ForEach(Array(totals.enumerated()), id: \.element.id) { index, item in
-                let isSelected = selectedSegment != nil && selectedSegment == segmentIndex(forRow: index)
+                let isSelected = selectedRow == index
                 Button {
                     Haptics.select()
-                    withAnimation(.snappy(duration: 0.2)) { toggleSegment(forRow: index) }
+                    withAnimation(.snappy(duration: 0.2)) { toggleRow(index) }
                 } label: {
                     HStack(spacing: AppSpacing.base) {
                         EmojiIconTile(emoji: item.category.emoji, colorHex: item.category.colorHex, size: 44)
