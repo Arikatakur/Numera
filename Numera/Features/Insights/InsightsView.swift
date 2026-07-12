@@ -180,8 +180,8 @@ struct InsightsView: View {
                     }
 
                     Group {
-                        if let selected = selectedSegment, selected < donutSegments.count {
-                            selectedSegmentCenter(selected)
+                        if let row = selectedRow, row < totals.count {
+                            selectedCategoryCenter(row)
                                 .transition(.opacity.combined(with: .scale(scale: 0.94)))
                         } else {
                             defaultDonutCenter
@@ -222,6 +222,8 @@ struct InsightsView: View {
                     .foregroundColor(AppColors.textSecondary)
             }
             MoneyText(amount: store.totalExpenses(in: period), size: 34)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
             changeBadge
         }
     }
@@ -236,35 +238,26 @@ struct InsightsView: View {
         return title.hasPrefix("This") ? title.lowercased() : title
     }
 
-    /// Donut center while a ring segment is selected: that category's spend.
-    /// Segments are `totals.prefix(5)` plus an optional "other" remainder.
-    private func selectedSegmentCenter(_ index: Int) -> some View {
-        let top = Array(totals.prefix(5))
+    /// Donut center for the selected category — always that exact row's spend,
+    /// even for small slices the ring pools into "Other". The amount scales to a
+    /// single line so large values don't wrap inside the donut hole.
+    private func selectedCategoryCenter(_ row: Int) -> some View {
+        let item = totals[row]
         return VStack(spacing: 5) {
-            if index < top.count {
-                let item = top[index]
-                Text(item.category.emoji)
-                    .font(.system(size: 26, design: .rounded))
-                Text(item.category.name)
-                    .font(.system(size: 15, design: .rounded))
-                    .foregroundColor(AppColors.textSecondary)
-                    .lineLimit(1)
-                MoneyText(amount: item.total, size: 30)
-                Text("\(Int((item.share * 100).rounded()))% of spending")
-                    .font(.system(size: 12, design: .rounded))
-                    .foregroundColor(AppColors.textTertiary)
-            } else {
-                let rest = totals.dropFirst(5)
-                Text("Other")
-                    .font(.system(size: 15, design: .rounded))
-                    .foregroundColor(AppColors.textSecondary)
-                MoneyText(amount: rest.reduce(Decimal(0)) { $0 + $1.total }, size: 30)
-                Text("\(Int((rest.reduce(0.0) { $0 + $1.share } * 100).rounded()))% of spending")
-                    .font(.system(size: 12, design: .rounded))
-                    .foregroundColor(AppColors.textTertiary)
-            }
+            Text(item.category.emoji)
+                .font(.system(size: 26, design: .rounded))
+            Text(item.category.name)
+                .font(.system(size: 15, design: .rounded))
+                .foregroundColor(AppColors.textSecondary)
+                .lineLimit(1)
+            MoneyText(amount: item.total, size: 30)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+            Text("\(Int((item.share * 100).rounded()))% of spending")
+                .font(.system(size: 12, design: .rounded))
+                .foregroundColor(AppColors.textTertiary)
         }
-        .padding(.horizontal, AppSpacing.xl)
+        .padding(.horizontal, AppSpacing.lg)
     }
 
     @ViewBuilder
