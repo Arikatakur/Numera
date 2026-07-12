@@ -5,6 +5,14 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
+## [0.16.2] — 2026-07-12
+
+### Fixed
+- **Insights donut center showed the pooled "Other" total for categories below the 5th.** 0.15.1 fixed the *list* highlight, but the donut center was still driven by the ring *segment* — so selecting a small slice (Shopping, Transport, …) showed the summed "Other" amount instead of that category's. The center now reads from the selected **row**, so it always shows the exact category's spend and share (the ring still pools small slices into "Other").
+- **Large amounts wrapped onto two lines in the donut center.** A big value like ₪1,710.80 broke across lines inside the ring. The center amount (selected-category and default total) now scales to a single line via `lineLimit(1)` + `minimumScaleFactor(0.5)`.
+
+---
+
 ## [0.16.1] — 2026-07-12
 
 App Store distribution-blocker fixes (see `appstore-review.md` for the full audit).

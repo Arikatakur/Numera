@@ -24,7 +24,31 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
-## Session — App Store distribution blockers (2026-07-12, latest)
+## Session — Insights donut-center fix (2026-07-12, latest)
+
+Branch: `fix/insights-pie-center` (off `main`). Changelog version: **0.16.2**.
+Follow-up to 0.15.1 (evidence: `error-images/insight-pie1.png`, `insight-pie2.png`).
+
+**Two bugs in the Insights donut center (`InsightsView.swift`).**
+- Center still read from the ring *segment* (`selectedSegmentCenter(_ segment:)`),
+  so selecting a category below the top-5 showed the pooled "Other" total, not that
+  category. Replaced with `selectedCategoryCenter(_ row:)` driven by `selectedRow`
+  (`totals[row]`), and switched the center's `if let` gate from `selectedSegment` to
+  `selectedRow`. The ring still uses `selectedSegment` (computed) to pool small slices
+  into "Other" — only the center readout changed.
+- Large amounts (e.g. ₪1,710.80) wrapped to two lines in the hole. Added
+  `.lineLimit(1).minimumScaleFactor(0.5)` to the center amount in both
+  `selectedCategoryCenter` and `defaultDonutCenter`.
+
+**Status:** Not compiled (Windows — CI compiles). Verify: select any category incl.
+below the 5th → center shows that category's own amount/%; big totals stay on one line.
+
+**Note:** A reviewer demo-account seed migration was in progress when this bug came in
+(schema fully read; no file written yet) — resume after this.
+
+---
+
+## Session — App Store distribution blockers (2026-07-12)
 
 Branch: `fix/appstore-blockers` (stacked on `feature/premium-insights`). Changelog
 version: **0.16.1**. Worked through a 7-item distribution audit; full status in
