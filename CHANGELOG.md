@@ -40,6 +40,16 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
   pushing the NUMERA wordmark ~90pt to the right of the mark. The glow moved into a
   `.background` of the mark `Image` (non-layout), so the glyph cell is now the mark's own
   width and the wordmark sits directly beside it, matching the intended lockup.
+- **Activity chart: one big day (e.g. Rent) crushed every other bar.** The day-bars axis was
+  scaled to the raw daily max, so a single large expense pushed the ceiling to ~5k and
+  flattened normal days into an unreadable row of stubs. `DayBarsChart` now scales the Y-axis
+  to *normal* spending — outliers are detected with a Tukey fence (Q3 + 1.5·IQR) over the
+  positive days and excluded from the ceiling, which still leaves room for the average line.
+  Any day above the ceiling is drawn clipped to the top and flagged with an up-marker (▲) and
+  its **exact amount** in a small pill, so the real value is never hidden or misrepresented
+  (no log/broken axis, no silent cap). With no outlier present the axis is unchanged. The
+  approach follows data-viz guidance: scale to the chart's job (comparing normal days) and
+  label the outlier rather than distort the scale.
 
 ---
 
