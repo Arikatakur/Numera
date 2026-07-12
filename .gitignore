@@ -71,6 +71,8 @@ temp/
 .cache/
 
 # Other
+qunato-app/*
+v1-design/*
 privacy.md
 terms.md
 error-images/

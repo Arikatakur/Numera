@@ -1,14 +1,10 @@
-Numera 0.15 — guided welcome
+Numera 0.16 — insights, pricing & polish
 
-• New: a guided first-run setup walks new members through their currency, month start, first account, categories, and a first (or sample) expense — with an optional reminder. Everything stays free; the Pro preview is skippable.
-• Fresh rounded typography across the whole app.
-• All charts are now native Apple charts: day bars, income vs expenses, and the category donut — smoother, clearer, no more wrapped day labels.
-• Tap the average number on the Activity chart for a "How we calculate the average" sheet (the ⓘ badge is gone).
-• Insights: new Weekly / Monthly / Quarterly / Yearly selector at the top.
-• Calendar days are now glassy, and long amounts stay inside their cells.
-• Budget: tap a card to edit inside it — live ring preview while you type; pencils removed.
-• Activity shows your full history (previous months included) and the month picker reaches back to 2020.
-• The floating + responds instantly on every tab.
-• Fixes: Activity day bars render again, every chart responds to a single tap, the calendar stays inside its card, and Budget saves on the first tap.
+• New: Recurring insights (Numera Pro) — your total recurring spend, a shortcut into the rules manager, and a monthly calendar marking every day a bill or subscription lands.
+• New: Budget insights (Numera Pro) — how much of your monthly budget is left, over a tappable history of recent periods.
+• Subscription prices now always match your App Store country and currency (no more placeholder prices).
+• The account-deletion flow now explains that deleting your account won't cancel an Apple subscription, with a shortcut to manage it first.
+• Faster, tighter launch animation — the Numera mark now sits right beside the NUMERA wordmark instead of drifting far to the right.
+• The full public changelog is now linked from Home › What's new.
 
-Please test: first-run onboarding on a fresh account (currency, month start, account, sample expense; the reminder prompt appears only if you pick a time; the Pro preview is skippable), then rounded font everywhere, chart taps (bars, donut, average), Insights range switching, calendar day cells, in-card budget editing, + button speed, and scrolling into past months in Activity.
+Please test: open the app and watch the launch animation (logo + wordmark should sit together, and it should feel quick); Insights › scroll to the Recurring and Budget cards (blurred preview for free users, live for Pro — tap the recurring calendar and a budget history bar); the paywall shows real prices for your region; Settings › Delete account shows the subscription notice; and Home › What's new? › "View full changelog" opens the web page.

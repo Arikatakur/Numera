@@ -1,7 +1,7 @@
 import SwiftUI
 
 // First-launch animation: monogram fades in center → glides left → NUMERA reveals A→N → tagline.
-// Total sequence ≈ 4.6s, then calls onFinished() to hand off to the main app.
+// Total sequence ≈ 2.4s, then calls onFinished() to hand off to the main app.
 struct LaunchAnimationView: View {
     let onFinished: () -> Void
 
@@ -31,32 +31,33 @@ struct LaunchAnimationView: View {
 
             VStack(spacing: 24) {
                 HStack(spacing: 16) {
-                    // Glyph + glow move as one unit
-                    ZStack {
-                        Circle()
-                            .fill(
-                                RadialGradient(
-                                    colors: [
-                                        AppColors.accent.opacity(0.3),
-                                        AppColors.accent.opacity(0)
-                                    ],
-                                    center: .center,
-                                    startRadius: 0,
-                                    endRadius: 90
+                    // Glyph + glow move as one unit. The glow lives in a .background so
+                    // its 180pt size never inflates the HStack — otherwise the glyph cell
+                    // grows to the glow's width and shoves NUMERA far to the right.
+                    Image("numera-mark")
+                        .resizable()
+                        .aspectRatio(64.0 / 57.0, contentMode: .fit)
+                        .frame(height: 32)
+                        .background(
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: [
+                                            AppColors.accent.opacity(0.3),
+                                            AppColors.accent.opacity(0)
+                                        ],
+                                        center: .center,
+                                        startRadius: 0,
+                                        endRadius: 90
+                                    )
                                 )
-                            )
-                            .frame(width: 180, height: 180)
-                            .scaleEffect(glowScale)
-                            .opacity(glowOpacity)
-
-                        Image("numera-mark")
-                            .resizable()
-                            .aspectRatio(64.0 / 57.0, contentMode: .fit)
-                            .frame(height: 32)
-                            .opacity(glyphOpacity)
-                            .scaleEffect(glyphScale)
-                    }
-                    .offset(x: glyphExtraOffset)
+                                .frame(width: 180, height: 180)
+                                .scaleEffect(glowScale)
+                                .opacity(glowOpacity)
+                        )
+                        .opacity(glyphOpacity)
+                        .scaleEffect(glyphScale)
+                        .offset(x: glyphExtraOffset)
 
                     // Wordmark — each letter animates independently
                     HStack(spacing: 0) {
@@ -104,42 +105,42 @@ struct LaunchAnimationView: View {
         // Allow one extra frame for PreferenceKey to propagate before starting.
         try? await Task.sleep(nanoseconds: 32_000_000)
 
-        // ─── Phase 1: glyph appears (t = 150ms, duration 1s, ease-out) ───
-        try? await Task.sleep(nanoseconds: 150_000_000)
-        withAnimation(.easeOut(duration: 1.0)) {
+        // ─── Phase 1: glyph appears (t = 100ms, duration 0.55s, ease-out) ───
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        withAnimation(.easeOut(duration: 0.55)) {
             glyphOpacity = 1
             glyphScale   = 1.0
             glowOpacity  = 0.55
         }
 
-        // ─── Phase 2: glyph slides left (t = 1700ms, duration 1.35s) ───
-        // 1700 - 150 - 32 (frame) = 1518ms remaining
-        try? await Task.sleep(nanoseconds: 1_518_000_000)
-        withAnimation(.timingCurve(0.16, 0.84, 0.24, 1, duration: 1.35)) {
+        // ─── Phase 2: glyph slides left (t ≈ 650ms, duration 0.7s) ───
+        // 650 - 100 - 32 (frame) = 518ms remaining
+        try? await Task.sleep(nanoseconds: 518_000_000)
+        withAnimation(.timingCurve(0.16, 0.84, 0.24, 1, duration: 0.7)) {
             glyphExtraOffset = 0
         }
         startGlowPulse()
 
         // ─── Phase 3: letters reveal A → R → E → M → U → N ───
-        // First letter starts at t = 1880ms (180ms after slide begins)
-        try? await Task.sleep(nanoseconds: 180_000_000)
+        // First letter starts at t ≈ 770ms (120ms after slide begins)
+        try? await Task.sleep(nanoseconds: 120_000_000)
         for (i, idx) in [5, 4, 3, 2, 1, 0].enumerated() {
-            if i > 0 { try? await Task.sleep(nanoseconds: 120_000_000) }
-            withAnimation(.timingCurve(0.2, 0.9, 0.3, 1, duration: 0.6)) {
+            if i > 0 { try? await Task.sleep(nanoseconds: 70_000_000) }
+            withAnimation(.timingCurve(0.2, 0.9, 0.3, 1, duration: 0.42)) {
                 letterOpacity[idx] = 1
                 letterOffset[idx]  = 0
             }
         }
 
-        // ─── Phase 4: tagline (350ms after last letter, 0.9s ease-out) ───
-        try? await Task.sleep(nanoseconds: 350_000_000)
-        withAnimation(.easeOut(duration: 0.9)) {
+        // ─── Phase 4: tagline (180ms after last letter, 0.55s ease-out) ───
+        try? await Task.sleep(nanoseconds: 180_000_000)
+        withAnimation(.easeOut(duration: 0.55)) {
             taglineOpacity = 1
             taglineOffset  = 0
         }
 
-        // Settle, then hand off (~4.6s total from launch)
-        try? await Task.sleep(nanoseconds: 1_800_000_000)
+        // Settle, then hand off (~2.4s total from launch)
+        try? await Task.sleep(nanoseconds: 1_100_000_000)
         onFinished()
     }
 

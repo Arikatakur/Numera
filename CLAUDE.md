@@ -299,6 +299,25 @@ Use this format:
 
 Never leave changelog updates for “later.”
 
+### Public changelog (keep in sync every release)
+
+There is a **public, user-facing changelog** on the ClientVault website:
+
+- URL: `https://clientvault.org/numera/changelog`
+- Source: the **ClientVault-Web** repo →
+  `artifacts/client-vault/src/pages/numera-changelog.tsx`
+- Also referenced in the app via `AppInfo.changelogURL` and surfaced from the in-app
+  **What's new?** sheet ("View full changelog").
+
+Whenever a user-facing release ships (anything that would appear in the in-app What's New
+or TestFlight notes), **also add a public-friendly entry to `numera-changelog.tsx`**:
+- Write for end users, not developers — highlights only, no file paths, migration names,
+  or internal implementation detail.
+- Newest version first, matching the version numbers in `CHANGELOG.md`.
+- Keep it short: a one-line summary per version plus a few bullet highlights.
+
+Treat this the same as `CHANGELOG.md` — never leave it for “later.”
+
 ---
 
 ## Handoff Rules
