@@ -16,16 +16,71 @@ struct DayBarsChart: View {
 
     @State private var showAverageInfo = false
 
+    @Environment(AppSettings.self) private var settings: AppSettings?
+
     private var maxValue: Double { max(values.max() ?? 0, 1) }
 
-    /// Axis ceiling rounded up to 1 / 2 / 2.5 / 5 × 10ⁿ so the top label reads
-    /// clean ("2.5k", not "2,286.71").
+    // MARK: - Outlier-aware Y scale
+    //
+    // A single large day (e.g. Rent) used to set the axis to its own value, which
+    // crushed every normal day into an unreadable stub at the bottom. Instead the
+    // axis is scaled to *normal* spending and any day above the ceiling is drawn
+    // clipped to the top, then flagged with an up-marker and its exact amount (see
+    // `outlierCallout`). Nothing is silently capped — the true value is always
+    // shown. Rationale: scale to the chart's job (comparing normal days) + label
+    // the outlier, per data-viz guidance (avoids misleading log/broken axes).
+
+    /// Positive daily totals only — zero days are "no activity", not part of the
+    /// normal-spending distribution used to judge outliers.
+    private var positives: [Double] { values.filter { $0 > 0 } }
+
+    /// Tukey upper fence (Q3 + 1.5·IQR) over the positive days: the boundary above
+    /// which a day is an extreme outlier. `.infinity` when there are too few days
+    /// to judge, so nothing is treated as an outlier (chart behaves as before).
+    private var outlierFence: Double {
+        let p = positives.sorted()
+        guard p.count >= 4 else { return .infinity }
+        func quantile(_ q: Double) -> Double {
+            let pos = q * Double(p.count - 1)
+            let lo = Int(pos.rounded(.down))
+            let hi = Int(pos.rounded(.up))
+            if lo == hi { return p[lo] }
+            return p[lo] + (p[hi] - p[lo]) * (pos - Double(lo))
+        }
+        let q1 = quantile(0.25)
+        let q3 = quantile(0.75)
+        return q3 + 1.5 * (q3 - q1)
+    }
+
+    /// Largest "normal" day (outliers excluded). Falls back to the plain max when
+    /// there are no outliers or too few points.
+    private var normalMax: Double {
+        let fence = outlierFence
+        let normals = positives.filter { $0 <= fence }
+        return normals.max() ?? maxValue
+    }
+
+    /// Axis ceiling: scaled to normal spending, but always tall enough to keep the
+    /// average line on-chart. Rounded up to 1 / 2 / 2.5 / 5 × 10ⁿ so the top label
+    /// reads clean ("500", not "2,286.71"). With no outlier this equals the old
+    /// `niceCeil(max)`, so nothing changes for well-behaved data.
     private var axisMax: Double {
-        let exponent = floor(log10(maxValue))
+        niceCeil(max(normalMax, average ?? 0, 1))
+    }
+
+    private func niceCeil(_ value: Double) -> Double {
+        let v = max(value, 1)
+        let exponent = floor(log10(v))
         let base = pow(10.0, exponent)
-        let mantissa = maxValue / base
+        let mantissa = v / base
         let nice: Double = mantissa <= 1 ? 1 : mantissa <= 2 ? 2 : mantissa <= 2.5 ? 2.5 : mantissa <= 5 ? 5 : 10
         return nice * base
+    }
+
+    /// Days taller than the ceiling — drawn clipped to the top and flagged with a
+    /// marker + exact value. The 0.5 epsilon avoids float-noise false positives.
+    private var outlierIndices: [Int] {
+        values.indices.filter { values[$0] > axisMax + 0.5 }
     }
 
     /// Empty days keep a tiny stub so the baseline reads as a row of dots.
@@ -47,7 +102,7 @@ struct DayBarsChart: View {
                 let value = values[index]
                 BarMark(
                     x: .value("Day", dayKeys[index]),
-                    y: .value("Amount", value > 0 ? value : stub),
+                    y: .value("Amount", value > 0 ? min(value, axisMax) : stub),
                     width: .fixed(5)
                 )
                 .foregroundStyle(value > 0 ? barColor : Color.white.opacity(0.07))
@@ -109,11 +164,51 @@ struct DayBarsChart: View {
                 }
             }
         }
+        // Outlier callouts: any day taller than the axis (drawn clipped to the top)
+        // is flagged here with an up-marker and its exact amount, so the real value
+        // is never hidden. Positioned on the plot via the proxy, like the average.
+        .chartOverlay { proxy in
+            GeometryReader { geo in
+                if let anchor = proxy.plotFrame {
+                    let plot = geo[anchor]
+                    ForEach(outlierIndices, id: \.self) { index in
+                        if let x = proxy.position(forX: dayKeys[index]) {
+                            outlierCallout(value: values[index])
+                                .position(x: plot.minX + x, y: plot.minY + 16)
+                        }
+                    }
+                }
+            }
+        }
         .chartLegend(.hidden)
         .frame(height: height)
         .sheet(isPresented: $showAverageInfo) {
             AverageInfoSheet(text: averageExplanation ?? "")
         }
+    }
+
+    /// The marker for a clipped (outlier) bar: an up-triangle over a small pill with
+    /// the day's exact amount. Non-interactive so it never blocks taps underneath.
+    private func outlierCallout(value: Double) -> some View {
+        VStack(spacing: 1) {
+            Image(systemName: "arrowtriangle.up.fill")
+                .font(.system(size: 7, weight: .bold))
+                .foregroundColor(barColor)
+            Text(MoneyFormatter.string(
+                Decimal(value),
+                code: settings?.currencyCode ?? "USD",
+                cents: settings?.displayCents ?? false
+            ))
+            .font(.system(size: 10, weight: .semibold, design: .rounded))
+            .monospacedDigit()
+            .foregroundColor(AppColors.textPrimary)
+            .fixedSize()
+            .padding(.horizontal, 5)
+            .padding(.vertical, 2)
+            .background(AppColors.background.opacity(0.85), in: Capsule())
+            .overlay(Capsule().stroke(barColor.opacity(0.45), lineWidth: 1))
+        }
+        .allowsHitTesting(false)
     }
 }
 
@@ -211,9 +306,23 @@ struct HorizontalDashLine: Shape {
     ZStack {
         AppColors.background.ignoresSafeArea()
         DayBarsChart(
-            values: (0..<31).map { $0 == 0 ? 2200 : ($0 == 1 ? 90 : 0) },
+            // Day 1 is a Rent-sized outlier; the rest are normal days. The axis
+            // scales to the normal range and the outlier is clipped + labeled.
+            values: (0..<31).map { i in
+                switch i {
+                case 0:  return 4000   // Rent — outlier
+                case 2:  return 380
+                case 4:  return 128
+                case 6:  return 64
+                case 8:  return 90
+                case 10: return 50
+                case 13: return 220
+                case 15: return 32
+                default: return 0
+                }
+            },
             labels: (0..<31).map { [0, 7, 15, 22, 29].contains($0) ? "\($0 + 1)" : "" },
-            average: 381,
+            average: 300,
             averageExplanation: "We add up all transactions in the selected time period and divide it by the number of bars displayed on the chart. Future days are not counted."
         )
         .padding()
