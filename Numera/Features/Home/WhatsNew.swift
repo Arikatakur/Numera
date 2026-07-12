@@ -78,6 +78,7 @@ struct WhatsNewCard: View {
 /// Release highlights behind the "What's new?" button.
 struct WhatsNewSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         ZStack {
@@ -97,19 +98,33 @@ struct WhatsNewSheet: View {
                         .padding(.top, AppSpacing.xxl)
 
                         VStack(alignment: .leading, spacing: AppSpacing.lg) {
-                            featureRow("hand.wave.fill", "A guided welcome",
-                                       "New members set up their currency, first account and a sample expense in seconds.")
-                            featureRow("sparkles", "Rounded, glassy look",
-                                       "Quanto-style rounded type and Liquid Glass on every page.")
-                            featureRow("chart.bar.xaxis", "Native charts",
-                                       "Bars, donut and calendar are now Apple-native — smoother and clearer.")
-                            featureRow("calendar", "Weekly to yearly insights",
-                                       "Switch Insights between weekly, monthly, quarterly and yearly views.")
-                            featureRow("clock.arrow.circlepath", "Full activity history",
-                                       "Scroll back through every month and jump to any year since 2020.")
-                            featureRow("arrow.triangle.2.circlepath", "Recurring transactions",
-                                       "Put rent, salary and subscriptions on autopilot.")
+                            featureRow("arrow.triangle.2.circlepath", "Recurring insights",
+                                       "See your total recurring spend and a calendar of every day a bill or subscription lands. (Numera Pro)")
+                            featureRow("chart.bar.xaxis", "Budget insights",
+                                       "Track how much of your monthly budget is left, with a tappable history of recent periods. (Numera Pro)")
+                            featureRow("sparkles", "A sharper launch",
+                                       "The opening animation is faster, and the Numera mark now sits right beside the wordmark.")
+                            featureRow("creditcard", "Accurate regional pricing",
+                                       "Subscription prices always match your App Store country and currency.")
+                            featureRow("checkmark.shield", "Privacy & account controls",
+                                       "A clearer account-deletion flow and an updated privacy manifest.")
                         }
+
+                        // Link out to the full public changelog.
+                        Button {
+                            Haptics.tap()
+                            openURL(AppInfo.changelogURL)
+                        } label: {
+                            HStack(spacing: 6) {
+                                Text("View full changelog")
+                                Image(systemName: "arrow.up.right")
+                                    .font(.system(size: 12, weight: .semibold))
+                            }
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(AppColors.accent)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
 
                         Spacer().frame(height: AppSpacing.base)
                     }

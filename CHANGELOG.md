@@ -5,6 +5,44 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ---
 
+## [Unreleased]
+
+### Added
+- **Public changelog page** at `clientvault.org/numera/changelog` (in the ClientVault-Web
+  repo, `artifacts/client-vault/src/pages/numera-changelog.tsx`) — a reader-friendly,
+  public summary of each release. Linked from the in-app **What's new?** sheet via a new
+  "View full changelog" button (`AppInfo.changelogURL`). This page must be kept in sync on
+  every release (see the Changelog Rules in `CLAUDE.md`).
+- **Demo-account seed migration** (`supabase/migrations/20260712000000_seed_demo_account.sql`)
+  for App Review. Idempotent, date-relative seed keyed off the auth user
+  `demo@clientvault.org`: renames the default account to **Everyday** and adds
+  **Savings** + **Cash**; ensures the default categories plus a custom **Rent**;
+  sets an overall budget and five per-category budgets; seeds 12 months of income
+  and fixed-cost anchors plus a current-period scatter (kept fresh to "today" on
+  every re-run) so all four Insights ranges, Home, and the Weekly tab are always
+  populated; includes all three transaction types (income / expense / **transfer**)
+  and a second income category so the income donut has more than one slice; and
+  adds four recurring rules for the Pro Recurring insight. Wipes and reseeds only
+  the demo user — every other account is untouched. Pro entitlement is **not**
+  seeded (StoreKit-only, on-device — App Review unlocks Pro via the sandbox).
+
+### Changed
+- **What's New sheet refreshed for 0.16.** The Home "What's new?" highlights now lead with
+  Recurring & Budget insights, accurate regional pricing, the sharper launch animation, and
+  privacy/account controls (replacing the 0.15 guided-welcome list). TestFlight notes
+  (`fastlane/changelog.txt`) rewritten to match.
+- **Faster launch animation.** The `LaunchAnimationView` sequence is compressed from ~4.6s
+  to ~2.4s (quicker glyph fade-in, slide, letter reveal, and settle).
+
+### Fixed
+- **Launch logo and wordmark were far apart.** The monogram's glow was a sibling of the mark
+  inside the glyph's `ZStack`, so the 180pt glow `Circle` set the glyph cell's layout width —
+  pushing the NUMERA wordmark ~90pt to the right of the mark. The glow moved into a
+  `.background` of the mark `Image` (non-layout), so the glyph cell is now the mark's own
+  width and the wordmark sits directly beside it, matching the intended lockup.
+
+---
+
 ## [0.16.2] — 2026-07-12
 
 ### Fixed

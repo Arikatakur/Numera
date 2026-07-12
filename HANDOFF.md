@@ -24,7 +24,77 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
-## Session — Insights donut-center fix (2026-07-12, latest)
+## Session — Launch animation fix + public changelog (2026-07-12, latest)
+
+Branch: `chore/demo-seed`. Changelog: **[Unreleased]**.
+
+**Fixed — launch animation logo/wordmark gap.** In `LaunchAnimationView`, the monogram's
+radial glow was a sibling of the mark inside the glyph `ZStack`, so the 180pt glow `Circle`
+became the glyph cell's layout width and pushed the NUMERA wordmark ~90pt to the right (the
+"wrong-logo" report). The glow moved into a `.background` of the mark `Image` (non-layout),
+so the glyph cell is now the mark's own width and the wordmark sits directly beside it.
+
+**Changed — faster launch.** The sequence was compressed from ~4.6s to ~2.4s (glyph fade-in
+0.55s, slide 0.7s, letter stagger 70ms/0.42s, tagline 0.55s, settle 1.1s). `NumeraApp` calls
+`onFinished()` from the view, so no other timing depended on the old duration.
+
+**Changed — What's New.** `WhatsNewSheet` highlights rewritten for 0.16 (Recurring/Budget
+insights, regional pricing, sharper launch, privacy/account controls) and a **"View full
+changelog"** button added at the bottom → `AppInfo.changelogURL`
+(`https://clientvault.org/numera/changelog`). `fastlane/changelog.txt` rewritten to match.
+
+**Added — public changelog (separate repo).** In **ClientVault-Web**
+(`C:\Users\Saleem\Documents\GitHubRepositories\clients\saleem-yousef\ClientVault-Web`):
+new `artifacts/client-vault/src/pages/numera-changelog.tsx`, routed at `/numera/changelog`
+in `App.tsx`, meta added in `use-page-meta.ts`. Typechecks clean (`pnpm typecheck`). A rule
+was added to `CLAUDE.md` (Changelog Rules) to keep this page in sync every release.
+
+**Not done:** no version bump (still 0.16.1); Swift not compiled locally (Windows — CI is the
+compiler); ClientVault-Web not built/deployed (only typechecked). Both repos have uncommitted
+changes.
+
+---
+
+## Session — Demo-account seed for App Review (2026-07-12)
+
+Branch: `chore/demo-seed`. Changelog: **[Unreleased]**. Closes one of the four
+open App Store action items from the distribution audit — the reviewer demo
+account's data.
+
+**Added** — `supabase/migrations/20260712000000_seed_demo_account.sql`, a hand-run
+seed (Supabase SQL editor, not an auto-applied migration). Keyed off the auth user
+**`demo@clientvault.org`**; create that user first (Authentication → Users → Add
+user, tick *Auto Confirm User*), then run the file.
+
+What it seeds, verified against the schema migrations:
+- **Profile** — `has_completed_onboarding = true`, display name "Numera Demo".
+- **Accounts** — renames the seeded *Main account* → **Everyday** (start 5 000),
+  adds **Savings** (20 000) and **Cash** (600). Balances shown in-app are
+  starting ± transactions (`DataStore.currentBalance`), so the reviewer sees
+  ≈ $104.8k Everyday, $20.3k Savings, $474 Cash.
+- **Categories** — ensures the 15 defaults via `seed_default_categories`, plus a
+  custom **Rent**.
+- **Budgets** — overall 6 000 + per-category (Rent/Groceries/Food/Transport/
+  Shopping); upserts on `budgets_unique_user_category_month`.
+- **Transactions** — 12 monthly anchors (salary, rent, Netflix, groceries) so the
+  Monthly/Quarterly/Yearly charts have history, plus a current-period scatter
+  (down to "2 hours ago") so Weekly and Home-today are never empty. Covers all
+  three types incl. a **transfer** and a second income category (**Dividends**).
+- **Recurring rules** — Rent/Netflix/Salary (monthly) + Gym (weekly) for the Pro
+  Recurring insight.
+
+Properties: **idempotent** and **re-runnable** — each run wipes and reseeds only
+the demo user's transactions + recurring rules against the current date (so the
+demo never goes stale), and touches no other account. Not seeded: **Pro
+entitlement** — StoreKit-only/on-device (`PremiumManager`), so App Review unlocks
+Pro through the sandbox, not this SQL.
+
+Also still open from the audit: EULA clauses, canonical support email, App Review
+notes text. (The migration file is now committed on `chore/demo-seed`.)
+
+---
+
+## Session — Insights donut-center fix (2026-07-12)
 
 Branch: `fix/insights-pie-center` (off `main`). Changelog version: **0.16.2**.
 Follow-up to 0.15.1 (evidence: `error-images/insight-pie1.png`, `insight-pie2.png`).
@@ -42,9 +112,6 @@ Follow-up to 0.15.1 (evidence: `error-images/insight-pie1.png`, `insight-pie2.pn
 
 **Status:** Not compiled (Windows — CI compiles). Verify: select any category incl.
 below the 5th → center shows that category's own amount/%; big totals stay on one line.
-
-**Note:** A reviewer demo-account seed migration was in progress when this bug came in
-(schema fully read; no file written yet) — resume after this.
 
 ---
 

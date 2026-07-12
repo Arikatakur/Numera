@@ -21,6 +21,10 @@ enum AppInfo {
         URL(string: "https://clientvault.org/numera/feedback?new=\(type)")!
     }
 
+    /// Public, user-facing changelog hosted on the ClientVault site.
+    /// Linked from the in-app "What's New" sheet.
+    static let changelogURL = URL(string: "https://clientvault.org/numera/changelog")!
+
     // MARK: - Social
 
     static var instagramURL: URL {
