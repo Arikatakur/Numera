@@ -24,6 +24,29 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
+## Session — New-entry keyboard fix (real) (2026-07-13, latest)
+
+Branch: `feature/activity-chart-outliers`. Changelog: **[Unreleased]**.
+
+**Fixed — note keyboard shoved the New Entry layout up.** Reported again with
+screenshots (`error-images/new-trans-with-note.png` vs `…-without-note.png`): focusing
+the note field pushed everything up — the amount overlapped the "New Entry" title and the
+Expense/Income/Transfer selector left the screen. The prior session had *moved*
+`ignoresSafeArea(.keyboard, edges: .bottom)` from the inner `ZStack` onto the
+`NavigationStack` (see the note previously at the bottom of this file), but that ignore does
+**not** cross the NavigationStack boundary, so avoidance was never suppressed. Moved it back
+onto the content `ZStack` inside the NavigationStack in
+`Features/AddTransaction/AddTransactionView.swift`. The note field already sits above where
+the keyboard lands, so the fixed layout now stays put and the keyboard just overlays the
+custom keypad.
+
+**Not built locally** — Windows dev box, no Xcode; CI is the compiler. Verify on the next
+TestFlight/simulator build: open Add Transaction → tap the note ("What was this for?") →
+the amount, type selector, pills, and note must not move; the keyboard should simply cover
+the keypad.
+
+---
+
 ## Session — Launch animation fix + public changelog (2026-07-12, latest)
 
 Branch: `chore/demo-seed`. Changelog: **[Unreleased]**.
@@ -384,9 +407,9 @@ Quanto reference `quanto-app/summary.jpg`).
 - `Features/Settings/MonthStartDayView.swift` — selected-day circle is `accent`
   (mint), was white.
 - `Features/AddTransaction/AddTransactionView.swift` — `ignoresSafeArea(.keyboard)`
-  moved from the inner `ZStack` to the `NavigationStack` (the sheet root where
-  avoidance is applied) so focusing the note/title field no longer shoves the
-  fixed keypad layout up.
+  moved from the inner `ZStack` to the `NavigationStack`. **Superseded by the
+  2026-07-13 session:** that placement didn't work (the ignore doesn't cross the
+  NavigationStack boundary) and it was moved back onto the inner `ZStack`.
 
 **Not built locally** — Windows dev box, no Xcode; CI is the compiler. Verify on
 the next TestFlight build: bars visible in Activity; average tap sheet; tapping

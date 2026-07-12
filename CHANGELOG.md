@@ -35,6 +35,14 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
   to ~2.4s (quicker glyph fade-in, slide, letter reveal, and settle).
 
 ### Fixed
+- **New-entry keyboard still shoved the fixed layout up (real fix).** Focusing the note
+  field pushed the whole New Entry layout upward — the amount collided with the "New Entry"
+  title and the Expense/Income/Transfer selector scrolled off-screen. The earlier attempt put
+  `ignoresSafeArea(.keyboard, edges: .bottom)` on the `NavigationStack`, but that ignore does
+  **not** cross the NavigationStack boundary, so keyboard avoidance was never actually
+  suppressed. Moved the modifier onto the content `ZStack` *inside* the NavigationStack, so
+  the note field (which already sits above the keyboard) no longer moves the layout — the
+  system keyboard simply overlays the custom keypad.
 - **Launch logo and wordmark were far apart.** The monogram's glow was a sibling of the mark
   inside the glyph's `ZStack`, so the 180pt glow `Circle` set the glyph cell's layout width —
   pushing the NUMERA wordmark ~90pt to the right of the mark. The glow moved into a

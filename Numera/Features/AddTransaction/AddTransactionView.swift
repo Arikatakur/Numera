@@ -103,6 +103,14 @@ struct AddTransactionView: View {
                     keypad
                 }
             }
+            // The amount is driven by the custom keypad; the note field is the
+            // only control that raises the system keyboard, and it already sits
+            // above where the keyboard lands. Ignore the keyboard's safe area on
+            // the content *inside* the NavigationStack (applying it to the stack
+            // itself has no effect — the ignore doesn't cross that boundary), so
+            // focusing the note never shifts the fixed layout; the keyboard just
+            // overlays the keypad.
+            .ignoresSafeArea(.keyboard, edges: .bottom)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -130,11 +138,6 @@ struct AddTransactionView: View {
                 }
             }
         }
-        // Custom keypad drives the amount; the only system keyboard is the
-        // note/title field. Disabling keyboard avoidance at the NavigationStack
-        // (the sheet's root, where avoidance is actually applied) keeps the
-        // fixed layout from jumping — the note field sits above the keyboard.
-        .ignoresSafeArea(.keyboard, edges: .bottom)
         .preferredColorScheme(.dark)
         .sheet(isPresented: $showDatePicker) { datePicker }
         .sheet(isPresented: $showAccountPicker) { accountPicker }
