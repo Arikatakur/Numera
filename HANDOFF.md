@@ -24,7 +24,45 @@ are tracked on-device by `PremiumManager`.
 
 ---
 
-## Session — New-entry keyboard fix (real) (2026-07-13, latest)
+## Session — New-entry keyboard: definitive fix + state/format cleanup (2026-07-14, latest)
+
+Branch: `fix/new-entry-keyboard-avoidance`. Changelog: **[Unreleased]**.
+
+The note-keyboard bug was reported *again* with the same screenshots
+(`error-images/new-trans-with-note.png` vs `…-without-note.png`). The earlier
+`ignoresSafeArea(.keyboard)` tweaks never fixed the root cause, which the screenshot makes
+obvious: focusing the note raises the **system keyboard on top of the custom numeric keypad**
+— two keyboards on screen at once — and the stack crushes the layout so `₪0` overlaps the
+"New Entry" title and the Expense/Income/Transfer selector clips away.
+
+**Fixes applied in `Features/AddTransaction/AddTransactionView.swift`:**
+1. **Keyboard (definitive).** Added `@FocusState private var isTitleFocused`, bound it to the
+   note `TextField` (`.focused`), and now **remove the custom keypad while the field is
+   focused** (`if !isTitleFocused { keypad … }`, animated `easeInOut` 0.2s). Only one keyboard
+   is ever visible; it fills the freed keypad slot. Kept `ignoresSafeArea(.keyboard, edges:
+   .bottom)` on the content `ZStack` so the fixed content stays pinned. Added a `.keyboard`
+   toolbar **Done** button and `.submitLabel(.done)` / `.onSubmit` to dismiss the field.
+2. **Category state.** New `selectTransactionType(_:)` replaces the inline `transactionType =
+   type` in the toggle: keeps a still-valid category, else picks the first of the new kind,
+   and clears it for Transfer. Keeps `selectedCategoryId` consistent with the active type.
+3. **Amount formatting.** `init(editing:)` now runs the stored `Decimal` through a new
+   `amountInputString(from:)` (`en_US_POSIX`, up to 2 fraction digits, no grouping) instead of
+   `"\(amount)"`, so edit mode shows clean values (`12`, `12.3`, `12.30`).
+
+Docs synced: `CHANGELOG.md` [Unreleased] (rewrote the keyboard bullet + two new bullets),
+`fastlane/changelog.txt`, and the public changelog in ClientVault-Web
+(`numera-changelog.tsx`).
+
+**Not built locally** — Windows dev box, no Swift/Xcode toolchain; CI is the compiler. Verify
+on the next simulator/TestFlight build: Add Transaction → tap the note → the amount, type
+selector, pills, and note must **not** move; the custom keypad disappears; only the system
+keyboard shows; Done (or return) dismisses it and the keypad returns. Also switch
+Expense↔Income↔Transfer and confirm the highlighted category stays valid, and edit an existing
+transaction to confirm the amount reads cleanly.
+
+---
+
+## Session — New-entry keyboard fix (real) (2026-07-13)
 
 Branch: `feature/activity-chart-outliers`. Changelog: **[Unreleased]**.
 

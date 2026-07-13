@@ -35,14 +35,25 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
   to ~2.4s (quicker glyph fade-in, slide, letter reveal, and settle).
 
 ### Fixed
-- **New-entry keyboard still shoved the fixed layout up (real fix).** Focusing the note
-  field pushed the whole New Entry layout upward — the amount collided with the "New Entry"
-  title and the Expense/Income/Transfer selector scrolled off-screen. The earlier attempt put
-  `ignoresSafeArea(.keyboard, edges: .bottom)` on the `NavigationStack`, but that ignore does
-  **not** cross the NavigationStack boundary, so keyboard avoidance was never actually
-  suppressed. Moved the modifier onto the content `ZStack` *inside* the NavigationStack, so
-  the note field (which already sits above the keyboard) no longer moves the layout — the
-  system keyboard simply overlays the custom keypad.
+- **New-entry keyboard broke the layout (definitive fix — two keyboards fighting).** Focusing
+  the note field ("What was this for?") raised the system keyboard *on top of* the custom
+  numeric keypad, and the two stacked and crushed the layout: the `₪0` amount collided with
+  the "New Entry" title and the Expense/Income/Transfer selector clipped off-screen. Earlier
+  attempts only tuned `ignoresSafeArea(.keyboard, edges: .bottom)`, which never addressed the
+  root cause — two keyboards on screen at once. Now the note field is bound to a `@FocusState`
+  and the custom keypad is **removed** whenever the field is focused (animated), so only one
+  keyboard is ever visible and it fills the vacated keypad slot. The fixed content
+  (amount/header/type toggle/pills/note) stays pinned in place. Added a keyboard **Done** bar
+  button plus a `.done` return key to dismiss the field. (`AddTransactionView.swift`)
+- **Category selection could go stale when switching transaction type.** Toggling
+  Expense/Income/Transfer only changed the displayed fallback while `selectedCategoryId` could
+  still hold the previous kind's category. A new `selectTransactionType(_:)` keeps a still-valid
+  choice, otherwise selects the first category of the new kind, and clears the category for
+  Transfers — so the selection is always consistent with the active type.
+- **Editing an amount could show an ugly `Decimal` string.** When editing an existing
+  transaction, the amount was interpolated straight from `Decimal` (`"\(amount)"`), which could
+  render awkward precision. A dedicated `en_US_POSIX` formatter now produces clean input values
+  (`12`, `12.3`, `12.30`).
 - **Launch logo and wordmark were far apart.** The monogram's glow was a sibling of the mark
   inside the glyph's `ZStack`, so the 180pt glow `Circle` set the glyph cell's layout width —
   pushing the NUMERA wordmark ~90pt to the right of the mark. The glow moved into a
