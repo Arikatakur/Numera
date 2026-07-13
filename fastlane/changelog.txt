@@ -1,10 +1,9 @@
-Numera 0.16 — insights, pricing & polish
+Numera 0.16.3 — Add Transaction & polish fixes
 
-• New: Recurring insights (Numera Pro) — your total recurring spend, a shortcut into the rules manager, and a monthly calendar marking every day a bill or subscription lands.
-• New: Budget insights (Numera Pro) — how much of your monthly budget is left, over a tappable history of recent periods.
-• Subscription prices now always match your App Store country and currency (no more placeholder prices).
-• The account-deletion flow now explains that deleting your account won't cancel an Apple subscription, with a shortcut to manage it first.
-• Faster, tighter launch animation — the Numera mark now sits right beside the NUMERA wordmark instead of drifting far to the right.
-• The full public changelog is now linked from Home › What's new.
+• Fixed: adding a note on the New Entry screen no longer breaks the layout. Tapping "What was this for?" used to raise the keyboard on top of the number pad and shove everything up — the amount overlapped the title and the Expense/Income/Transfer selector disappeared. Now the number pad steps aside for the keyboard, nothing moves, and a Done button dismisses it.
+• Fixed: switching between Expense, Income, and Transfer now always keeps a valid category selected (and clears it for transfers).
+• Fixed: editing an existing transaction now shows a clean amount (e.g. 12.30) instead of an odd long decimal.
+• Fixed: the Activity chart no longer lets one big day (like rent) flatten every other bar — it scales to normal spending and flags the outlier with its exact amount.
+• Fixed: the launch animation is quicker and the Numera mark now sits right beside the NUMERA wordmark.
 
-Please test: open the app and watch the launch animation (logo + wordmark should sit together, and it should feel quick); Insights › scroll to the Recurring and Budget cards (blurred preview for free users, live for Pro — tap the recurring calendar and a budget history bar); the paywall shows real prices for your region; Settings › Delete account shows the subscription notice; and Home › What's new? › "View full changelog" opens the web page.
+Please test: open Add Transaction (+) → tap the note field ("What was this for?") and confirm the amount, type selector, pills, and note do NOT move, the number pad hides, only the system keyboard shows, and Done/return dismisses it (the number pad comes back). Switch Expense/Income/Transfer and confirm the highlighted category stays valid. Edit an existing transaction and confirm the amount reads cleanly. Also check the Activity chart with a large one-off expense present, and watch the launch animation.

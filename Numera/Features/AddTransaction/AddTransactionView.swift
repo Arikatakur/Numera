@@ -22,14 +22,30 @@ struct AddTransactionView: View {
     @State private var recurrence: RecurrenceFrequency?
     @State private var showPaywall = false
 
+    /// True while the note field owns the system keyboard. Used to swap the
+    /// custom numeric keypad out so the two keyboards never fight for space.
+    @FocusState private var isTitleFocused: Bool
+
     init(editing: Transaction? = nil) {
         self.editing = editing
         _transactionType = State(initialValue: editing?.type ?? .expense)
-        _amountString = State(initialValue: editing.map { "\($0.amount)" } ?? "0")
+        _amountString = State(initialValue: editing.map { Self.amountInputString(from: $0.amount) } ?? "0")
         _selectedCategoryId = State(initialValue: editing?.categoryId)
         _selectedAccountId = State(initialValue: editing?.accountId)
         _selectedDate = State(initialValue: editing?.date ?? Date())
         _titleText = State(initialValue: editing?.title ?? "")
+    }
+
+    /// Clean, human-friendly rendering of a stored amount for keypad editing,
+    /// e.g. `12`, `12.3`, `12.30` — never a long `Decimal` description.
+    private static func amountInputString(from amount: Decimal) -> String {
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 0
+        formatter.maximumFractionDigits = 2
+        formatter.usesGroupingSeparator = false
+        return formatter.string(from: amount as NSDecimalNumber) ?? "\(amount)"
     }
 
     // MARK: - Derived
@@ -100,16 +116,22 @@ struct AddTransactionView: View {
 
                     Spacer(minLength: AppSpacing.sm)
 
-                    keypad
+                    // Only one keyboard at a time: the custom numeric keypad
+                    // drives the amount, but the moment the note field takes the
+                    // system keyboard we tear the keypad down so they can't stack
+                    // and crush the layout. The keypad's slot is freed for the
+                    // system keyboard to occupy.
+                    if !isTitleFocused {
+                        keypad
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
+                .animation(.easeInOut(duration: 0.2), value: isTitleFocused)
             }
-            // The amount is driven by the custom keypad; the note field is the
-            // only control that raises the system keyboard, and it already sits
-            // above where the keyboard lands. Ignore the keyboard's safe area on
-            // the content *inside* the NavigationStack (applying it to the stack
-            // itself has no effect — the ignore doesn't cross that boundary), so
-            // focusing the note never shifts the fixed layout; the keyboard just
-            // overlays the keypad.
+            // Pin the layout: the fixed content above never shifts when the
+            // system keyboard appears. Combined with hiding the keypad above,
+            // focusing the note leaves the amount/header/type toggle exactly
+            // where they were — the keyboard simply fills the vacated keypad slot.
             .ignoresSafeArea(.keyboard, edges: .bottom)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -135,6 +157,12 @@ struct AddTransactionView: View {
                             .foregroundColor(amount > 0 ? AppColors.accent : AppColors.textTertiary)
                             .disabled(amount <= 0)
                     }
+                }
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { isTitleFocused = false }
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(AppColors.accent)
                 }
             }
         }
@@ -203,12 +231,32 @@ struct AddTransactionView: View {
 
     // MARK: - Type Toggle
 
+    /// Switch type and keep the category selection valid for the new kind:
+    /// keep a still-valid choice, otherwise fall back to the first category of
+    /// that kind (or clear it for transfers, which have no category).
+    private func selectTransactionType(_ type: TransactionType) {
+        transactionType = type
+
+        switch type {
+        case .expense, .income:
+            let kind: CategoryKind = type == .expense ? .expense : .income
+            let categories = store.categories(of: kind)
+            if let selectedCategoryId, categories.contains(where: { $0.id == selectedCategoryId }) {
+                return
+            }
+            selectedCategoryId = categories.first?.id
+
+        case .transfer:
+            selectedCategoryId = nil
+        }
+    }
+
     private var typeToggle: some View {
         HStack(spacing: 0) {
             ForEach(TransactionType.allCases, id: \.self) { type in
                 Button {
                     Haptics.select()
-                    withAnimation(.easeInOut(duration: 0.2)) { transactionType = type }
+                    withAnimation(.easeInOut(duration: 0.2)) { selectTransactionType(type) }
                 } label: {
                     Text(type.label.uppercased())
                         .font(.system(size: 13, weight: .bold, design: .rounded))
@@ -325,6 +373,9 @@ struct AddTransactionView: View {
                 .font(.system(size: 15, design: .rounded))
                 .foregroundColor(AppColors.textPrimary)
                 .tint(AppColors.accent)
+                .focused($isTitleFocused)
+                .submitLabel(.done)
+                .onSubmit { isTitleFocused = false }
         }
         .padding(.horizontal, AppSpacing.base)
         .padding(.vertical, 14)
