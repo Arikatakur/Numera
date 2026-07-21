@@ -25,6 +25,9 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
   adds four recurring rules for the Pro Recurring insight. Wipes and reseeds only
   the demo user — every other account is untouched. Pro entitlement is **not**
   seeded (StoreKit-only, on-device — App Review unlocks Pro via the sandbox).
+- **`README.md`** — a public-facing project overview: features, architecture, data model,
+  getting-started/build steps, privacy notes, and a documentation index, with the Numera
+  brand and product mockups as hero art.
 
 ### Changed
 - **What's New sheet refreshed for 0.16.** The Home "What's new?" highlights now lead with
@@ -33,6 +36,9 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
   (`fastlane/changelog.txt`) rewritten to match.
 - **Faster launch animation.** The `LaunchAnimationView` sequence is compressed from ~4.6s
   to ~2.4s (quicker glyph fade-in, slide, letter reveal, and settle).
+- **`.gitignore`** now excludes personal scratch notes (`notes.txt`/`notes.md`) and the
+  local-only design reference folders `quanto-app/`, `design/`, and `v1-design/` (keeping
+  `design/luminous_ledger/DESIGN.md`, the design-token source of truth).
 
 ### Fixed
 - **New-entry keyboard broke the layout (definitive fix — two keyboards fighting).** Focusing
@@ -69,6 +75,14 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
   (no log/broken axis, no silent cap). With no outlier present the axis is unchanged. The
   approach follows data-viz guidance: scale to the chart's job (comparing normal days) and
   label the outlier rather than distort the scale.
+
+### Removed
+- Untracked `quanto-app/` (competitor reference screenshots), `design/` (Stitch HTML/PNG
+  prototypes), and `v1-design/` (early image mocks) from Git — the files stay on disk for
+  local reference but are no longer published to GitHub.
+- Deleted redundant loose `icon-*.png` duplicates under
+  `design-assets/design_handoff_app_icon_launch/app-icons/`; the two valid `.appiconset`
+  bundles (and `numera-mark.png`, README) are retained.
 
 ---
 
