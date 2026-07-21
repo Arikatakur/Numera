@@ -70,6 +70,18 @@ tmp/
 temp/
 .cache/
 
+# Scratch / personal notes
+notes.txt
+notes.md
+
+# Design references & history — kept locally, not published to GitHub.
+# Exception: DESIGN.md is the design-token source of truth and stays tracked.
+/quanto-app/
+/design/
+!/design/luminous_ledger/
+!/design/luminous_ledger/DESIGN.md
+/v1-design/
+
 # Other
 qunato-app/*
 v1-design/*
