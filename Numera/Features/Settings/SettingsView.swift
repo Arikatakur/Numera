@@ -57,11 +57,9 @@ struct SettingsView: View {
                             }
                             SettingsDivider()
                             Button {
-                                if premium.isPremium {
-                                    showManageSubscriptions = true
-                                } else {
-                                    showPaywall = true
-                                }
+                                // Opens the paywall for everyone; it shows manage /
+                                // upgrade / downgrade states for current subscribers.
+                                showPaywall = true
                             } label: {
                                 SettingsRow(icon: "star.circle", title: "Subscription") {
                                     SettingsValueChevron(value: premium.isPremium ? "Pro" : "Free")

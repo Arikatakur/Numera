@@ -153,13 +153,10 @@ struct InsightsView: View {
     // MARK: - Summary donut
 
     private var donutSegments: [DonutSegment] {
-        let top = totals.prefix(5)
-        var segments = top.map { DonutSegment(color: Color(hex: $0.category.colorHex), fraction: $0.share) }
-        let remainder = totals.dropFirst(5).reduce(0.0) { $0 + $1.share }
-        if remainder > 0.01 {
-            segments.append(DonutSegment(color: AppColors.textTertiary.opacity(0.5), fraction: remainder))
-        }
-        return segments
+        // One colored slice per category, using its own picked color — no top-5
+        // cap or pooled "Other" slice. Selection is driven by the list, so small
+        // slices don't need to be individually tappable on the ring.
+        totals.map { DonutSegment(color: Color(hex: $0.category.colorHex), fraction: $0.share) }
     }
 
     private var summaryDonutCard: some View {
@@ -174,7 +171,8 @@ struct InsightsView: View {
                             lineWidth: 18,
                             selectedIndex: selectedSegment,
                             onSelectSegment: { index in
-                                withAnimation(.snappy(duration: 0.2)) { selectedRow = index.flatMap(firstRow(forSegment:)) }
+                                // Each slice maps 1:1 to a category row now.
+                                withAnimation(.snappy(duration: 0.2)) { selectedRow = index }
                             }
                         )
                     }
@@ -280,28 +278,12 @@ struct InsightsView: View {
 
     // MARK: - Category breakdown
 
-    /// Donut segment highlighted for the current selection, derived from the
-    /// selected row. Read-only — `selectedRow` is the source of truth.
+    /// Donut segment highlighted for the current selection. Each category maps
+    /// 1:1 to its own slice, so the highlighted segment is just the selected
+    /// row. Read-only — `selectedRow` is the source of truth.
     private var selectedSegment: Int? {
-        selectedRow.flatMap(segmentIndex(forRow:))
-    }
-
-    /// The donut segment a breakdown row maps to: its own index within the
-    /// top-5, or the pooled "Other" segment for anything beyond. Small slices
-    /// are impossible to tap on the ring, so the list is the reliable selector.
-    private func segmentIndex(forRow row: Int) -> Int? {
-        let topCount = min(totals.count, 5)
-        if row < topCount { return row }
-        return donutSegments.count > topCount ? topCount : nil
-    }
-
-    /// Inverse of `segmentIndex`: a representative row for a tapped donut
-    /// segment. Top-5 slices map to their own row; the pooled "Other" slice
-    /// maps to the first row beyond the top-5.
-    private func firstRow(forSegment segment: Int) -> Int? {
-        let topCount = min(totals.count, 5)
-        if segment < topCount { return segment }
-        return totals.count > topCount ? topCount : nil
+        guard let row = selectedRow, row < donutSegments.count else { return nil }
+        return row
     }
 
     private func toggleRow(_ row: Int) {
