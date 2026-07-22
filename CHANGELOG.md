@@ -29,6 +29,28 @@ Repo & documentation maintenance (not tied to an app build).
 
 ---
 
+## [0.16.5] — 2026-07-23
+
+### Changed
+- **Settings screen reorganized for faster scanning.** Consolidated nine section groups into
+  six, grouped by a clearer mental model and with consistent ordering:
+  - **Your money** — Categories, Accounts, Recurring transactions, Subscription (folds in the
+    former single-item "Automations" group).
+  - **Preferences** — Currency, Month start day, First day of week, Reminder, Display cents,
+    Haptics (calendar-related rows now sit together).
+  - **Privacy** — Hide balances.
+  - **Data** — Export / Import CSV.
+  - **Support & about** — merges the old "Support & feedback", "Other", and "Legal" groups
+    (Rate, Feedback & roadmap, Support, Privacy policy, Terms of use, Follow on IG).
+  - **Account** — Erase data, Sign out, Delete account, all destructive actions grouped at the
+    very bottom (the standard iOS pattern).
+  No rows lost their destination. Removed duplicated content (the standalone "Version" row — the
+  app version still shows in the footer) and collapsed the four forum shortcut rows into a single
+  "Feedback & roadmap" entry. Dropped the now-unused `AppInfo.forumComposeURL`.
+  (`SettingsView.swift`, `AppInfo.swift`)
+
+---
+
 ## [0.16.4] — 2026-07-23
 
 ### Added

@@ -1,8 +1,8 @@
 import SwiftUI
 import UIKit
 
-/// Settings hub — Quanto structure (General / Preferences / Privacy / Data /
-/// About) rendered with Numera's card language.
+/// Settings hub — grouped into Your money / Preferences / Privacy / Data /
+/// Support & about / Account, rendered with Numera's card language.
 struct SettingsView: View {
     @Environment(AuthManager.self) private var authManager
     @Environment(DataStore.self) private var store
@@ -38,7 +38,7 @@ struct SettingsView: View {
                             proBanner
                         }
 
-                        SettingsSectionHeader(title: "General")
+                        SettingsSectionHeader(title: "Your money")
                         SettingsCard {
                             NavigationLink {
                                 CategoriesView().hidesTabBar()
@@ -56,19 +56,6 @@ struct SettingsView: View {
                                 }
                             }
                             SettingsDivider()
-                            Button {
-                                // Opens the paywall for everyone; it shows manage /
-                                // upgrade / downgrade states for current subscribers.
-                                showPaywall = true
-                            } label: {
-                                SettingsRow(icon: "star.circle", title: "Subscription") {
-                                    SettingsValueChevron(value: premium.isPremium ? "Pro" : "Free")
-                                }
-                            }
-                        }
-
-                        SettingsSectionHeader(title: "Automations")
-                        SettingsCard {
                             if premium.isPremium {
                                 NavigationLink {
                                     RecurringView().hidesTabBar()
@@ -86,6 +73,16 @@ struct SettingsView: View {
                                     }
                                 }
                             }
+                            SettingsDivider()
+                            Button {
+                                // Opens the paywall for everyone; it shows manage /
+                                // upgrade / downgrade states for current subscribers.
+                                showPaywall = true
+                            } label: {
+                                SettingsRow(icon: "star.circle", title: "Subscription") {
+                                    SettingsValueChevron(value: premium.isPremium ? "Pro" : "Free")
+                                }
+                            }
                         }
 
                         SettingsSectionHeader(title: "Preferences")
@@ -95,14 +92,6 @@ struct SettingsView: View {
                             } label: {
                                 SettingsRow(icon: "dollarsign.circle", title: "Currency") {
                                     SettingsValueChevron(value: settings.currencyCode)
-                                }
-                            }
-                            SettingsDivider()
-                            NavigationLink {
-                                ReminderView().hidesTabBar()
-                            } label: {
-                                SettingsRow(icon: "bell", title: "Reminder") {
-                                    SettingsValueChevron(value: settings.reminderFrequency.label)
                                 }
                             }
                             SettingsDivider()
@@ -123,6 +112,14 @@ struct SettingsView: View {
                                 }
                             }
                             SettingsDivider()
+                            NavigationLink {
+                                ReminderView().hidesTabBar()
+                            } label: {
+                                SettingsRow(icon: "bell", title: "Reminder") {
+                                    SettingsValueChevron(value: settings.reminderFrequency.label)
+                                }
+                            }
+                            SettingsDivider()
                             SettingsRow(icon: "centsign.circle", title: "Display cents") {
                                 Toggle("", isOn: $settings.displayCents)
                                     .labelsHidden()
@@ -136,7 +133,7 @@ struct SettingsView: View {
                             }
                         }
 
-                        SettingsSectionHeader(title: "Privacy & security")
+                        SettingsSectionHeader(title: "Privacy")
                         SettingsCard {
                             SettingsRow(icon: "eye.slash", title: "Hide balances") {
                                 Toggle("", isOn: $settings.isPrivate)
@@ -170,36 +167,9 @@ struct SettingsView: View {
                                     SettingsValueChevron()
                                 }
                             }
-                            SettingsDivider()
-                            Button {
-                                showEraseConfirm = true
-                            } label: {
-                                SettingsRow(icon: "trash", title: "Erase data", iconTint: AppColors.danger, titleColor: AppColors.danger)
-                            }
                         }
 
-                        SettingsSectionHeader(title: "About")
-                        SettingsCard {
-                            SettingsRow(icon: "info.circle", title: "Version") {
-                                Text(versionText)
-                                    .font(.system(size: 15, design: .rounded))
-                                    .foregroundColor(AppColors.textSecondary)
-                            }
-                            SettingsDivider()
-                            Button {
-                                showSignOutConfirm = true
-                            } label: {
-                                SettingsRow(icon: "rectangle.portrait.and.arrow.right", title: "Sign out", iconTint: AppColors.danger, titleColor: AppColors.danger)
-                            }
-                            SettingsDivider()
-                            Button {
-                                showDeleteAccountConfirm = true
-                            } label: {
-                                SettingsRow(icon: "person.crop.circle.badge.xmark", title: "Delete account", iconTint: AppColors.danger, titleColor: AppColors.danger)
-                            }
-                        }
-
-                        SettingsSectionHeader(title: "Support & feedback")
+                        SettingsSectionHeader(title: "Support & about")
                         SettingsCard {
                             Button {
                                 Haptics.tap()
@@ -221,15 +191,12 @@ struct SettingsView: View {
                                 }
                             }
                             SettingsDivider()
-                            forumRow("hand.thumbsup", "Help us improve", type: "improvement")
+                            settingsLink("questionmark.circle", "Support", "https://clientvault.org/numera/support")
                             SettingsDivider()
-                            forumRow("ladybug", "Report a bug", type: "bug")
+                            settingsLink("hand.raised", "Privacy policy", "https://clientvault.org/numera/privacy")
                             SettingsDivider()
-                            forumRow("lightbulb", "Feature request", type: "feature")
-                        }
-
-                        SettingsSectionHeader(title: "Other")
-                        SettingsCard {
+                            settingsLink("doc.text", "Terms of use", "https://clientvault.org/numera/terms")
+                            SettingsDivider()
                             Button {
                                 Haptics.tap()
                                 openInstagram()
@@ -242,13 +209,25 @@ struct SettingsView: View {
                             }
                         }
 
-                        SettingsSectionHeader(title: "Legal")
+                        SettingsSectionHeader(title: "Account")
                         SettingsCard {
-                            settingsLink("hand.raised", "Privacy policy", "https://clientvault.org/numera/privacy")
+                            Button {
+                                showEraseConfirm = true
+                            } label: {
+                                SettingsRow(icon: "trash", title: "Erase data", iconTint: AppColors.danger, titleColor: AppColors.danger)
+                            }
                             SettingsDivider()
-                            settingsLink("doc.text", "Terms of use", "https://clientvault.org/numera/terms")
+                            Button {
+                                showSignOutConfirm = true
+                            } label: {
+                                SettingsRow(icon: "rectangle.portrait.and.arrow.right", title: "Sign out", iconTint: AppColors.danger, titleColor: AppColors.danger)
+                            }
                             SettingsDivider()
-                            settingsLink("questionmark.circle", "Support", "https://clientvault.org/numera/support")
+                            Button {
+                                showDeleteAccountConfirm = true
+                            } label: {
+                                SettingsRow(icon: "person.crop.circle.badge.xmark", title: "Delete account", iconTint: AppColors.danger, titleColor: AppColors.danger)
+                            }
                         }
 
                         VStack(spacing: 4) {
@@ -329,19 +308,6 @@ struct SettingsView: View {
         }
     }
 
-    private func forumRow(_ icon: String, _ title: String, type: String) -> some View {
-        Button {
-            Haptics.tap()
-            openURL(AppInfo.forumComposeURL(type: type))
-        } label: {
-            SettingsRow(icon: icon, title: title) {
-                Image(systemName: "arrow.up.right")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundColor(AppColors.textTertiary)
-            }
-        }
-    }
-
     /// Opens the creator's Instagram: the app when installed, otherwise the web
     /// profile. Uses `canOpenURL` to decide up front — the old completion-based
     /// fallback opened the web URL when the user cancelled the system
@@ -419,12 +385,6 @@ struct SettingsView: View {
 
     private var initials: String {
         String((authManager.currentUserEmail ?? "N").prefix(1).uppercased())
-    }
-
-    private var versionText: String {
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
-        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
-        return "\(version) (\(build))"
     }
 
     private func ordinal(_ n: Int) -> String {

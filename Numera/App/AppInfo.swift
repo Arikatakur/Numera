@@ -15,12 +15,6 @@ enum AppInfo {
 
     static let forumURL = URL(string: "https://clientvault.org/numera/feedback")!
 
-    /// Opens the forum with the composer pre-set to a post type
-    /// (`feature` / `bug` / `improvement`).
-    static func forumComposeURL(type: String) -> URL {
-        URL(string: "https://clientvault.org/numera/feedback?new=\(type)")!
-    }
-
     /// Public, user-facing changelog hosted on the ClientVault site.
     /// Linked from the in-app "What's New" sheet.
     static let changelogURL = URL(string: "https://clientvault.org/numera/changelog")!
