@@ -7,6 +7,60 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 
 ## [Unreleased]
 
+Repo & documentation maintenance (not tied to an app build).
+
+### Added
+- **`README.md`** — a public-facing project overview: features, architecture, data model,
+  getting-started/build steps, privacy notes, and a documentation index, with the Numera
+  brand and product mockups as hero art.
+
+### Changed
+- **`.gitignore`** now excludes personal scratch notes (`notes.txt`/`notes.md`) and the
+  local-only design reference folders `quanto-app/`, `design/`, and `v1-design/` (keeping
+  `design/luminous_ledger/DESIGN.md`, the design-token source of truth).
+
+### Removed
+- Untracked `quanto-app/` (competitor reference screenshots), `design/` (Stitch HTML/PNG
+  prototypes), and `v1-design/` (early image mocks) from Git — the files stay on disk for
+  local reference but are no longer published to GitHub.
+- Deleted redundant loose `icon-*.png` duplicates under
+  `design-assets/design_handoff_app_icon_launch/app-icons/`; the two valid `.appiconset`
+  bundles (and `numera-mark.png`, README) are retained.
+
+---
+
+## [0.16.4] — 2026-07-23
+
+### Added
+- **Manage, upgrade, or downgrade from the paywall (#20).** Subscribers can now open the
+  subscription page instead of being sent straight to the system manage sheet. The plan they
+  own is marked **Current**, and the primary button adapts to the selected plan: **Manage
+  Subscription** for the current plan, **Upgrade Subscription** for a higher tier, and
+  **Downgrade Subscription** for a lower one (lifetime owners see the subscription tiers as
+  already included). `PremiumManager` now tracks `activeProduct` (lifetime takes precedence
+  over a subscription), and Settings → Subscription opens the paywall for everyone.
+  (`PremiumManager.swift`, `PaywallView.swift`, `SettingsView.swift`)
+
+### Changed
+- **Email verification lands on a welcome page instead of `localhost` (#19).** New sign-ups'
+  confirmation email now redirects to `clientvault.org/numera/welcome` ("You're verified")
+  rather than the default localhost page. `AuthManager.signUp` passes `redirectTo`
+  (`AppInfo.verifyRedirectURL`); the page lives in the ClientVault-Web repo. Requires the URL
+  to be added to the Supabase project's allowed Redirect URLs (Auth → URL Configuration).
+
+### Fixed
+- **Insights donut now colors every category, not just the top 5.** The spending donut capped
+  at the top 5 categories and merged the rest into a single gray "Other" slice — so selecting a
+  category below the 5th highlighted the gray pooled slice instead of that category's own color
+  (only the center emoji/amount were right). The donut now draws one slice per category in its
+  picked color, matching the breakdown list beneath it. Selection stays list-driven, so small
+  slices don't need to be tappable on the ring. Removed the now-obsolete top-5/`Other` segment
+  mapping in `InsightsView`. (`InsightsView.swift`)
+
+---
+
+## [0.16.3] — 2026-07-14
+
 ### Added
 - **Public changelog page** at `clientvault.org/numera/changelog` (in the ClientVault-Web
   repo, `artifacts/client-vault/src/pages/numera-changelog.tsx`) — a reader-friendly,
@@ -25,17 +79,6 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
   adds four recurring rules for the Pro Recurring insight. Wipes and reseeds only
   the demo user — every other account is untouched. Pro entitlement is **not**
   seeded (StoreKit-only, on-device — App Review unlocks Pro via the sandbox).
-- **`README.md`** — a public-facing project overview: features, architecture, data model,
-  getting-started/build steps, privacy notes, and a documentation index, with the Numera
-  brand and product mockups as hero art.
-- **Manage, upgrade, or downgrade from the paywall (#20).** Subscribers can now open the
-  subscription page instead of being sent straight to the system manage sheet. The plan they
-  own is marked **Current**, and the primary button adapts to the selected plan: **Manage
-  Subscription** for the current plan, **Upgrade Subscription** for a higher tier, and
-  **Downgrade Subscription** for a lower one (lifetime owners see the subscription tiers as
-  already included). `PremiumManager` now tracks `activeProduct` (lifetime takes precedence
-  over a subscription), and Settings → Subscription opens the paywall for everyone.
-  (`PremiumManager.swift`, `PaywallView.swift`, `SettingsView.swift`)
 
 ### Changed
 - **What's New sheet refreshed for 0.16.** The Home "What's new?" highlights now lead with
@@ -44,14 +87,6 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
   (`fastlane/changelog.txt`) rewritten to match.
 - **Faster launch animation.** The `LaunchAnimationView` sequence is compressed from ~4.6s
   to ~2.4s (quicker glyph fade-in, slide, letter reveal, and settle).
-- **`.gitignore`** now excludes personal scratch notes (`notes.txt`/`notes.md`) and the
-  local-only design reference folders `quanto-app/`, `design/`, and `v1-design/` (keeping
-  `design/luminous_ledger/DESIGN.md`, the design-token source of truth).
-- **Email verification lands on a welcome page instead of `localhost` (#19).** New sign-ups'
-  confirmation email now redirects to `clientvault.org/numera/welcome` ("You're verified")
-  rather than the default localhost page. `AuthManager.signUp` passes `redirectTo`
-  (`AppInfo.verifyRedirectURL`); the page lives in the ClientVault-Web repo. Requires the URL
-  to be added to the Supabase project's allowed Redirect URLs (Auth → URL Configuration).
 
 ### Fixed
 - **New-entry keyboard broke the layout (definitive fix — two keyboards fighting).** Focusing
@@ -88,21 +123,6 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
   (no log/broken axis, no silent cap). With no outlier present the axis is unchanged. The
   approach follows data-viz guidance: scale to the chart's job (comparing normal days) and
   label the outlier rather than distort the scale.
-- **Insights donut now colors every category, not just the top 5.** The spending donut capped
-  at the top 5 categories and merged the rest into a single gray "Other" slice — so selecting a
-  category below the 5th highlighted the gray pooled slice instead of that category's own color
-  (only the center emoji/amount were right). The donut now draws one slice per category in its
-  picked color, matching the breakdown list beneath it. Selection stays list-driven, so small
-  slices don't need to be tappable on the ring. Removed the now-obsolete top-5/`Other` segment
-  mapping in `InsightsView`. (`InsightsView.swift`)
-
-### Removed
-- Untracked `quanto-app/` (competitor reference screenshots), `design/` (Stitch HTML/PNG
-  prototypes), and `v1-design/` (early image mocks) from Git — the files stay on disk for
-  local reference but are no longer published to GitHub.
-- Deleted redundant loose `icon-*.png` duplicates under
-  `design-assets/design_handoff_app_icon_launch/app-icons/`; the two valid `.appiconset`
-  bundles (and `numera-mark.png`, README) are retained.
 
 ---
 
