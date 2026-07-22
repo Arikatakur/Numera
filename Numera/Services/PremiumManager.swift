@@ -8,6 +8,15 @@ enum PremiumProduct: String, CaseIterable {
     case monthly  = "org.clientvault.numera.pro.monthly.v2"
     case yearly   = "org.clientvault.numera.pro.yearly.v2"
     case lifetime = "org.clientvault.numera.pro.lifetime"
+
+    /// Tier order for upgrade/downgrade comparison: monthly < yearly < lifetime.
+    var rank: Int {
+        switch self {
+        case .monthly:  return 0
+        case .yearly:   return 1
+        case .lifetime: return 2
+        }
+    }
 }
 
 /// StoreKit 2 subscription state. Entitlements are the on-device source of
@@ -17,6 +26,10 @@ enum PremiumProduct: String, CaseIterable {
 final class PremiumManager {
     /// True when any Numera Pro entitlement (subscription or lifetime) is active.
     private(set) var isPremium = false
+    /// The plan the user currently owns, if any. Lifetime takes precedence when
+    /// (unusually) both a subscription and lifetime are active. Drives the
+    /// paywall's manage / upgrade / downgrade states.
+    private(set) var activeProduct: PremiumProduct?
     /// Loaded products in fixed order: monthly, yearly, lifetime.
     private(set) var products: [Product] = []
     /// True once the product request finished (even if it returned nothing —
@@ -28,9 +41,10 @@ final class PremiumManager {
     @ObservationIgnored private var updatesTask: Task<Void, Never>?
 
     /// For previews and locked-state UI work.
-    static func preview(isPremium: Bool = false) -> PremiumManager {
+    static func preview(isPremium: Bool = false, active: PremiumProduct? = nil) -> PremiumManager {
         let manager = PremiumManager()
         manager.isPremium = isPremium
+        manager.activeProduct = active ?? (isPremium ? .yearly : nil)
         manager.hasLoadedProducts = true
         return manager
     }
@@ -72,15 +86,18 @@ final class PremiumManager {
     }
 
     func refreshEntitlements() async {
-        var premium = false
+        var active: PremiumProduct?
         for await entitlement in StoreKit.Transaction.currentEntitlements {
-            guard case .verified(let transaction) = entitlement else { continue }
-            if transaction.revocationDate == nil,
-               PremiumProduct(rawValue: transaction.productID) != nil {
-                premium = true
+            guard case .verified(let transaction) = entitlement,
+                  transaction.revocationDate == nil,
+                  let product = PremiumProduct(rawValue: transaction.productID) else { continue }
+            // Lifetime always wins; otherwise take the active subscription.
+            if product == .lifetime || active == nil {
+                active = product
             }
         }
-        isPremium = premium
+        activeProduct = active
+        isPremium = active != nil
     }
 
     // MARK: - Purchasing

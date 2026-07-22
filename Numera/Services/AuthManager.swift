@@ -81,7 +81,13 @@ final class AuthManager {
     }
 
     func signUp(email: String, password: String) async throws {
-        try await SupabaseManager.shared.client.auth.signUp(email: email, password: password)
+        // `redirectTo` sends the email-confirmation link to a friendly web
+        // "account verified" page instead of the default localhost URL.
+        try await SupabaseManager.shared.client.auth.signUp(
+            email: email,
+            password: password,
+            redirectTo: AppInfo.verifyRedirectURL
+        )
     }
 
     func signInWithApple(idToken: String, nonce: String) async throws {

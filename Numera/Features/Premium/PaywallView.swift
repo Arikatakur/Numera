@@ -9,6 +9,7 @@ struct PaywallView: View {
 
     @State private var selected: PremiumProduct = .yearly
     @State private var trialEligible = false
+    @State private var showManageSubscriptions = false
 
     private let termsURL = URL(string: "https://clientvault.org/numera/terms")!
     private let privacyURL = URL(string: "https://clientvault.org/numera/privacy")!
@@ -67,6 +68,11 @@ struct PaywallView: View {
         .task(id: premium.products.count) {
             trialEligible = await premium.yearlyProduct?.subscription?.isEligibleForIntroOffer ?? false
         }
+        .onAppear {
+            // Subscribers land on their current plan (so its CTA reads "Manage").
+            if let active = premium.activeProduct { selected = active }
+        }
+        .manageSubscriptionsSheet(isPresented: $showManageSubscriptions)
         .alert(
             "Purchase",
             isPresented: Binding(
@@ -82,6 +88,17 @@ struct PaywallView: View {
 
     // MARK: - Header
 
+    private var headerTitle: String {
+        if premium.isPremium { return "Numera Pro" }
+        return trialAvailable ? "Try Numera Pro for Free" : "Numera Pro"
+    }
+
+    private var headerSubtitle: String {
+        premium.isPremium
+            ? "You're a Pro member. Change or manage your plan below."
+            : "Unlock all features with zero commitment."
+    }
+
     private var header: some View {
         VStack(alignment: .leading, spacing: AppSpacing.md) {
             ZStack {
@@ -93,11 +110,11 @@ struct PaywallView: View {
                     .foregroundColor(AppColors.accent)
             }
 
-            Text(trialAvailable ? "Try Numera Pro for Free" : "Numera Pro")
+            Text(headerTitle)
                 .font(.system(size: 30, weight: .bold, design: .rounded))
                 .foregroundColor(AppColors.textPrimary)
 
-            Text("Unlock all features with zero commitment.")
+            Text(headerSubtitle)
                 .font(.system(size: 15, design: .rounded))
                 .foregroundColor(AppColors.textSecondary)
         }
@@ -182,14 +199,10 @@ struct PaywallView: View {
                     .stroke(isSelected ? AppColors.accent : AppColors.borderGlass, lineWidth: isSelected ? 1.5 : 1)
             )
             .overlay(alignment: .top) {
-                if spec.product == .yearly, let savings = premium.yearlySavingsPercent {
-                    Text("Save \(savings)%")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                        .foregroundColor(.black)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(AppColors.accent))
-                        .offset(y: -11)
+                if spec.product == premium.activeProduct {
+                    topBadge("Current")
+                } else if spec.product == .yearly, let savings = premium.yearlySavingsPercent {
+                    topBadge("Save \(savings)%")
                 }
             }
             // Select on a tap anywhere in the card, not just the centered text.
@@ -198,13 +211,58 @@ struct PaywallView: View {
         .buttonStyle(.plain)
     }
 
+    private func topBadge(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 11, weight: .bold, design: .rounded))
+            .foregroundColor(.black)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(Capsule().fill(AppColors.accent))
+            .offset(y: -11)
+    }
+
     // MARK: - CTA + footnote
 
     private var trialAvailable: Bool {
         trialEligible && premium.yearlyProduct?.subscription?.introductoryOffer != nil
     }
 
+    /// What the primary button does for the selected plan, relative to the
+    /// plan the user already owns.
+    private enum CTAKind { case buy, upgrade, downgrade, manage, purchased, ownedLifetime }
+
+    private var ctaKind: CTAKind {
+        guard let active = premium.activeProduct else { return .buy }
+        if selected == active {
+            return active == .lifetime ? .purchased : .manage
+        }
+        // Lifetime owners already have everything — no paid downgrade to a sub.
+        if active == .lifetime { return .ownedLifetime }
+        return selected.rank > active.rank ? .upgrade : .downgrade
+    }
+
+    private var ctaTitle: String {
+        switch ctaKind {
+        case .buy:           return selected == .yearly && trialAvailable ? "Start my 14 day free trial" : "Unlock Numera Pro"
+        case .upgrade:       return "Upgrade Subscription"
+        case .downgrade:     return "Downgrade Subscription"
+        case .manage:        return "Manage Subscription"
+        case .purchased:     return "Purchased"
+        case .ownedLifetime: return "Included in Lifetime"
+        }
+    }
+
     private var footnoteText: String {
+        if premium.isPremium {
+            switch ctaKind {
+            case .manage:        return "You're on this plan. Manage or cancel anytime in the App Store."
+            case .purchased:     return "You own Numera Pro Lifetime. Thank you for your support 🫶"
+            case .ownedLifetime: return "Included in your Lifetime purchase — you already have everything."
+            case .upgrade:       return "Switch to this plan — the App Store prorates the change."
+            case .downgrade:     return "Switch to this plan — it takes effect at your next renewal."
+            case .buy:           break
+            }
+        }
         if selected == .lifetime {
             return "One-time payment. Yours forever."
         }
@@ -226,7 +284,7 @@ struct PaywallView: View {
 
     @ViewBuilder
     private var ctaButton: some View {
-        if premium.hasLoadedProducts && premium.products.isEmpty {
+        if !premium.isPremium && premium.hasLoadedProducts && premium.products.isEmpty {
             VStack(spacing: AppSpacing.sm) {
                 UnlockGradientButton(title: "Purchases unavailable", icon: nil)
                     .opacity(0.4)
@@ -244,12 +302,24 @@ struct PaywallView: View {
             }
             .padding(.vertical, 16)
         } else {
-            UnlockGradientButton(
-                title: selected == .yearly && trialAvailable ? "Start my 14 day free trial" : "Unlock Numera Pro",
-                icon: nil
-            ) {
-                buy()
+            let kind = ctaKind
+            let isDisabled = kind == .purchased || kind == .ownedLifetime
+            UnlockGradientButton(title: ctaTitle, icon: nil) {
+                handleCTA(kind)
             }
+            .opacity(isDisabled ? 0.4 : 1)
+            .disabled(isDisabled)
+        }
+    }
+
+    private func handleCTA(_ kind: CTAKind) {
+        switch kind {
+        case .buy, .upgrade, .downgrade:
+            buy()
+        case .manage:
+            showManageSubscriptions = true
+        case .purchased, .ownedLifetime:
+            break
         }
     }
 

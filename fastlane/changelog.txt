@@ -1,9 +1,10 @@
-Numera 0.16.3 — Add Transaction & polish fixes
+Numera 0.16.4 — Subscriptions & Insights polish
 
-• Fixed: adding a note on the New Entry screen no longer breaks the layout. Tapping "What was this for?" used to raise the keyboard on top of the number pad and shove everything up — the amount overlapped the title and the Expense/Income/Transfer selector disappeared. Now the number pad steps aside for the keyboard, nothing moves, and a Done button dismisses it.
-• Fixed: switching between Expense, Income, and Transfer now always keeps a valid category selected (and clears it for transfers).
-• Fixed: editing an existing transaction now shows a clean amount (e.g. 12.30) instead of an odd long decimal.
-• Fixed: the Activity chart no longer lets one big day (like rent) flatten every other bar — it scales to normal spending and flags the outlier with its exact amount.
-• Fixed: the launch animation is quicker and the Numera mark now sits right beside the NUMERA wordmark.
+• New: manage your plan right from the subscription page. Your current plan is marked "Current", and you can Upgrade, Downgrade, or Manage/cancel without leaving the app — subscribers no longer get bounced straight to the system sheet.
+• Fixed: the Insights spending donut now shows every category in its own color (matching the list below it), instead of merging everything past the top 5 into one gray slice.
+• Improved: after confirming your email on a new account, you now land on a friendly "You're verified" page instead of a blank localhost page.
 
-Please test: open Add Transaction (+) → tap the note field ("What was this for?") and confirm the amount, type selector, pills, and note do NOT move, the number pad hides, only the system keyboard shows, and Done/return dismisses it (the number pad comes back). Switch Expense/Income/Transfer and confirm the highlighted category stays valid. Edit an existing transaction and confirm the amount reads cleanly. Also check the Activity chart with a large one-off expense present, and watch the launch animation.
+Please test:
+1) While subscribed, open Settings → Subscription: your plan shows "Current", and the button reads Manage / Upgrade / Downgrade as you tap each plan. Tap Manage and confirm the system subscription sheet opens.
+2) In Insights, tap categories below the 5th in the breakdown list and confirm the donut highlights that exact category's own color (not a gray "Other" slice).
+3) Create a brand-new account and tap the email verification link — confirm it opens the Numera "You're verified" welcome page.

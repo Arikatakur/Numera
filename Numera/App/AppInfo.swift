@@ -25,6 +25,12 @@ enum AppInfo {
     /// Linked from the in-app "What's New" sheet.
     static let changelogURL = URL(string: "https://clientvault.org/numera/changelog")!
 
+    /// Where Supabase sends users after they confirm their email. A friendly
+    /// web "account verified" page instead of the default localhost redirect.
+    /// NOTE: this URL must also be added to the Supabase project's allowed
+    /// Redirect URLs (Auth → URL Configuration) for the redirect to take effect.
+    static let verifyRedirectURL = URL(string: "https://clientvault.org/numera/welcome")!
+
     // MARK: - Social
 
     static var instagramURL: URL {

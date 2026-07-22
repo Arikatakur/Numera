@@ -28,6 +28,14 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 - **`README.md`** — a public-facing project overview: features, architecture, data model,
   getting-started/build steps, privacy notes, and a documentation index, with the Numera
   brand and product mockups as hero art.
+- **Manage, upgrade, or downgrade from the paywall (#20).** Subscribers can now open the
+  subscription page instead of being sent straight to the system manage sheet. The plan they
+  own is marked **Current**, and the primary button adapts to the selected plan: **Manage
+  Subscription** for the current plan, **Upgrade Subscription** for a higher tier, and
+  **Downgrade Subscription** for a lower one (lifetime owners see the subscription tiers as
+  already included). `PremiumManager` now tracks `activeProduct` (lifetime takes precedence
+  over a subscription), and Settings → Subscription opens the paywall for everyone.
+  (`PremiumManager.swift`, `PaywallView.swift`, `SettingsView.swift`)
 
 ### Changed
 - **What's New sheet refreshed for 0.16.** The Home "What's new?" highlights now lead with
@@ -39,6 +47,11 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
 - **`.gitignore`** now excludes personal scratch notes (`notes.txt`/`notes.md`) and the
   local-only design reference folders `quanto-app/`, `design/`, and `v1-design/` (keeping
   `design/luminous_ledger/DESIGN.md`, the design-token source of truth).
+- **Email verification lands on a welcome page instead of `localhost` (#19).** New sign-ups'
+  confirmation email now redirects to `clientvault.org/numera/welcome` ("You're verified")
+  rather than the default localhost page. `AuthManager.signUp` passes `redirectTo`
+  (`AppInfo.verifyRedirectURL`); the page lives in the ClientVault-Web repo. Requires the URL
+  to be added to the Supabase project's allowed Redirect URLs (Auth → URL Configuration).
 
 ### Fixed
 - **New-entry keyboard broke the layout (definitive fix — two keyboards fighting).** Focusing
@@ -75,6 +88,13 @@ Format: newest first. Each entry maps to one meaningful commit or milestone.
   (no log/broken axis, no silent cap). With no outlier present the axis is unchanged. The
   approach follows data-viz guidance: scale to the chart's job (comparing normal days) and
   label the outlier rather than distort the scale.
+- **Insights donut now colors every category, not just the top 5.** The spending donut capped
+  at the top 5 categories and merged the rest into a single gray "Other" slice — so selecting a
+  category below the 5th highlighted the gray pooled slice instead of that category's own color
+  (only the center emoji/amount were right). The donut now draws one slice per category in its
+  picked color, matching the breakdown list beneath it. Selection stays list-driven, so small
+  slices don't need to be tappable on the ring. Removed the now-obsolete top-5/`Other` segment
+  mapping in `InsightsView`. (`InsightsView.swift`)
 
 ### Removed
 - Untracked `quanto-app/` (competitor reference screenshots), `design/` (Stitch HTML/PNG
