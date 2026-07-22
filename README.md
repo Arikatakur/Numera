@@ -32,10 +32,6 @@ Numera is **not** a banking app. It's a manual-first expense tracker for people 
 add expenses in seconds, understand where their money goes, and stay in control — without
 handing their financial life to a third party.
 
-The experience borrows from three places at once: **Quanto-style** fast manual tracking,
-**Nike-app editorial** personalization ("For You" cards, story-like summaries), and
-**Apple-native** SwiftUI polish (large titles, native sheets, Liquid Glass, haptics, SF Symbols).
-
 The look is **dark-first** with a "Deep-Sea" charcoal-blue palette and a single **Mint-Volt**
 accent reserved for income, growth, and primary actions.
 
